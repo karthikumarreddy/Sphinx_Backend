@@ -20,6 +20,7 @@ import org.apache.ofbiz.service.ServiceContainer;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class AdminResource {
+
 	@Context
 	private ServletContext servletContext;
 
@@ -39,22 +40,29 @@ public class AdminResource {
 		}
 		return dispatcher;
 	}
-	
+
 	@POST
 	@Path("/approve")
-	public Response approveUser(Map<String,Object> input) {
+	public Response approveUser(Map<String, Object> input) {
 		try {
-		if(input.get("userName") == null) 
-			 return Response.status(404).entity(Map.of("error", "userName is required")).build();
-		
-		LocalDispatcher dispatcher=getDispatcher();
-		Map<String,Object> result=dispatcher.runSync("approveUser", input);
-		return Response.ok(result).build();
-		
-		}catch (Exception e) {
-			return Response.status(500).entity(Map.of("error","something went wromg try later")).build();
-		}
-		
-	}
+			if (input.get("userName") == null)
+				return Response.status(400)
+						.entity(Map.of("error", "The 'userName' field is required to process the approval.")).build();
 
+			LocalDispatcher dispatcher = getDispatcher();
+			if (dispatcher == null)
+				return Response.status(500)
+						.entity(Map.of("error", "An internal server error occurred. Please try again later.")).build();
+
+			Map<String, Object> result = dispatcher.runSync("approveUser", input);
+			return Response.ok(result).build();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Response.status(500)
+					.entity(Map.of("error",
+							"An unexpected error occurred while processing the request. Please try again later."))
+					.build();
+		}
+	}
 }

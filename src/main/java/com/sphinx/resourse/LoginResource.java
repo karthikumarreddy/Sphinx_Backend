@@ -29,7 +29,7 @@ public class LoginResource {
 	private HttpServletRequest request;
 
 	@Context
-	private ServletContext servletContext; // ← ADD THIS
+	private ServletContext servletContext;
 
 	private Delegator getDelegator() {
 		Delegator delegator = (Delegator) servletContext.getAttribute("delegator");
@@ -42,8 +42,7 @@ public class LoginResource {
 	private LocalDispatcher getDispatcher() {
 		LocalDispatcher dispatcher = (LocalDispatcher) servletContext.getAttribute("dispatcher");
 		if (dispatcher == null) {
-			dispatcher = ServiceContainer.getLocalDispatcher("Sphinx", // must match localDispatcherName in web.xml
-					getDelegator());
+			dispatcher = ServiceContainer.getLocalDispatcher("Sphinx", getDelegator());
 		}
 		return dispatcher;
 	}
@@ -56,51 +55,55 @@ public class LoginResource {
 			String password = (String) input.get("password");
 
 			if (userName == null || password == null)
-				return Response.status(400).entity(Map.of("error", "required fields are null")).build();
-
-			Delegator delegator = getDelegator();
-			GenericValue user = delegator.findOne("UserLogin", true,
-					UtilMisc.toMap("userLoginId", input.get("userName")));
-			// enabled y means account is active enabled n account inactive
+				return Response.status(400).entity(Map.of("error", "Username and password are required.")).build();
 
 			if (!Pattern.matches("^[a-zA-Z0-9]{4,20}$", userName))
 				return Response.status(400).entity(Map.of("error",
-						"invalid user name username length should be gteater than 4 and should contain numbers and letters only"))
+						"Invalid username. It must be 4–20 characters long and contain only letters and numbers."))
 						.build();
 
-			if (user == null) {
-				return Response.status(404).entity(Map.of("error", "User not found")).build();
-			}
-			if (!user.get("enabled").equals("Y")) {
-				return Response.status(404).entity(Map.of("error", "User is bocked my the admin")).build();
-			}
 			if (!Pattern.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$", password))
-				return Response.status(400).entity(Map.of("erreo", "invalid password")).build();
+				return Response.status(400).entity(Map.of("error",
+						"Invalid password format. Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character."))
+						.build();
+
+			Delegator delegator = getDelegator();
+			GenericValue user = delegator.findOne("UserLogin", true, UtilMisc.toMap("userLoginId", userName));
+
+			if (user == null)
+				return Response.status(404).entity(Map.of("error", "No account found with the provided username."))
+						.build();
+
+			if (!user.get("enabled").equals("Y"))
+				return Response.status(403)
+						.entity(Map.of("error",
+								"Your account has been suspended. Please contact the administrator for assistance."))
+						.build();
 
 			LocalDispatcher dispatcher = getDispatcher();
-			if (dispatcher == null) {
-				return Response.status(500).entity(Map.of("error", "Dispatcher is still null")).build();
-			}
+			if (dispatcher == null)
+				return Response.status(500)
+						.entity(Map.of("error", "An internal server error occurred. Please try again later.")).build();
 
 			Map<String, Object> result = dispatcher.runSync("loginUser", input);
-
 			return Response.status(200).entity(result).build();
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			return Response.status(500).entity(Map.of("error", e.getMessage())).build();
+			return Response.status(500).entity(Map.of("error", "An unexpected error occurred. Please try again later."))
+					.build();
 		}
 	}
 
 	@POST
 	@Path("/signup")
 	public Response signupUser(Map<String, Object> input) {
-		System.out.println(" INPUT : " + input);
+		System.out.println("INPUT : " + input);
 
 		try {
-			if (input == null) {
-				return Response.status(400).entity(Map.of("error", "input is null ")).build();
-			}
+			if (input == null)
+				return Response.status(400).entity(Map.of("error", "Request body is missing or malformed.")).build();
+
 			String userName = (String) input.get("userName");
 			String firstName = (String) input.get("firstName");
 			String lastName = (String) input.get("lastName");
@@ -110,53 +113,66 @@ public class LoginResource {
 			String currentPassword = (String) input.get("currentPassword");
 			String role = (String) input.get("role");
 
-			Delegator delegator = getDelegator();
-
-			GenericValue user = delegator.findOne("UserLogin", true, UtilMisc.toMap("userLoginId", userName));
-
 			if (userName == null || firstName == null || lastName == null || mobileNo == null || email == null
-					|| password == null || currentPassword == null || !currentPassword.equals(password) || role == null)
-				return Response.status(400).entity(Map.of("error", "required fields are null")).build();
+					|| password == null || currentPassword == null || role == null)
+				return Response.status(400)
+						.entity(Map.of("error", "All fields are required. Please ensure no fields are left empty."))
+						.build();
 
 			if (!Pattern.matches("^[a-zA-Z0-9]{4,20}$", userName))
 				return Response.status(400).entity(Map.of("error",
-						"invalid user name username length should be gteater than 4 and should contain numbers and letters only"))
+						"Invalid username. /n It must be 4–20 characters long /n and contain only letters and numbers."))
 						.build();
-			if (user != null) {
-				return Response.status(409).entity(Map.of("error", "Username already exists")).build();
-			}
 
-			if (!Pattern.matches("^[A-Za-z ]{2,50}$", firstName))
-				return Response.status(400).entity(Map.of("error", "first name should contain only alphabets")).build();
+			Delegator delegator = getDelegator();
+			GenericValue user = delegator.findOne("UserLogin", true, UtilMisc.toMap("userLoginId", userName));
 
-			if (!Pattern.matches("^[A-Za-z ]{2,50}$", lastName))
-				return Response.status(400).entity(Map.of("error", "last name should contain only alphabets")).build();
+			if (user != null)
+				return Response.status(409)
+						.entity(Map.of("error", "This username is already taken. Please choose a different username."))
+						.build();
+
+			if (!Pattern.matches("^[A-Za-z ]{2,20}$", firstName))
+				return Response.status(400)
+						.entity(Map.of("error",
+								"Invalid first name. /n It must be 2–20 characters /n and contain only letters."))
+						.build();
+
+			if (!Pattern.matches("^[A-Za-z ]{1,20}$", lastName))
+				return Response.status(400).entity(Map.of("error", "Invalid last name. ")).build();
 
 			if (!Pattern.matches("^[6-9]\\d{9}$", mobileNo))
-				return Response.status(400).entity(Map.of("error", "invalid mobile no it must be excatly 10 digits"))
+				return Response.status(400)
+						.entity(Map.of("error",
+								"Invalid mobile number. /n Please enter a valid 10-digit Indian mobile number."))
 						.build();
 
 			if (!Pattern.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$", email))
-				return Response.status(400).entity(Map.of("error", "email is invalid ")).build();
+				return Response.status(400)
+						.entity(Map.of("error", "Invalid email address. /n Please provide a valid email.")).build();
 
 			if (!Pattern.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$", password))
-				return Response.status(400).entity(Map.of("errer", "invalid password")).build();
+				return Response.status(400).entity(Map.of("error",
+						"Password must be at least 8 characters /n and include uppercase, lowercase, a number, and a special character (@$!%*?&)."))
+						.build();
 
 			if (!currentPassword.equals(password))
-				return Response.status(400).entity(Map.of("error", "current password does not match password "))
+				return Response.status(400).entity(
+						Map.of("error", "Passwords do not match. Please ensure both password fields are identical."))
 						.build();
+
 			if (!role.equals("admin") && !role.equals("user"))
-				return Response.status(400).entity(Map.of("error", "role is manditory")).build();
+				return Response.status(400)
+						.entity(Map.of("error", "Invalid role. Accepted values are 'admin' or 'user'.")).build();
 
 			LocalDispatcher dispatcher = getDispatcher();
 			Map<String, Object> result = dispatcher.runSync("signupUser", input);
-
 			return Response.status(201).entity(result).build();
 
 		} catch (Exception e) {
-			return Response.status(500).entity(Map.of("error", e.getMessage())).build();
-
+			return Response.status(500).entity(
+					Map.of("error", "An unexpected error occurred during registration./n Please try again later."))
+					.build();
 		}
-
 	}
 }
