@@ -36,7 +36,6 @@
 		<attribute name="mobileNo" mode="IN" type="String" />
 		<attribute name="email" mode="IN" type="String" />
 		<attribute name="password" mode="IN" type="String"></attribute>
-		<attribute name="currentPassword" mode="IN" type="String" />
 		<attribute name="role" mode="IN" type="String"></attribute>
 	</service>
 
