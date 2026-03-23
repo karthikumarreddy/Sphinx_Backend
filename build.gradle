@@ -22,6 +22,13 @@ dependencies {
 
     //pluginLibsCompile 'junit:junit-dep:4.10'
     //pluginLibsRuntime 'junit:junit-dep:4.10'
+    pluginLibsCompile 'javax.ws.rs:javax.ws.rs-api:2.1.1'
+
+    pluginLibsCompile 'org.glassfish.jersey.core:jersey-server:2.41'
+    pluginLibsCompile 'org.glassfish.jersey.containers:jersey-container-servlet:2.41'
+    pluginLibsCompile 'org.glassfish.jersey.media:jersey-media-json-jackson:2.41'
+
+    pluginLibsCompile 'javax.xml.bind:jaxb-api:2.3.1'
 }
 
 task install {

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api xmlns="http://ofbiz.apache.org/rest-api"
+     name="sphinx"
+     description="Sphinx REST API"
+     publish="true">
+
+    <resource name="User" path="/sphinx/user" publish="true">
+
+        <operation verb="post" service="loginUser" auth="false">
+            <description>Login a user</description>
+        </operation>
+
+    </resource>
+
+</api>

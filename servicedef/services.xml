@@ -1,33 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
+<!-- Licensed to the Apache Software Foundation (ASF) under one or more contributor 
+	license agreements. See the NOTICE file distributed with this work for additional 
+	information regarding copyright ownership. The ASF licenses this file to 
+	you under the Apache License, Version 2.0 (the "License"); you may not use 
+	this file except in compliance with the License. You may obtain a copy of 
+	the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required 
+	by applicable law or agreed to in writing, software distributed under the 
+	License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS 
+	OF ANY KIND, either express or implied. See the License for the specific 
+	language governing permissions and limitations under the License. -->
 
 <services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="https://ofbiz.apache.org/dtds/services.xsd">
-    <description>Sphinx Services</description>
-    <vendor></vendor>
-    <version>1.0</version>
+	xsi:noNamespaceSchemaLocation="https://ofbiz.apache.org/dtds/services.xsd">
+	<description>Sphinx Services</description>
+	<vendor></vendor>
+	<version>1.0</version>
 
-    <service name="noSyntaxError" engine="interface">
-        <description>
+	<service name="noSyntaxError" engine="interface">
+		<description>
             Dummy service to prevent empty files and syntax error - Remove when the 1st real service will be added here 
         </description>
-    </service> 
-    
+	</service>
+
+	<service name="loginUser" engine="java"
+		location="com.sphinx.services.UserServices" invoke="loginUser">
+		<attribute name="userName" mode="IN" type="String" />
+		<attribute name="password" mode="IN" type="String" />
+	</service>
+
+	<service name="signupUser" engine="java"
+		location="com.sphinx.services.UserServices" invoke="signupUser">
+		<attribute name="userName" mode="IN" type="String" />
+		<attribute name="firstName" mode="IN" type="String" />
+		<attribute name="lastName" mode="IN" type="String" />
+		<attribute name="mobileNo" mode="IN" type="String" />
+		<attribute name="email" mode="IN" type="String" />
+		<attribute name="password" mode="IN" type="String"></attribute>
+		<attribute name="currentPassword" mode="IN" type="String" />
+		<attribute name="role" mode="IN" type="String"></attribute>
+	</service>
+
+	<service name="approveUser" engine="java"
+		location="com.sphinx.services.AdminServices" invoke="approveUser">
+		<attribute name="userName" mode="IN" type="String"></attribute>
+	</service>
+
 </services>

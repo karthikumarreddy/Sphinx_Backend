@@ -27,5 +27,28 @@ under the License.
     <description>None</description>
     <copyright></copyright>
     <version></version>
+ <!--    <extend-entity entity-name="Party">	 -->
+   <!--  <field name="allowAdminLockRelease" type="numeric">
+	    <description>Flag to show if admin lock release is enabled or not </description>
+	  </field>
+	  <field name="lockReleaseTimeout" type="numeric">
+	    <description>Lock release time</description>
+	  </field>	 
+	  <field name="peopleId" type="id-ne">
+	    <description>For users</description>
+	  </field>
+	  <field name="userFunction" type="short-varchar">
+	    <description>For users</description>
+	  </field>
+	  <field name="lastActivity" type="short-varchar">
+	    <description>For users</description>
+	  </field>
+	  <field name="administeredBy" type="id-ne" not-null="true">
+	    <description>For users</description>
+	  </field>    	   -->
+	  
+	  
+	  
+	<!-- </extend-entity>  -->
 
 </entitymodel>
