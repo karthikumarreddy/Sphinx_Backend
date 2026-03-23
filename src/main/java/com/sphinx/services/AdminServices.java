@@ -6,7 +6,8 @@ import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.service.DispatchContext;
-import org.apache.ofbiz.service.ServiceUtil;
+
+import com.sphinx.util.ApiResponse;
 
 public class AdminServices {
 
@@ -14,28 +15,27 @@ public class AdminServices {
 			Map<String, ? extends Object> context) {
 		try {
 			if (context.get("userName") == null)
-				return ServiceUtil.returnError("userName is required");
+				return ApiResponse.response(false, 400, "userName is required", null);
 
 			Delegator delegator = dctx.getDelegator();
 			GenericValue user = delegator.findOne("UserLogin", false,
 					UtilMisc.toMap("userLoginId", context.get("userName")));
 			if (user == null)
-				return ServiceUtil.returnError("user not found");
-
+				return ApiResponse.response(false, 400,"user not found", null);
 			user.set("enabled", "Y");
 			delegator.store(user);
 
 			GenericValue party = delegator.findOne("Party", false, UtilMisc.toMap("partyId", user.getString("partyId")));
 			if (party == null)
-				return ServiceUtil.returnError("party not found");
-
+				return ApiResponse.response(false, 400, "party not found", null);
+			
 			party.set("statusId", "PARTY_ENABLED");
 			delegator.store(party);
 
-			return ServiceUtil.returnSuccess("User approved successfully");
+			return ApiResponse.response(true, 200, "User approved successfully", null);
 
 		} catch (Exception e) {
-			return ServiceUtil.returnError("something went wrong try later");
+			return ApiResponse.response(false, 400, "something went wrong try later", null);
 		}
 	}
 }

@@ -11,15 +11,16 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import com.sphinx.util.ApiResponse;
+
 public class UserServices {
 
 	public static Map<String, ? extends Object> loginUser(DispatchContext dctx, Map<String, ? extends Object> context) {
-		Map<String, Object> result = ServiceUtil.returnSuccess();
 		Delegator delegator = dctx.getDelegator();
 		try {
 			GenericValue user = delegator.findOne("UserLogin", false, Map.of("userLoginId", context.get("userName")));
 			if (user == null)
-				return ServiceUtil.returnError("No account found with the provided credentials.");
+				return ApiResponse.response(false, 400, "No account found with the provided credentials.", null);
 
 			GenericValue party = delegator.findOne("Party", false,
 					UtilMisc.toMap("partyId", user.getString("partyId")));
@@ -28,33 +29,37 @@ public class UserServices {
 					UtilMisc.toMap("partyId", user.getString("partyId")), null, false);
 
 			if (partyRoles == null || partyRoles.isEmpty())
-				return ServiceUtil.returnError("No role assigned to this account.\n Please contact the administrator.");
+				return ApiResponse.response(false, 400,
+						"No role assigned to this account.\n Please contact the administrator.", null);
 
 			GenericValue partyRole = partyRoles.get(0);
 
 			if (!partyRole.get("roleTypeId").equals("SphinxUser") && !partyRole.get("roleTypeId").equals("SphinxAdmin"))
-				return ServiceUtil.returnError("Access denied. Your account does not have a recognized role.");
+				return ApiResponse.response(false, 400, "Access denied. Your account does not have a recognized role.",
+						null);
 
 			if (!user.get("enabled").equals("Y"))
-				return ServiceUtil.returnError(
-						"Your account has been suspended.\n Please contact the administrator for further assistance.");
+				return ApiResponse.response(false, 400,
+						"Your account has been suspended.\n Please contact the administrator for further assistance.",
+						null);
 
 			if (!party.get("statusId").equals("PARTY_ENABLED"))
-				return ServiceUtil.returnError(
-						"Your account is pending administrator approval.\n You will be notified once access is granted.");
+				return ApiResponse.response(false, 400,
+						"Your account is pending administrator approval. You will be notified once access is granted.",
+						null);
 
 			if (user.get("currentPassword").equals(context.get("password"))) {
-				result.put("responseMessage", "Login successful. Welcome back!");
-				return result;
+				return ApiResponse.response(true, 200, "Login successful. Welcome back!", null);
 			}
 
 		} catch (GenericEntityException e) {
 			e.printStackTrace();
-			return ServiceUtil
-					.returnError("An error occurred while processing your login request.\n Please try again later.");
+			return ApiResponse.response(false, 500,
+					"An error occurred while processing your login request. Please try again later.", null);
 		}
 
-		return ServiceUtil.returnError("Invalid username or password.\n Please check your credentials and try again.");
+		return ApiResponse.response(false, 500,
+				"Invalid username or password. Please check your credentials and try again.", null);
 	}
 
 	public static Map<String, ? extends Object> signupUser(DispatchContext dctx,
@@ -72,7 +77,8 @@ public class UserServices {
 
 			if (userName == null || firstName == null || lastName == null || mobileNo == null || email == null
 					|| password == null || role == null)
-				return ServiceUtil.returnError("All fields are required.\n Please ensure no fields are left empty.");
+				return ApiResponse.response(false, 400,
+						"All fields are required.\n Please ensure no fields are left empty.", null);
 
 			Delegator delegator = dctx.getDelegator();
 
@@ -144,13 +150,12 @@ public class UserServices {
 			phonePartyContactMech.set("fromDate", UtilDateTime.nowTimestamp());
 			delegator.create(phonePartyContactMech);
 
-			result.put("responseMessage",
-					"Registration successful.\n Your account is pending administrator approval.\n You will receive a confirmation email once your account is activated.");
-			return result;
+			return ApiResponse.response(true, 200,
+					"Registration successful. Your account is pending administrator approval. You will receive a confirmation email once your account is activated.",
+					null);
 
 		} catch (Exception e) {
-			e.printStackTrace();
-			return ServiceUtil.returnError("An unexpected error occurred during registration.\n Please try again later."+e.getMessage());
+			return ApiResponse.response(false,500,"An unexpected error occurred during registration. Please try again later.", null);
 		}
 	}
 }

@@ -46,9 +46,6 @@ under the License.
 	  <field name="administeredBy" type="id-ne" not-null="true">
 	    <description>For users</description>
 	  </field>    	   -->
-	  
-	  
-	  
 	<!-- </extend-entity>  -->
 
 </entitymodel>
