@@ -1,7 +1,8 @@
 package com.sphinx.util;
 
-import java.util.HashMap;
 import java.util.Map;
+
+import org.apache.ofbiz.service.ServiceUtil;
 
 public class ApiResponse {
 //	{
@@ -12,14 +13,19 @@ public class ApiResponse {
 //
 //		}
 
-		public static Map<String, Object> response(boolean success, int statusCode, String message, Object data) {
-			Map<String, Object> result = new HashMap<String, Object>();
-			result.put("success", success);
-			result.put("statusCode", statusCode);
-			result.put("message", message);
-			result.put("data", data);
-			return result;
-	
+	public static Map<String, Object> response(boolean success, int statusCode, String message, Object data) {
+		Map<String, Object> result;
+
+		if (success) {
+			result = ServiceUtil.returnSuccess(message);
+		} else {
+			result = ServiceUtil.returnError(message);
 		}
 
+		result.put("success", success);
+		result.put("statusCode", statusCode);
+		result.put("data", data);
+		return result;
+
+	}
 }
