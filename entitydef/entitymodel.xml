@@ -32,12 +32,31 @@
 	<!-- </extend-entity> -->
 
 	<entity entity-name="TopicMaster" package-name="">
-		<field name="topicId" type="String" />
-		<field name="topicName" type="String" />
-		
+		<field name="topicId" type="id" />
+		<field name="topicName" type="id-long" />
+
 		<prim-key field="topicId" />
 	</entity>
-	
-	
+	<entity entity-name="QuestionMaster" package-name="">
+		<field name="questionId" type="id" />
+		<field name="questionDetail" type="description" />
+		<field name="optionA" type="name" />
+		<field name="optionB" type="name" />
+		<field name="optionC" type="name" />
+		<field name="optionD" type="name" />
+		<field name="answer" type="name" />
+		<field name="numAnswers" type="numeric" />
+		<field name="questionType" type="name" />
+		<field name="difficultyLevel" type="integer" />
+		<field name="answerValue" type="numeric" />
+		<field name="topicId" type="id" />
+
+		<prim-key field="questionId" />
+		<relation rel-entity-name="TopicMaster" fk-name="topic_id"
+			type="one">
+			<key-map field-name="topicId" rel-field-name="topicId" />
+		</relation>
+	</entity>
+
 
 </entitymodel>
