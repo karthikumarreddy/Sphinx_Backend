@@ -21,6 +21,7 @@ import org.apache.ofbiz.service.ServiceContainer;
 @Consumes(MediaType.APPLICATION_JSON)
 public class AdminResource {
 
+
 	@Context
 	private ServletContext servletContext;
 

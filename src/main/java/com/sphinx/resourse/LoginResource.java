@@ -83,15 +83,16 @@ public class LoginResource {
 			LocalDispatcher dispatcher = getDispatcher();
 			if (dispatcher == null)
 				return Response.status(500)
-						.entity(Map.of("error", "An internal server error occurred. \n Please try again later.")).build();
+						.entity(Map.of("error", "An internal server error occurred. \n Please try again later."))
+						.build();
 
 			Map<String, Object> result = dispatcher.runSync("loginUser", input);
 			return Response.status(200).entity(result).build();
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			return Response.status(500).entity(Map.of("error", "An unexpected error occurred.\n Please try again later."))
-					.build();
+			return Response.status(500)
+					.entity(Map.of("error", "An unexpected error occurred.\n Please try again later.")).build();
 		}
 	}
 
@@ -110,7 +111,7 @@ public class LoginResource {
 			String mobileNo = (String) input.get("mobileNo");
 			String email = (String) input.get("email");
 			String password = (String) input.get("password");
-		
+
 			String role = (String) input.get("role");
 
 			if (userName == null || firstName == null || lastName == null || mobileNo == null || email == null
@@ -128,8 +129,8 @@ public class LoginResource {
 			GenericValue user = delegator.findOne("UserLogin", true, UtilMisc.toMap("userLoginId", userName));
 
 			if (user != null)
-				return Response.status(409)
-						.entity(Map.of("error", "This username is already taken. \n Please choose a different username."))
+				return Response.status(409).entity(
+						Map.of("error", "This username is already taken. \n Please choose a different username."))
 						.build();
 
 			if (!Pattern.matches("^[A-Za-z ]{2,20}$", firstName))
