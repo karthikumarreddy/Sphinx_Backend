@@ -75,6 +75,55 @@
 		<attribute name="topicId" mode="IN" type="String" />
 		<attribute name="topic" type="Map" mode="OUT" />
 	</service>
+
+
+
+	<service name="createQuestion" engine="java"
+		location="com.sphinx.services.QuestionService" invoke="createQuestion">
+
+		<attribute name="questionDetail" mode="IN" type="String" />
+
+		<attribute name="optionA" mode="IN" type="String" />
+
+		<attribute name="optionB" mode="IN" type="String" />
+
+		<attribute name="optionC" mode="IN" type="String"
+			optional="true" />
+
+		<attribute name="optionD" mode="IN" type="String"
+			optional="true" />
+
+		<attribute name="answer" mode="IN" type="String" />
+
+		<attribute name="numAnswers" mode="IN" type="String" />
+
+		<attribute name="questionType" mode="IN" type="String" />
+
+		<attribute name="difficultyLevel" mode="IN" type="String"
+			optional="true" />
+
+		<attribute name="answerValue" mode="IN" type="String"
+			optional="true" />
+
+		<attribute name="topicId" mode="IN" type="String" />
+		
+
+		<attribute name="success"         type="Boolean" mode="OUT" optional="true"/>
+		<attribute name="statusCode"      type="Long"    mode="OUT" optional="true"/>
+		<attribute name="responseMessage" type="String"  mode="OUT" optional="true"/>
+		<attribute name="data"            type="Map"     mode="OUT" optional="true"/>
+	</service>
+
+	<service name="createBulkQuestions" engine="java"
+		location="com.sphinx.services.QuestionService"
+		invoke="createBulkQuestions">
+
+		<attribute name="listOfQuestions" type="List" mode="IN" />
 	
-	
+		<attribute name="success"         type="Boolean" mode="OUT" optional="true"/>
+		<attribute name="statusCode"      type="Long"    mode="OUT" optional="true"/>
+		<attribute name="responseMessage" type="String"  mode="OUT" optional="true"/>
+		<attribute name="data"            type="Map"     mode="OUT" optional="true"/>
+	</service>
+
 </services>

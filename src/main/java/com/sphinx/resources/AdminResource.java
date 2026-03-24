@@ -1,4 +1,4 @@
-package com.sphinx.resourse;
+package com.sphinx.resources;
 
 import java.util.Map;
 
