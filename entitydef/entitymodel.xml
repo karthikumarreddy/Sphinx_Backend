@@ -57,6 +57,4 @@
 			<key-map field-name="topicId" rel-field-name="topicId" />
 		</relation>
 	</entity>
-
-
 </entitymodel>
