@@ -20,4 +20,15 @@ under the License.
 
 <entity-engine-xml>
 
+ <EnumerationType enumTypeId="SPHINX_Q_TYPE" hasTable = "N" description="Question type for sphinx tool" />
+ 
+ <Enumeration enumId="FILL_UP" enumTypeId="SPHINX_Q_TYPE" enumCode="Q_FILL" description="Fill in the blanks questions" />
+<Enumeration enumId="MULTIPLE_CHOICE" enumTypeId="SPHINX_Q_TYPE" enumCode="Q_MUL" description="Multiple choice questions" />
+<Enumeration enumId="SINGLE_CHOICE" enumTypeId="SPHINX_Q_TYPE" enumCode="Q_SIN" description="Single choice questions" />
+<Enumeration enumId="DETAILED_ANSWER" enumTypeId="SPHINX_Q_TYPE" enumCode="Q_DET_ANS" description="Descriptive type questions" />
+<Enumeration enumId="TRUE_FALSE" enumTypeId="SPHINX_Q_TYPE" enumCode="Q_TF" description="True or False questions" />
+
+<!--  -->
+<RoleType roleTypeId="SphinxAdmin" hasTable="N" description="Admin role type for Sphinx admin" />
+
 </entity-engine-xml>
