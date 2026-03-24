@@ -33,7 +33,7 @@
 
 	<entity entity-name="TopicMaster" package-name="">
 		<field name="topicId" type="id" />
-		<field name="topicName" type="id-long" />
+		<field name="topicName" type="short-varchar" />
 
 		<prim-key field="topicId" />
 	</entity>
@@ -57,4 +57,20 @@
 			<key-map field-name="topicId" rel-field-name="topicId" />
 		</relation>
 	</entity>
+	
+		<entity entity-name="ExamTopicDetails" package-name="">
+		<field name="examId" type="id"></field>
+		<field name="topicId" type="id"></field>
+		<field name="topicName" type="short-varchar" not-null="true"/>
+		<field name="percentage" type="numeric" not-null="true"></field>
+		<field name="startingQid" type="numeric" not-null="true"></field>
+		<field name="endingQid" type="numeric" not-null="true"/>
+		<field name="questionsPerExam" type="numeric" not-null="true"></field>
+		<field name="topicPassPercentage" type="floating-point" not-null="true"></field>
+		<prim-key field="examId" />
+		<prim-key field="topicId" />
+		<relation rel-entity-name="ExamMaster" fk-name="EXAM_TOPIC_FK" type="many">
+			<key-map field-name="examId" rel-field-name="examId" />
+		</relation>			
+    </entity>
 </entitymodel>
