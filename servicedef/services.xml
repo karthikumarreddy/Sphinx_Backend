@@ -44,4 +44,37 @@
 		<attribute name="userName" mode="IN" type="String"></attribute>
 	</service>
 
+	<service name="createTopic" engine="java"
+		location="com.sphinx.services.TopicServices" invoke="createTopic">
+		<attribute name="topicId" type="String" mode="OUT" />
+		<attribute name="topicName" mode="IN" type="String"></attribute>
+	</service>
+
+	<service name="updateTopic" engine="java"
+		location="com.sphinx.services.TopicServices" invoke="updateTopic">
+		<attribute name="topicId" mode="IN" type="String"></attribute>
+		<attribute name="topicName" mode="IN" type="String"></attribute>
+	</service>
+
+	<service name="deleteTopic" engine="java"
+		location="com.sphinx.services.TopicServices" invoke="deleteTopic">
+		<attribute name="topicId" mode="IN" type="String">
+
+		</attribute>
+	</service>
+
+	<service name="getTopic" engine="java"
+		location="com.sphinx.services.TopicServices" invoke="getTopic">
+		<attribute name="topicId" mode="IN" type="String" />
+		<attribute name="topicList" type="List" mode="OUT" />
+	</service>
+
+	<service name="getTopicById" engine="java"
+		location="com.sphinx.services.TopicServices" invoke="getTopicById"
+		auth="true">
+		<attribute name="topicId" mode="IN" type="String" />
+		<attribute name="topic" type="Map" mode="OUT" />
+	</service>
+	
+	
 </services>
