@@ -1,129 +1,136 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Licensed to the Apache Software Foundation (ASF) under one or more contributor 
-	license agreements. See the NOTICE file distributed with this work for additional 
-	information regarding copyright ownership. The ASF licenses this file to 
-	you under the Apache License, Version 2.0 (the "License"); you may not use 
-	this file except in compliance with the License. You may obtain a copy of 
-	the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required 
-	by applicable law or agreed to in writing, software distributed under the 
-	License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS 
-	OF ANY KIND, either express or implied. See the License for the specific 
-	language governing permissions and limitations under the License. -->
+    license agreements. See the NOTICE file distributed with this work for additional 
+    information regarding copyright ownership. The ASF licenses this file to 
+    you under the Apache License, Version 2.0 (the "License"); you may not use 
+    this file except in compliance with the License. You may obtain a copy of 
+    the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required 
+    by applicable law or agreed to in writing, software distributed under the 
+    License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS 
+    OF ANY KIND, either express or implied. See the License for the specific 
+    language governing permissions and limitations under the License. -->
 
 <services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:noNamespaceSchemaLocation="https://ofbiz.apache.org/dtds/services.xsd">
-	<description>Sphinx Services</description>
-	<vendor></vendor>
-	<version>1.0</version>
+    xsi:noNamespaceSchemaLocation="https://ofbiz.apache.org/dtds/services.xsd">
+    <description>Sphinx Services</description>
+    <vendor></vendor>
+    <version>1.0</version>
 
-	<service name="noSyntaxError" engine="interface">
-		<description>
-            Dummy service to prevent empty files and syntax error - Remove when the 1st real service will be added here 
-        </description>
-	</service>
+    <!-- User Services -->
+    <service name="loginUser" engine="java"
+        location="com.sphinx.services.UserServices" invoke="loginUser">
+        <attribute name="userName" mode="IN" type="String" />
+        <attribute name="password" mode="IN" type="String" />
+    </service>
 
-	<service name="loginUser" engine="java"
-		location="com.sphinx.services.UserServices" invoke="loginUser">
-		<attribute name="userName" mode="IN" type="String" />
-		<attribute name="password" mode="IN" type="String" />
-	</service>
+    <service name="signupUser" engine="java"
+        location="com.sphinx.services.UserServices" invoke="signupUser">
+        <attribute name="userName" mode="IN" type="String" />
+        <attribute name="firstName" mode="IN" type="String" />
+        <attribute name="lastName" mode="IN" type="String" />
+        <attribute name="mobileNo" mode="IN" type="String" />
+        <attribute name="email" mode="IN" type="String" />
+        <attribute name="password" mode="IN" type="String" />
+        <attribute name="role" mode="IN" type="String" />
+    </service>
 
-	<service name="signupUser" engine="java"
-		location="com.sphinx.services.UserServices" invoke="signupUser">
-		<attribute name="userName" mode="IN" type="String" />
-		<attribute name="firstName" mode="IN" type="String" />
-		<attribute name="lastName" mode="IN" type="String" />
-		<attribute name="mobileNo" mode="IN" type="String" />
-		<attribute name="email" mode="IN" type="String" />
-		<attribute name="password" mode="IN" type="String"></attribute>
-		<attribute name="role" mode="IN" type="String"></attribute>
-	</service>
+    <service name="approveUser" engine="java"
+        location="com.sphinx.services.AdminServices" invoke="approveUser">
+        <attribute name="userName" mode="IN" type="String" />
+    </service>
 
-	<service name="approveUser" engine="java"
-		location="com.sphinx.services.AdminServices" invoke="approveUser">
-		<attribute name="userName" mode="IN" type="String"></attribute>
-	</service>
+    <!-- Topic Services -->
+    <service name="createTopic" engine="entity-auto"
+        invoke="create" default-entity-name="TopicMaster">
+        <auto-attributes include="pk" mode="INOUT" optional="true" />
+        <auto-attributes include="nonpk" mode="IN" optional="false" />
+    </service>
 
-	<service name="createTopic" engine="java"
-		location="com.sphinx.services.TopicServices" invoke="createTopic">
-		<attribute name="topicId" type="String" mode="OUT" />
-		<attribute name="topicName" mode="IN" type="String"></attribute>
-	</service>
+    <service name="updateTopic" engine="entity-auto"
+        invoke="update" default-entity-name="TopicMaster">
+        <attribute name="topicId" type="String" mode="IN" />
+        <attribute name="topicName" type="String" mode="IN" />
+    </service>
 
-	<service name="updateTopic" engine="java"
-		location="com.sphinx.services.TopicServices" invoke="updateTopic">
-		<attribute name="topicId" mode="IN" type="String"></attribute>
-		<attribute name="topicName" mode="IN" type="String"></attribute>
-	</service>
+    <service name="deleteTopic" engine="entity-auto"
+        invoke="delete" default-entity-name="TopicMaster">
+        <attribute name="topicId" type="String" mode="IN" />
+    </service>
 
-	<service name="deleteTopic" engine="java"
-		location="com.sphinx.services.TopicServices" invoke="deleteTopic">
-		<attribute name="topicId" mode="IN" type="String">
+    <service name="getAllTopics" engine="java"
+    location="com.sphinx.services.TopicServices" invoke="getAllTopic">
+    <attribute name="topicList" type="List" mode="OUT" optional="true" />
+</service>
 
-		</attribute>
-	</service>
+    <service name="getTopicById" engine="java"
+    location="com.sphinx.services.TopicServices" invoke="getTopicById">
+    <attribute name="topicId" type="String" mode="IN" optional="false" />
+    <attribute name="topic" type="Map" mode="OUT" optional="true" />
+</service>
+    <!-- Exam Topic Services -->
+    <service name="createExamTopics" engine="entity-auto"
+        invoke="create" default-entity-name="ExamTopicDetails">
+        <auto-attributes include="pk" mode="INOUT" optional="true" />
+        <auto-attributes include="nonpk" mode="IN" optional="false" />
+    </service>
 
-	<service name="getTopic" engine="java"
-		location="com.sphinx.services.TopicServices" invoke="getTopic">
-		<attribute name="topicId" mode="IN" type="String" />
-		<attribute name="topicList" type="List" mode="OUT" />
-	</service>
+    <service name="updateExamTopics" engine="entity-auto"
+        invoke="update" entity-name="ExamTopicDetails">
+        <attribute name="examId" type="String" mode="IN" />
+        <attribute name="topicId" type="String" mode="IN" />
+        <attribute name="topicName" type="String" mode="IN" optional="true" />
+        <attribute name="percentage" type="BigDecimal" mode="IN" optional="true" />
+        <attribute name="startingQid" type="Long" mode="IN" optional="true" />
+        <attribute name="endingQid" type="Long" mode="IN" optional="true" />
+        <attribute name="questionsPerExam" type="Long" mode="IN" optional="true" />
+        <attribute name="topicPassPercentage" type="Double" mode="IN" optional="true" />
+    </service>
 
-	<service name="getTopicById" engine="java"
-		location="com.sphinx.services.TopicServices" invoke="getTopicById"
-		auth="true">
-		<attribute name="topicId" mode="IN" type="String" />
-		<attribute name="topic" type="Map" mode="OUT" />
-	</service>
+    <service name="deleteExamTopics" engine="entity-auto"
+        invoke="delete" entity-name="ExamTopicDetails">
+        <attribute name="examId" type="String" mode="IN" />
+        <attribute name="topicId" type="String" mode="IN" />
+    </service>
 
+   <service name="getAllExamTopics" engine="java"
+    location="com.sphinx.services.ExamTopicsServices" invoke="getAllExamTopics">
+    <attribute name="examTopicList" type="List" mode="OUT" optional="true" />
+</service>
 
+   <service name="getExamTopicById" engine="java"
+    location="com.sphinx.services.ExamTopicsServices" invoke="getExamTopicById">
+    <attribute name="examId" type="String" mode="IN" optional="false" />
+    <attribute name="topicId" type="String" mode="IN" optional="false" />
+    <attribute name="examTopic" type="Map" mode="OUT" optional="true" />
+</service>
 
-	<service name="createQuestion" engine="java"
-		location="com.sphinx.services.QuestionService" invoke="createQuestion">
+    <!-- Question Services -->
+    <service name="createQuestion" engine="java"
+        location="com.sphinx.services.QuestionService" invoke="createQuestion">
+        <attribute name="questionDetail" mode="IN" type="String" />
+        <attribute name="optionA" mode="IN" type="String" />
+        <attribute name="optionB" mode="IN" type="String" />
+        <attribute name="optionC" mode="IN" type="String" optional="true" />
+        <attribute name="optionD" mode="IN" type="String" optional="true" />
+        <attribute name="answer" mode="IN" type="String" />
+        <attribute name="numAnswers" mode="IN" type="String" />
+        <attribute name="questionType" mode="IN" type="String" />
+        <attribute name="difficultyLevel" mode="IN" type="String" optional="true" />
+        <attribute name="answerValue" mode="IN" type="String" optional="true" />
+        <attribute name="topicId" mode="IN" type="String" />
+        <attribute name="success" type="Boolean" mode="OUT" optional="true" />
+        <attribute name="statusCode" type="Long" mode="OUT" optional="true" />
+        <attribute name="responseMessage" type="String" mode="OUT" optional="true" />
+        <attribute name="data" type="Map" mode="OUT" optional="true" />
+    </service>
 
-		<attribute name="questionDetail" mode="IN" type="String" />
-
-		<attribute name="optionA" mode="IN" type="String" />
-
-		<attribute name="optionB" mode="IN" type="String" />
-
-		<attribute name="optionC" mode="IN" type="String"
-			optional="true" />
-
-		<attribute name="optionD" mode="IN" type="String"
-			optional="true" />
-
-		<attribute name="answer" mode="IN" type="String" />
-
-		<attribute name="numAnswers" mode="IN" type="String" />
-
-		<attribute name="questionType" mode="IN" type="String" />
-
-		<attribute name="difficultyLevel" mode="IN" type="String"
-			optional="true" />
-
-		<attribute name="answerValue" mode="IN" type="String"
-			optional="true" />
-
-		<attribute name="topicId" mode="IN" type="String" />
-		
-
-		<attribute name="success"         type="Boolean" mode="OUT" optional="true"/>
-		<attribute name="statusCode"      type="Long"    mode="OUT" optional="true"/>
-		<attribute name="responseMessage" type="String"  mode="OUT" optional="true"/>
-		<attribute name="data"            type="Map"     mode="OUT" optional="true"/>
-	</service>
-
-	<service name="createBulkQuestions" engine="java"
-		location="com.sphinx.services.QuestionService"
-		invoke="createBulkQuestions">
-
-		<attribute name="listOfQuestions" type="List" mode="IN" />
-	
-		<attribute name="success"         type="Boolean" mode="OUT" optional="true"/>
-		<attribute name="statusCode"      type="Long"    mode="OUT" optional="true"/>
-		<attribute name="responseMessage" type="String"  mode="OUT" optional="true"/>
-		<attribute name="data"            type="Map"     mode="OUT" optional="true"/>
-	</service>
+    <service name="createBulkQuestions" engine="java"
+        location="com.sphinx.services.QuestionService" invoke="createBulkQuestions">
+        <attribute name="listOfQuestions" type="List" mode="IN" />
+        <attribute name="success" type="Boolean" mode="OUT" optional="true" />
+        <attribute name="statusCode" type="Long" mode="OUT" optional="true" />
+        <attribute name="responseMessage" type="String" mode="OUT" optional="true" />
+        <attribute name="data" type="Map" mode="OUT" optional="true" />
+    </service>
 
 </services>

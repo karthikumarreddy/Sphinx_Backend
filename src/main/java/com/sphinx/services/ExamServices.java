@@ -12,6 +12,20 @@ import com.sphinx.util.ApiResponse;
 
 public class ExamServices {
 
+	public static Map<String, ? extends Object> getExam(DispatchContext dctx, Map<String, ? extends Object> context) {
+		try {
+			Delegator delegator = dctx.getDelegator();
+			List<GenericValue> examMaster = delegator.findAll("ExamMaster", false);
+			return ApiResponse.response(true, 200, "List of exams", examMaster);	
+		} catch (Exception e) {
+			return ApiResponse.response(false, 500, "Something went wrong try later .", null);
+		}
+		
+		
+	}
+	
+	
+	
 	public static Map<String, ? extends Object> createExam(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 		try {
@@ -42,16 +56,6 @@ public class ExamServices {
 		}
 	}
 
-	public static Map<String, ? extends Object> getExam(DispatchContext dctx, Map<String, ? extends Object> context) {
-		try {
-			Delegator delegator = dctx.getDelegator();
-			List<GenericValue> examMaster = delegator.findAll("ExamMaster", false);
-			return ApiResponse.response(true, 200, "List of exams", examMaster);
-
-		} catch (Exception e) {
-			return ApiResponse.response(false, 500, "Something went wrong try later .", null);
-		}
-	}
 
 	public static Map<String, ? extends Object> deleteExam(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
