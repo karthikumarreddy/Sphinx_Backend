@@ -18,8 +18,7 @@ public class ApiResponse {
 
 		if (success) {
 			result = ServiceUtil.returnSuccess(message);
-		}
-		else {
+		} else {
 			result = ServiceUtil.returnError(message);
 		}
 
@@ -29,5 +28,4 @@ public class ApiResponse {
 		return result;
 
 	}
-
 }
