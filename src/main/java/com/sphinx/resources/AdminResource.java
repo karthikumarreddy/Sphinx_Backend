@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -21,12 +22,13 @@ import org.apache.ofbiz.service.ServiceContainer;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class AdminResource {
-
+	@Context
+	private HttpServletRequest request;
     @Context
     private ServletContext servletContext;
 
     private Delegator getDelegator() {
-        Delegator delegator = (Delegator) servletContext.getAttribute("delegator");
+        Delegator delegator = (Delegator) request.getAttribute("delegator");
         if (delegator == null) {
             delegator = DelegatorFactory.getDelegator("default");
         }

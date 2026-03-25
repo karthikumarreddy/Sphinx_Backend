@@ -44,6 +44,7 @@
 		<field name="optionB" type="name" />
 		<field name="optionC" type="name" />
 		<field name="optionD" type="name" />
+		<field name="optionE" type="name"/>
 		<field name="answer" type="name" />
 		<field name="numAnswers" type="numeric" />
 		<field name="questionType" type="name" />
@@ -58,19 +59,102 @@
 		</relation>
 	</entity>
 	
-		<entity entity-name="ExamTopicDetails" package-name="">
-		<field name="examId" type="id"></field>
-		<field name="topicId" type="id"></field>
-		<field name="topicName" type="short-varchar" not-null="true"/>
-		<field name="percentage" type="numeric" not-null="true"></field>
-		<field name="startingQid" type="numeric" not-null="true"></field>
-		<field name="endingQid" type="numeric" not-null="true"/>
-		<field name="questionsPerExam" type="numeric" not-null="true"></field>
-		<field name="topicPassPercentage" type="floating-point" not-null="true"></field>
+	 <entity entity-name="QuestionBankMasterB" package-name="in.vastpro.sphinx">
+		<field name="examId" type="id-ne"></field>
+		<field name="qId" type="numeric"></field>
+		<field name="topicId" type="numeric" not-null="true"/>
+		<field name="questionDetail" type="very-long" not-null="true"></field>
+		<field name="optionA" type="very-long" not-null="true"></field>
+		<field name="optionB" type="very-long" not-null="true"/>
+		<field name="optionC" type="very-long" not-null="true"></field>
+		<field name="optionD" type="very-long" not-null="true"></field>
+		<field name="optionE" type="very-long" not-null="true"></field>
+		<field name="answer" type="id-ne" not-null="true"></field>
+		<field name="numAnswers" type="numeric" not-null="true"/>
+		<field name="questiontype" type="numeric" not-null="true"></field>
+		<field name="difficultyLevel" type="numeric"></field>
+		<field name="answerValue" type="currency-amount"/>
+		<field name="negativeMarkValue" type="currency-amount"></field>			
 		<prim-key field="examId" />
-		<prim-key field="topicId" />
-		<relation rel-entity-name="ExamMaster" fk-name="EXAM_TOPIC_FK" type="many">
+		<prim-key field="qId" />
+		<relation rel-entity-name="ExamMaster" fk-name="QUESTION_BANK_B_FK" type="many">
 			<key-map field-name="examId" rel-field-name="examId" />
 		</relation>			
     </entity>
+    
+    <entity entity-name="QuestionBankMaster" package-name="in.vastpro.sphinx">
+		<field name="examId" type="id-ne"></field>
+		<field name="qId" type="numeric"></field>
+		<field name="topicId" type="numeric" not-null="true"/>
+		<field name="questionDetail" type="very-long" not-null="true"></field>
+		<field name="optionA" type="very-long" not-null="true"></field>
+		<field name="optionB" type="very-long" not-null="true"/>
+		<field name="optionC" type="very-long" not-null="true"></field>
+		<field name="optionD" type="very-long" not-null="true"></field>
+		<field name="optionE" type="very-long" not-null="true"></field>
+		<field name="answer" type="id-ne" not-null="true"></field>
+		<field name="numAnswers" type="numeric" not-null="true"/>
+		<field name="questionType" type="numeric" not-null="true"></field>
+		<field name="difficultyLevel" type="numeric"></field>
+		<field name="answerValue" type="currency-amount"/>
+		<field name="negativeMarkValue" type="currency-amount"></field>		
+		<prim-key field="examId" />
+		<prim-key field="qId" />
+		<relation rel-entity-name="ExamMaster" fk-name="QUESTION_BANK_FK" type="many">
+			<key-map field-name="examId" rel-field-name="examId" />
+		</relation>			
+    </entity>
+	
+
+	<entity entity-name="ExamTopicDetails" package-name="">
+		<field name="examId" type="id"></field>
+		<field name="topicId" type="id"></field>
+		<field name="topicName" type="short-varchar" not-null="true" />
+		<field name="percentage" type="numeric" not-null="true"></field>
+		<field name="startingQid" type="numeric" not-null="true"></field>
+		<field name="endingQid" type="numeric" not-null="true" />
+		<field name="questionsPerExam" type="numeric" not-null="true"></field>
+		<field name="topicPassPercentage" type="floating-point"
+			not-null="true"></field>
+		<prim-key field="examId" />
+		<prim-key field="topicId" />
+		<relation rel-entity-name="ExamMaster"
+			fk-name="EXAM_TOPIC_FK" type="many">
+			<key-map field-name="examId" rel-field-name="examId" />
+		</relation>
+
+	</entity>
+
+	<entity entity-name="ExamMaster" package-name="">
+		<field name="examId" type="id"></field>
+		<field name="examName" type="id"></field>
+		<field name="description" type="description"></field>
+		<field name="noOfQuestions" type="numeric" not-null="true"></field>
+		<field name="duration" type="numeric" not-null="true"></field>
+		<field name="passPercentage" type="numeric" not-null="true" />
+		<field name="questionsRandomized" type="numeric"></field>
+		<field name="answersMust" type="numeric"></field>
+		<field name="allowNegativeMarks" type="numeric" />
+		<field name="examSetupProper" type="numeric"></field>
+		<field name="negativeMarkValue" type="currency-amount"></field>
+		<field name="fromDate" type="date-time"></field>
+		<field name="thruDate" type="date-time"></field>
+		<!--field to store the adminId who created this exam -->
+		<field name="createdByUserLogin" type="id-vlong"></field>
+		<!--field to store the adminId who last modified this exam -->
+		<field name="lastModifiedByUserLogin" type="id-vlong"></field>
+		<prim-key field="examId" />
+	</entity>
+
+	<entity entity-name="ExamSetupDetails"
+		package-name="in.vastpro.sphinx">
+		<field name="examId" type="id-ne"></field>
+		<field name="setupType" type="id-ne" not-null="true"></field>
+		<field name="setupDetails" type="very-long" not-null="true"></field>
+		<prim-key field="examId" />
+		<relation rel-entity-name="ExamMaster"
+			fk-name="EXAM_SETUP_FK" type="one">
+			<key-map field-name="examId" rel-field-name="examId" />
+		</relation>
+	</entity>
 </entitymodel>

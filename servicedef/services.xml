@@ -75,7 +75,7 @@
     </service>
 
     <service name="updateExamTopics" engine="entity-auto"
-        invoke="update" entity-name="ExamTopicDetails">
+        invoke="update" default-entity-name="ExamTopicDetails">
         <attribute name="examId" type="String" mode="IN" />
         <attribute name="topicId" type="String" mode="IN" />
         <attribute name="topicName" type="String" mode="IN" optional="true" />
@@ -87,7 +87,7 @@
     </service>
 
     <service name="deleteExamTopics" engine="entity-auto"
-        invoke="delete" entity-name="ExamTopicDetails">
+        invoke="delete" default-entity-name="ExamTopicDetails">
         <attribute name="examId" type="String" mode="IN" />
         <attribute name="topicId" type="String" mode="IN" />
     </service>
