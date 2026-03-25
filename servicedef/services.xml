@@ -118,6 +118,7 @@
         <attribute name="difficultyLevel" mode="IN" type="String" optional="true" />
         <attribute name="answerValue" mode="IN" type="String" optional="true" />
         <attribute name="topicId" mode="IN" type="String" />
+        
         <attribute name="success" type="Boolean" mode="OUT" optional="true" />
         <attribute name="statusCode" type="Long" mode="OUT" optional="true" />
         <attribute name="responseMessage" type="String" mode="OUT" optional="true" />
@@ -127,6 +128,7 @@
     <service name="createBulkQuestions" engine="java"
         location="com.sphinx.services.QuestionService" invoke="createBulkQuestions">
         <attribute name="listOfQuestions" type="List" mode="IN" />
+        
         <attribute name="success" type="Boolean" mode="OUT" optional="true" />
         <attribute name="statusCode" type="Long" mode="OUT" optional="true" />
         <attribute name="responseMessage" type="String" mode="OUT" optional="true" />

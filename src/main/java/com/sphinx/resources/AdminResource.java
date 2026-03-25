@@ -42,10 +42,8 @@ public class AdminResource {
         return dispatcher;
     }
 
-    // ─────────────────────────────────────────────
-    // User Services
-    // ─────────────────────────────────────────────
-
+  
+    // User approval Services
     @POST
     @Path("/approve")
     public Response approveUser(Map<String, Object> input) {
@@ -70,10 +68,8 @@ public class AdminResource {
         }
     }
 
-    // ─────────────────────────────────────────────
-    // Topic Services
-    // ─────────────────────────────────────────────
 
+    // Topic Services
     @POST
     @Path("/topic/create")
     public Response createTopic(Map<String, Object> input) {
@@ -166,10 +162,7 @@ public class AdminResource {
         }
     }
 
-    // ─────────────────────────────────────────────
     // Exam Topic Services
-    // ─────────────────────────────────────────────
-
     @POST
     @Path("/exam-topic/create")
     public Response createExamTopic(Map<String, Object> input) {
