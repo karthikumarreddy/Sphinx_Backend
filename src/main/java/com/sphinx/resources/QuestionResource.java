@@ -11,8 +11,10 @@ import java.util.Map;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
@@ -21,16 +23,16 @@ import javax.ws.rs.core.Response;
 
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
+import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.DelegatorFactory;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceContainer;
+import org.apache.ofbiz.service.ServiceUtil;
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.CellValue;
-import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -39,7 +41,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
-import com.sphinx.util.ApiResponse;
 import com.sphinx.util.QuestionColumnConfigUtil;
 import com.sphinx.util.QuestionColumnConfigUtil.ColumnConfig;
 
@@ -70,20 +71,164 @@ public class QuestionResource {
 		return dispatcher;
 	}
 
+	private String validateQuestionData(Map<String, Object> input) {
+		String questionDetail = (String) input.get("questionDetail");
+		String optionA = (String) input.get("optionA");
+		String optionB = (String) input.get("optionB");
+		String optionC = (String) input.get("optionC");
+		String optionD = (String) input.get("optionD");
+		String answer = (String) input.get("answer");
+		String numAnswers = (String) input.get("numAnswers");
+		String questionType = (String) input.get("questionType");
+		String difficultyLevel = (String) input.get("difficultyLevel");
+		String answerValue = (String) input.get("answerValue");
+		String topicId = (String) input.get("topicId");
+
+		if (UtilValidate.isEmpty(questionDetail)) {
+			return "Question detail is required";
+		}
+
+		if (UtilValidate.isEmpty(optionA)) {
+			return "Option A is required";
+		}
+
+		if (UtilValidate.isEmpty(optionB)) {
+			return "Option B is required";
+		}
+
+		if (UtilValidate.isEmpty(answer)) {
+			return "Answer is required";
+		}
+
+		if (UtilValidate.isEmpty(numAnswers)) {
+			return "Number of Answers is required";
+		}
+
+		if (UtilValidate.isEmpty(questionType)) {
+			return "Question type is required";
+		}
+
+		if (UtilValidate.isEmpty(difficultyLevel)) {
+			return "Difficulty level is required";
+		}
+
+		if (UtilValidate.isEmpty(topicId)) {
+			return "Topic ID is required";
+		}
+
+		if (!UtilValidate.isInteger(numAnswers)) {
+			return "Number of Answers must be a number";
+		}
+
+		int answersCount = Integer.parseInt(numAnswers);
+
+		if (answersCount < 1 || answersCount > 4) {
+			return "Number of Answers must be between 1 and 4";
+		}
+
+		if (answersCount >= 3 && UtilValidate.isEmpty(optionC)) {
+			return "Option C required when Number of Answers greater than 3";
+		}
+
+		if (answersCount >= 3 && UtilValidate.isEmpty(optionD)) {
+			return "Option D required when Number of Answers greater than 3";
+		}
+
+		return null;
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getAllQuestionByTopic() {
+		try {
+			String topicIdStr = request.getQueryString();
+			String topicId = topicIdStr.split("=")[1];
+
+			if (topicId == null) {
+				return Response.status(400).entity(ServiceUtil.returnError("Invalid topic Id")).build();
+			}
+
+			Map<String, Object> result = getDispatcher().runSync("getAllQuestionByTopic", UtilMisc.toMap("topicId", topicId));
+			return Response.status(201).entity(result).build();
+
+		} catch (GenericServiceException e) {
+			Debug.logError(e, MODULE);
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
+		}
+	}
+
+	@PUT
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response updateQuestion(Map<String, Object> input) {
+
+		String errorMsg = validateQuestionData(input);
+
+		if (errorMsg != null) {
+			return Response.status(400).entity(ServiceUtil.returnError(errorMsg)).build();
+		}
+
+		Map<String, Object> result;
+		try {
+			result = getDispatcher().runSync("updateQuestion", input);
+			if (result.get("responseMessage") != null && result.get("responseMessage").equals("error")) {
+				return Response.status(400).entity(result).build();
+			}
+			return Response.status(201).entity(result).build();
+		} catch (GenericServiceException e) {
+			Debug.logError(e, MODULE);
+			return Response.serverError().entity(ServiceUtil.returnError(e.getMessage())).build();
+		}
+
+	}
+
+	@DELETE
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response deleteQuestion(Map<String, Object> input) {
+
+		String qId = (String) input.get("questionId");
+
+		if (UtilValidate.isEmpty(qId)) {
+			return Response.status(400).entity(ServiceUtil.returnError("Question Id is required")).build();
+		}
+
+		Map<String, Object> result;
+		try {
+			result = getDispatcher().runSync("deleteQuestion", input);
+			if (result.get("responseMessage") != null && result.get("responseMessage").equals("error")) {
+				return Response.status(400).entity(result).build();
+			}
+			return Response.status(200).entity(result).build();
+		} catch (GenericServiceException e) {
+			Debug.logError(e, MODULE);
+			return Response.serverError().entity(ServiceUtil.returnError(e.getMessage())).build();
+		}
+
+	}
+
 	@POST
-	@Path("/add")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response addQuestions(Map<String, Object> input) {
 		try {
 
+			String errorMsg = validateQuestionData(input);
+
+			if (errorMsg != null) {
+				return Response.status(400).entity(ServiceUtil.returnError(errorMsg)).build();
+			}
+
+
 			Map<String, Object> result = getDispatcher().runSync("createQuestion", input);
-			System.out.println("============== RESULT ======================" + result);
+			if (result.get("responseMessage") != null && result.get("responseMessage").equals("error")) {
+				return Response.status(400).entity(result).build();
+			}
 			return Response.status(201).entity(result).build();
 
 		} catch (GenericServiceException e) {
 			Debug.logError(e, MODULE);
-			return Response.status(500).entity(ApiResponse.response(false, 500, e.getMessage(), null)).build();
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 
@@ -119,6 +264,7 @@ public class QuestionResource {
 							.type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet").build();
 
 		} catch (Exception e) {
+			Debug.logError(e, MODULE);
 			return Response.serverError().build();
 		}
 
@@ -134,20 +280,11 @@ public class QuestionResource {
 
 		// file type check
 		if (!fileName.endsWith(".xlsx")) {
-			return Response.status(400).entity(ApiResponse.response(false, 400, "Only Excel file with .xlsx files are allowed", null))
+			Debug.logWarning("Invalid file upload by user.", MODULE);
+			return Response.status(400).entity(ServiceUtil.returnError("Only files with .xlsx are allowed"))
 							.build();
 		}
 
-		// file size check
-		long sizeInMb = fileDetail.getSize() / 1024;
-
-		// maximum limit.
-		if (sizeInMb > 5) {
-			return Response.status(400)
-							.entity(ApiResponse.response(false, 400,
-											"File size exceeds 5 mb, only file less than that are allowed.", null))
-							.build();
-		}
 
 		// process the excel file
 
@@ -171,7 +308,7 @@ public class QuestionResource {
 
 					if (col.required && (cell == null || cell.getCellType() == CellType.BLANK)) {
 						return Response.status(400)
-										.entity(ApiResponse.response(false, 400,
+										.entity(ServiceUtil.returnError(
 														"Row " + i + ", Column " + col.index + " " + col.label + " is required", null))
 										.build();
 					}
@@ -183,67 +320,48 @@ public class QuestionResource {
 
 
 					switch (cell.getCellType()) {
-					case NUMERIC:
-						double numVal = cell.getNumericCellValue();
 
-						if (numVal == Math.floor(numVal)) {
-							question.put(col.field, (int) numVal);
-						} else {
-							question.put(col.field, numVal);
-						}
-						break;
-
-					case STRING:
-						String strVal = cell.getStringCellValue();
-						question.put(col.field, strVal != null ? strVal.trim() : null);
-						break;
-
-					case BOOLEAN:
-						question.put(col.field, cell.getBooleanCellValue());
-						break;
-
-					case FORMULA:
-						// Evaluate formula and get result
-						FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
-						CellValue evaluated = evaluator.evaluate(cell);
-						switch (evaluated.getCellType()) {
 						case NUMERIC:
-							question.put(col.field, (int) evaluated.getNumberValue());
+							double numVal = cell.getNumericCellValue();
+							question.put(col.field, numVal);
 							break;
+
 						case STRING:
-							question.put(col.field, evaluated.getStringValue());
+							String strVal = cell.getStringCellValue();
+							question.put(col.field, strVal != null ? strVal.trim() : null);
 							break;
+
 						case BOOLEAN:
-							question.put(col.field, evaluated.getBooleanValue());
+							question.put(col.field, cell.getBooleanCellValue());
+							break;
+
+						case BLANK:
+							question.put(col.field, null);
 							break;
 						default:
 							question.put(col.field, null);
-						}
-						break;
-
-					case BLANK:
-					default:
-						question.put(col.field, null);
-						break;
+							break;
 					}
 				}
 				questions.add(question);
 			}
 
-			Map<String, Object> serviceResult = getDispatcher().runSync("createBulkQuestions",
-							UtilMisc.toMap("listOfQuestions", questions));
 
-			return Response.status(201).entity(ApiResponse.response(true, 201, "Questions uploaded successfully!", serviceResult)).build();
+			for (Map<String, ? extends Object> question : questions) {
+				getDispatcher().runSync("createQuestion", question);
+			}
+
+			return Response.status(201).entity(ServiceUtil.returnSuccess("Question uploaded successfully")).build();
 
 		} catch (EncryptedDocumentException e) {
 			Debug.logError(e, MODULE);
-			return Response.status(500).entity(ApiResponse.response(false, 500, e.getMessage(), null)).build();
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
 		} catch (IOException e) {
 			Debug.logError(e, MODULE);
-			return Response.status(500).entity(ApiResponse.response(false, 500, e.getMessage(), null)).build();
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
 		} catch (GenericServiceException e) {
 			Debug.logError(e, MODULE);
-			return Response.status(500).entity(ApiResponse.response(false, 500, e.getMessage(), null)).build();
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 
 	}
