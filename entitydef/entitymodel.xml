@@ -48,13 +48,18 @@
 		<field name="numAnswers" type="numeric" />
 		<field name="questionType" type="name" />
 		<field name="difficultyLevel" type="integer" />
-		<field name="answerValue" type="numeric" />
+		<field name="answerValue" type="name" />
 		<field name="topicId" type="id" />
 
 		<prim-key field="questionId" />
 		<relation rel-entity-name="TopicMaster" fk-name="topic_id"
 			type="one">
 			<key-map field-name="topicId" rel-field-name="topicId" />
+		</relation>
+		
+		<relation rel-entity-name="Enumeration" fk-name="fk_question_type"
+			type="one">
+			<key-map field-name="questionType" rel-field-name="enumId" />
 		</relation>
 	</entity>
 </entitymodel>
