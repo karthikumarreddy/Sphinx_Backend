@@ -129,11 +129,9 @@ public class ExamTopicServices {
 					return ApiResponse.response(false, 400, "Topic " + topicId + " needs " + questionCount
 							+ " questions but only " + questions.size() + " available", null);
 				}
-
 				for (GenericValue q : questions) {
 
 					Long newQid = Long.parseLong(delegator.getNextSeqId("QuestionBankMasterB"));
-
 					GenericValue draft = delegator.makeValue("QuestionBankMasterB");
 					draft.set("examId", examId);
 					draft.set("qId", newQid);

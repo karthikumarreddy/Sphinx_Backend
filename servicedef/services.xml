@@ -76,7 +76,7 @@
     </service>
 
     <service name="getAllExamTopics" engine="java" location="com.sphinx.services.ExamTopicServices" invoke="getAllExamTopics">
-        <attribute name="examTopicList" type="List" mode="OUT" optional="true" />
+        <attribute name="examTopicList" type="List" mode="OUT" optional="false" />
     </service>
 
     <service name="getExamTopicById" engine="java" location="com.sphinx.services.ExamTopicServices" invoke="getExamTopicById">
@@ -97,9 +97,22 @@
     <!-- Exam services -->
 
     <service name="createExam" engine="entity-auto" invoke="create" default-entity-name="ExamMaster">
-        <auto-attributes include="pk" mode="INOUT" optional="true"/>
+        <auto-attributes include="pk" mode="IN" optional="true"/>
         <auto-attributes include="nonpk" mode="IN" optional="true"/>
     </service>
+    
+    <service name="createExamWrapper" engine="java" location="com.sphinx.services.ExamServices" invoke="createExamWrapper">
+    <attribute name="examName" mode="IN" type="String" optional="false"/>
+    <attribute name="description" mode="IN" type="String" optional="true"/>
+    <attribute name="noOfQuestions" mode="IN" type="String" optional="false"/>
+    <attribute name="duration" mode="IN" type="String" optional="false"/>
+    <attribute name="passPercentage" mode="IN" type="String" optional="false"/>
+    <attribute name="questionsRandomized" mode="IN" type="String" optional="true"/>
+    <attribute name="answersMust" mode="IN" type="String" optional="true"/>
+    <attribute name="allowNegativeMarks" mode="IN" type="String" optional="true"/>
+    <attribute name="negativeMarkValue" mode="IN" type="String" optional="true"/>
+    <attribute name="examId" mode="OUT" type="String" optional="true"/>
+</service>
 
     <service name="updateExam" engine="entity-auto" invoke="update" default-entity-name="ExamMaster">
         <auto-attributes include="pk" mode="IN" optional="false"/>
@@ -111,6 +124,7 @@
     </service>
 
     <service name="getExam" engine="java" location="com.sphinx.services.ExamServices" invoke="getExam">
+    <attribute name="examList" type="List" mode="OUT" optional="false" />
     
     </service>
     <!-- Exam service ended  -->

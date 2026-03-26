@@ -132,7 +132,7 @@
 
 	<entity entity-name="ExamMaster" package-name="">
 		<field name="examId" type="id"></field>
-		<field name="examName" type="id"></field>
+		<field name="examName" type="name"></field>
 		<field name="description" type="description"></field>
 		<field name="noOfQuestions" type="numeric" not-null="true"></field>
 		<field name="duration" type="numeric" not-null="true"></field>

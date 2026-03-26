@@ -6,37 +6,43 @@ import java.util.Map;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.service.DispatchContext;
+import org.apache.ofbiz.service.ServiceUtil;
 
 import com.sphinx.util.ApiResponse;
 
 public class TopicServices {
 
-public static Map<String, ? extends Object> getAllTopic(DispatchContext dctx, Map<String, ? extends Object> context) {
+	public static Map<String, ? extends Object> getAllTopic(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
 		try {
+			Map<String, Object> result = ServiceUtil.returnSuccess();
 			Delegator delegator = dctx.getDelegator();
 			List<GenericValue> topics = delegator.findAll("TopicMaster", false);
 			if (topics.isEmpty()) {
-				return ApiResponse.response(false, 400, "Topic not found", null);
+				return ServiceUtil.returnError("Cannot find the data ");
 			}
-			return ApiResponse.response(true, 200, null, topics);
+			result.put("topicList", topics);
+			return result;
 		} catch (Exception e) {
-			return ApiResponse.response(false, 500, "Soething went wrong try later", null);
+			return ServiceUtil.returnError("Something went wrong try later ");
 		}
 	}
 
 	public static Map<String, Object> getTopicById(DispatchContext dctx, Map<String, Object> context) {
 		Delegator delegator = dctx.getDelegator();
 		try {
+			Map<String, Object> result = ServiceUtil.returnSuccess();
 			GenericValue topic = delegator.findOne("TopicMaster", false, Map.of("topicId", context.get("topicId")));
 			if (topic == null) {
-				return ApiResponse.response(false, 400, "Topic not found", null);
+				return ServiceUtil.returnError("topic is empty");
 			}
-			return ApiResponse.response(true, 200, null, topic);
+			result.put("topic", topic);
+			return result;
 		} catch (Exception e) {
-			return ApiResponse.response(false, 500, "Soething went wrong try later", null);
+			return ServiceUtil.returnError("Something went wrong try later ");
 		}
 	}
-	
+
 	//
 //	public static Map<String, ? extends Object> createTopic(DispatchContext dctx,
 //			Map<String, ? extends Object> context) {
