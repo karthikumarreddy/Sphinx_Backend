@@ -101,7 +101,7 @@ public class ExamTopicServices {
 
 			delegator.removeByCondition("QuestionBankMasterB", EntityCondition.makeCondition("examId", examId));
 
-			 
+			int totalSaved = 0;
 
 			for (GenericValue topic : topics) {
 				String topicId = topic.getString("topicId");
