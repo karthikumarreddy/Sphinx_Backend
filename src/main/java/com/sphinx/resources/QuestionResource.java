@@ -50,7 +50,7 @@ public class QuestionResource {
 	private static final String MODULE = QuestionResource.class.getName();
 
 	@Context
-	private HttpServletRequest request;
+	HttpServletRequest request;
 
 	@Context
 	private ServletContext servletContext;
@@ -141,6 +141,7 @@ public class QuestionResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getAllQuestionByTopic() {
 		try {
+
 			String topicIdStr = request.getQueryString();
 			String topicId = topicIdStr.split("=")[1];
 
@@ -149,7 +150,21 @@ public class QuestionResource {
 			}
 
 			Map<String, Object> result = getDispatcher().runSync("getAllQuestionByTopic", UtilMisc.toMap("topicId", topicId));
-			return Response.status(201).entity(result).build();
+			return Response.status(200).entity(result).build();
+
+		} catch (GenericServiceException e) {
+			Debug.logError(e, MODULE);
+			return Response.serverError().entity(ServiceUtil.returnError(e.getMessage())).build();
+		}
+	}
+
+	@GET
+	@Path("/questionTypes")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getAllQuestionTypes() {
+		try {
+			Map<String, Object> result = getDispatcher().runSync("getAllQuestionTypes", UtilMisc.toMap());
+			return Response.status(200).entity(result).build();
 
 		} catch (GenericServiceException e) {
 			Debug.logError(e, MODULE);
@@ -161,6 +176,7 @@ public class QuestionResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response updateQuestion(Map<String, Object> input) {
+
 
 		String errorMsg = validateQuestionData(input);
 
@@ -284,7 +300,6 @@ public class QuestionResource {
 			return Response.status(400).entity(ServiceUtil.returnError("Only files with .xlsx are allowed"))
 							.build();
 		}
-
 
 		// process the excel file
 

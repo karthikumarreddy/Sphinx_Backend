@@ -74,33 +74,18 @@ public class QuestionService {
 		}
 	}
 
-	public Map<String, ? extends Object> createBulkQuestions(DispatchContext dctx, Map<String, ? extends Object> context) {
+	public Map<String, ? extends Object> getAllQuestionTypes(DispatchContext dctx, Map<String, ? extends Object> context) {
 
+		Delegator delegator = dctx.getDelegator();
 		try {
-
-			Delegator delegator = dctx.getDelegator();
-
-			List<Map<String, ? extends Object>> questions = (List<Map<String, ? extends Object>>) context.get("listOfQuestions");
-
-			for (Map<String, ? extends Object> question : questions) {
-
-				GenericValue questionRecord = delegator.makeValue("QuestionMaster");
-
-				questionRecord.setNextSeqId();
-
-				questionRecord.setNonPKFields(question);
-
-				questionRecord.create();
-
-			}
-
-			return ApiResponse.response(true, 201, "Questions addedd successfully!", null);
-
+			Map<String, Object> result = ServiceUtil.returnSuccess();
+ 			List<GenericValue> questionTypes = EntityQuery.use(delegator).from("Enumeration").where("enumTypeId", "SPHINX_Q_TYPE").queryList();
+			result.put("data", questionTypes);
+			return result;
 		} catch (GenericEntityException e) {
 			Debug.logError(e, MODULE);
-			return ApiResponse.response(true, 500, "Unexpected error occured", null);
+			return ServiceUtil.returnError(e.getMessage());
 		}
-
 	}
 
 }

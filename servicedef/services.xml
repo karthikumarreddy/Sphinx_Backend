@@ -143,11 +143,17 @@
 	
 
    <service name="getExamTopicById" engine="java"
-    location="com.sphinx.services.ExamTopicsServices" invoke="getExamTopicById">
-    <attribute name="examId" type="String" mode="IN" optional="false" />
-    <attribute name="topicId" type="String" mode="IN" optional="false" />
-    <attribute name="examTopic" type="Map" mode="OUT" optional="true" />
-</service>
+	    location="com.sphinx.services.ExamTopicsServices" invoke="getExamTopicById">
+	    <attribute name="examId" type="String" mode="IN" optional="false" />
+	    <attribute name="topicId" type="String" mode="IN" optional="false" />
+	    <attribute name="examTopic" type="Map" mode="OUT" optional="true" />
+	</service>
+	
+	<service name="getAllQuestionTypes" engine="java"
+	    location="com.sphinx.services.ExamTopicsServices" invoke="getAllQuestionTypes">
+	    <attribute name="data" type="List" mode="OUT" optional="true" />
+	</service>
+	
 
 
 </services>
