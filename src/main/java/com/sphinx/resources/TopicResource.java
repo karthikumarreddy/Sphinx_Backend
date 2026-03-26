@@ -16,6 +16,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.service.LocalDispatcher;
@@ -23,7 +24,7 @@ import org.apache.ofbiz.service.ServiceUtil;
 
 @Path("/topics")
 public class TopicResource {
-
+	private static final String MODULE = TopicResource.class.getName();
 	@Context
 	private HttpServletRequest request;
 
@@ -70,7 +71,8 @@ public class TopicResource {
 			Map<String, Object> result = getDispatcher().runSync("getTopicById", UtilMisc.toMap("topicId", topicId));
 			return Response.ok(result).build();
 		} catch (Exception e) {
-			return Response.serverError().build();
+			Debug.logError(e, MODULE);
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 
@@ -85,7 +87,8 @@ public class TopicResource {
 			Map<String, Object> result = getDispatcher().runSync("updateTopic", input);
 			return Response.status(200).entity(result).build();
 		} catch (Exception e) {
-			return Response.status(500).entity("Something went wrong try again later").build();
+			Debug.logError(e, MODULE);
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 
@@ -100,8 +103,8 @@ public class TopicResource {
 			Map<String, Object> result = getDispatcher().runSync("deleteTopic", input);
 			return Response.status(200).entity(ServiceUtil.returnSuccess("Topic deleted sucessfully")).build();
 		} catch (Exception e) {
-			return Response.status(500).entity(ServiceUtil.returnError("Something went wrong try later")).build();
-			// TODO: handle exception
+			Debug.logError(e, MODULE);
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();			// TODO: handle exception
 		}
 	}
 
@@ -116,8 +119,8 @@ public class TopicResource {
 			Map<String, Object> result = getDispatcher().runSync("createTopic", input);
 			return Response.status(200).entity(ServiceUtil.returnSuccess("Topic created suceddfully .")).build();
 		} catch (Exception e) {
-			return Response.status(500).entity(ServiceUtil.returnSuccess("Something went wrong try later .")).build();
-		}
+			Debug.logError(e, MODULE);
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();		}
 	}
 
 }

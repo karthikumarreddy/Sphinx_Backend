@@ -14,6 +14,8 @@ import org.apache.ofbiz.service.DispatchContext;
 import com.sphinx.util.ApiResponse;
 
 public class ExamTopicServices {
+	private static final String MODULE = ExamTopicServices.class.getName();
+
 	public static Map<String, ? extends Object> getAllExamTopics(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 		try {
@@ -99,7 +101,7 @@ public class ExamTopicServices {
 
 			delegator.removeByCondition("QuestionBankMasterB", EntityCondition.makeCondition("examId", examId));
 
-			int totalSaved = 0;
+			 
 
 			for (GenericValue topic : topics) {
 				String topicId = topic.getString("topicId");

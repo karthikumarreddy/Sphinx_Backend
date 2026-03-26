@@ -65,10 +65,10 @@ public class ExamResource {
 	public Response getExam() {
 		try {
 			Map<String, Object> result = getDispatcher().runSync("getExam", UtilMisc.toMap());
-			return Response.status(200).entity(result).build();
+			return Response.status(201).entity(result).build();
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
-			return Response.serverError().build();
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 
@@ -86,7 +86,7 @@ public class ExamResource {
 			return Response.status(201).entity(result).build();
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
-			return Response.serverError().build();
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 
@@ -102,10 +102,10 @@ public class ExamResource {
 
 		try {
 			Map<String, Object> result = getDispatcher().runSync("updateExam", input);
-			return Response.ok(result).build();
+			return Response.status(201).entity(result).build();
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
-			return Response.serverError().build();
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 
@@ -121,10 +121,10 @@ public class ExamResource {
 
 		try {
 			Map<String, Object> result = getDispatcher().runSync("deleteExam", input);
-			return Response.ok(result).build();
+			return Response.status(201).entity(result).build();
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
-			return Response.serverError().build();
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 
@@ -145,7 +145,7 @@ public class ExamResource {
 			return Response.status(201).entity(result).build();
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
-			return Response.serverError().build();
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 
@@ -163,10 +163,10 @@ public class ExamResource {
 
 		try {
 			Map<String, Object> result = getDispatcher().runSync("generateExamQuestions", input);
-			return Response.ok(result).build();
+			return Response.status(201).entity(result).build();
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
-			return Response.serverError().build();
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 
@@ -184,10 +184,10 @@ public class ExamResource {
 
 		try {
 			Map<String, Object> result = getDispatcher().runSync("launchExam", input);
-			return Response.ok(result).build();
+			return Response.status(201).entity(result).build();
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
-			return Response.serverError().build();
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 }

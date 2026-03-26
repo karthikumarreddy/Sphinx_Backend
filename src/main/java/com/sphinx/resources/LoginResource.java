@@ -13,12 +13,14 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.DelegatorFactory;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceContainer;
+import org.apache.ofbiz.service.ServiceUtil;
 
 @Path("/auth")
 @Produces(MediaType.APPLICATION_JSON)
@@ -90,10 +92,8 @@ public class LoginResource {
 			return Response.status(200).entity(result).build();
 
 		} catch (Exception e) {
-			e.printStackTrace();
-			return Response.status(500)
-					.entity(Map.of("error", "An unexpected error occurred.\n Please try again later.")).build();
-		}
+			
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();		}
 	}
 
 	@POST
@@ -166,9 +166,7 @@ public class LoginResource {
 			return Response.status(201).entity(result).build();
 
 		} catch (Exception e) {
-			return Response.status(500).entity(
-					Map.of("error", "An unexpected error occurred during registration.\n Please try again later."))
-					.build();
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 }

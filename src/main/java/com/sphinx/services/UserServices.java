@@ -14,6 +14,7 @@ import org.apache.ofbiz.service.ServiceUtil;
 import com.sphinx.util.ApiResponse;
 
 public class UserServices {
+	private static final String MODULE = UserServices.class.getName();
 
 	public static Map<String, ? extends Object> loginUser(DispatchContext dctx, Map<String, ? extends Object> context) {
 		Delegator delegator = dctx.getDelegator();

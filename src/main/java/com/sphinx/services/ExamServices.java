@@ -12,6 +12,8 @@ import org.apache.ofbiz.service.ServiceUtil;
 import com.sphinx.util.ApiResponse;
 
 public class ExamServices {
+	private static final String MODULE = ExamServices.class.getName();
+
 
 	public static Map<String, ? extends Object> getExam(DispatchContext dctx, Map<String, ? extends Object> context) {
 		try {

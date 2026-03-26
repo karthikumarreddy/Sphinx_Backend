@@ -3,6 +3,7 @@ package com.sphinx.services;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.service.DispatchContext;
@@ -11,6 +12,7 @@ import org.apache.ofbiz.service.ServiceUtil;
 import com.sphinx.util.ApiResponse;
 
 public class TopicServices {
+	private static final String MODULE = TopicServices.class.getName();
 
 	public static Map<String, ? extends Object> getAllTopic(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
@@ -24,8 +26,8 @@ public class TopicServices {
 			result.put("topicList", topics);
 			return result;
 		} catch (Exception e) {
-			return ServiceUtil.returnError("Something went wrong try later ");
-		}
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError(e.getMessage());		}
 	}
 
 	public static Map<String, Object> getTopicById(DispatchContext dctx, Map<String, Object> context) {
@@ -39,8 +41,8 @@ public class TopicServices {
 			result.put("topic", topic);
 			return result;
 		} catch (Exception e) {
-			return ServiceUtil.returnError("Something went wrong try later ");
-		}
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError(e.getMessage());		}
 	}
 
 	//
