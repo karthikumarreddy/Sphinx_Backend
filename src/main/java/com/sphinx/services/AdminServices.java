@@ -2,14 +2,17 @@ package com.sphinx.services;
 
 import java.util.Map;
 
+import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.service.DispatchContext;
+import org.apache.ofbiz.service.ServiceUtil;
 
 import com.sphinx.util.ApiResponse;
 
 public class AdminServices {
+	private static final String MODULE = AdminServices.class.getName();
 
 	public static Map<String, ? extends Object> approveUser(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
@@ -35,7 +38,8 @@ public class AdminServices {
 			return ApiResponse.response(true, 200, "User approved successfully", null);
 
 		} catch (Exception e) {
-			return ApiResponse.response(false, 400, "something went wrong try later", null);
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError(e.getMessage());
 		}
 	}
 }

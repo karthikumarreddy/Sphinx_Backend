@@ -10,21 +10,18 @@
     OF ANY KIND, either express or implied. See the License for the specific 
     language governing permissions and limitations under the License. -->
 
-<services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:noNamespaceSchemaLocation="https://ofbiz.apache.org/dtds/services.xsd">
+<services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://ofbiz.apache.org/dtds/services.xsd">
     <description>Sphinx Services</description>
     <vendor></vendor>
     <version>1.0</version>
 
     <!-- User Services -->
-    <service name="loginUser" engine="java"
-        location="com.sphinx.services.UserServices" invoke="loginUser">
+    <service name="loginUser" engine="java" location="com.sphinx.services.UserServices" invoke="loginUser">
         <attribute name="userName" mode="IN" type="String" />
         <attribute name="password" mode="IN" type="String" />
     </service>
 
-    <service name="signupUser" engine="java"
-        location="com.sphinx.services.UserServices" invoke="signupUser">
+    <service name="signupUser" engine="java" location="com.sphinx.services.UserServices" invoke="signupUser">
         <attribute name="userName" mode="IN" type="String" />
         <attribute name="firstName" mode="IN" type="String" />
         <attribute name="lastName" mode="IN" type="String" />
@@ -34,113 +31,70 @@
         <attribute name="role" mode="IN" type="String" />
     </service>
 
-    <service name="approveUser" engine="java"
-        location="com.sphinx.services.AdminServices" invoke="approveUser">
+    <service name="approveUser" engine="java" location="com.sphinx.services.AdminServices" invoke="approveUser">
         <attribute name="userName" mode="IN" type="String" />
     </service>
 
     <!-- Topic Services -->
-    <service name="createTopic" engine="entity-auto"
-        invoke="create" default-entity-name="TopicMaster">
+    <service name="createTopic" engine="entity-auto" invoke="create" default-entity-name="TopicMaster">
         <auto-attributes include="pk" mode="INOUT" optional="true" />
         <auto-attributes include="nonpk" mode="IN" optional="false" />
     </service>
 
-    <service name="updateTopic" engine="entity-auto"
-        invoke="update" default-entity-name="TopicMaster">
+    <service name="updateTopic" engine="entity-auto" invoke="update" default-entity-name="TopicMaster">
         <attribute name="topicId" type="String" mode="IN" />
         <attribute name="topicName" type="String" mode="IN" />
     </service>
 
-    <service name="deleteTopic" engine="entity-auto"
-        invoke="delete" default-entity-name="TopicMaster">
+    <service name="deleteTopic" engine="entity-auto" invoke="delete" default-entity-name="TopicMaster">
         <attribute name="topicId" type="String" mode="IN" />
     </service>
 
-    <service name="getAllTopics" engine="java"
-    location="com.sphinx.services.TopicServices" invoke="getAllTopic">
-    <attribute name="topicList" type="List" mode="OUT" optional="true" />
-</service>
+    <service name="getAllTopics" engine="java" location="com.sphinx.services.TopicServices" invoke="getAllTopic">
+        <attribute name="topicList" type="List" mode="OUT" optional="true" />
+    </service>
 
-    <service name="getTopicById" engine="java"
-    location="com.sphinx.services.TopicServices" invoke="getTopicById">
-    <attribute name="topicId" type="String" mode="IN" optional="false" />
-    <attribute name="topic" type="Map" mode="OUT" optional="true" />
-</service>
+    <service name="getTopicById" engine="java" location="com.sphinx.services.TopicServices" invoke="getTopicById">
+        <attribute name="topicId" type="String" mode="IN" optional="false" />
+        <attribute name="topic" type="Map" mode="OUT" optional="true" />
+    </service>
+
     <!-- Exam Topic Services -->
-    <service name="createExamTopics" engine="entity-auto"
-        invoke="create" default-entity-name="ExamTopicDetails">
-        <auto-attributes include="pk" mode="INOUT" optional="true" />
-        <auto-attributes include="nonpk" mode="IN" optional="false" />
+    <service name="addExamTopics" default-entity-name="ExamTopicDetails" engine="entity-auto" invoke="create" auth="true">
+        <auto-attributes include="pk" mode="IN" optional="false"/>
+        <auto-attributes include="nonpk" mode="IN" optional="true"/>
     </service>
 
-    <service name="updateExamTopics" engine="entity-auto"
-        invoke="update" entity-name="ExamTopicDetails">
-        <attribute name="examId" type="String" mode="IN" />
-        <attribute name="topicId" type="String" mode="IN" />
-        <attribute name="topicName" type="String" mode="IN" optional="true" />
-        <attribute name="percentage" type="BigDecimal" mode="IN" optional="true" />
-        <attribute name="startingQid" type="Long" mode="IN" optional="true" />
-        <attribute name="endingQid" type="Long" mode="IN" optional="true" />
-        <attribute name="questionsPerExam" type="Long" mode="IN" optional="true" />
-        <attribute name="topicPassPercentage" type="Double" mode="IN" optional="true" />
+    <service name="updateExamTopics" default-entity-name="ExamTopicDetails" engine="entity-auto" invoke="update" auth="true">
+        <auto-attributes include="pk" mode="IN" optional="false"/>
+        <auto-attributes include="nonpk" mode="IN" optional="true"/>
     </service>
 
-    <service name="deleteExamTopics" engine="entity-auto"
-        invoke="delete" entity-name="ExamTopicDetails">
+    <service name="deleteExamTopics" engine="entity-auto" invoke="delete" default-entity-name="ExamTopicDetails" auth="true">
         <attribute name="examId" type="String" mode="IN" />
         <attribute name="topicId" type="String" mode="IN" />
     </service>
 
-   <service name="getAllExamTopics" engine="java"
-    location="com.sphinx.services.ExamTopicsServices" invoke="getAllExamTopics">
-    <attribute name="examTopicList" type="List" mode="OUT" optional="true" />
-</service>
-	<service name="questionFields" location="" invoke="" engine="interface">
-		<attribute name="questionDetail" mode="IN" type="String" optional="false" />
-		<attribute name="optionA" mode="IN" type="String" optional="false" />
-		<attribute name="optionB" mode="IN" type="String" optional="false" />
-		<attribute name="optionC" mode="IN" type="String" optional="true" />
-		<attribute name="optionD" mode="IN" type="String" optional="true" />
-		<attribute name="answer" mode="IN" type="String" optional="false" />
-		<attribute name="numAnswers" mode="IN" type="String" optional="false" />
-		<attribute name="questionType" mode="IN" type="String" optional="false" />
-		<attribute name="difficultyLevel" mode="IN" type="String" optional="true" />
-		<attribute name="answerValue" mode="IN" type="String" optional="true" />
-		<attribute name="topicId" mode="IN" type="String" optional="false"/>
-	</service>
+    <service name="getAllExamTopics" engine="java" location="com.sphinx.services.ExamTopicServices" invoke="getAllExamTopics">
+        <attribute name="examTopicList" type="List" mode="OUT" optional="false" />
+    </service>
 
+    <service name="getExamTopicById" engine="java" location="com.sphinx.services.ExamTopicServices" invoke="getExamTopicById">
+        <attribute name="examId" type="String" mode="IN" optional="false" />
+        <attribute name="topicId" type="String" mode="IN" optional="false" />
+        <attribute name="examTopic" type="Map" mode="OUT" optional="true" />
+    </service>
 
-	<service name="createQuestion" default-entity-name="QuestionMaster" engine="entity-auto" invoke="create">
+    <service name="generateExamQuestions" engine="java" location="com.sphinx.services.ExamTopicServices" invoke="generateExamQuestions">
+        <attribute name="examId" type="String" mode="IN"/>
+    </service>
 
-		
-		<implements service="questionFields" optional="false" />
-		
-		<attribute name="questionId" mode="INOUT" type="String" optional="true" />
-		
-	</service>
-	
-	<service name="updateQuestion" default-entity-name="QuestionMaster" engine="entity-auto" invoke="update">
-		<implements service="questionFields" optional="false" />
-		
-		<attribute name="questionId" mode="IN" type="String" optional="true" />
-	</service>
-	
-	<service name="deleteQuestion" default-entity-name="QuestionMaster" engine="entity-auto" invoke="delete">
+    <service name="launchExam" engine="java" location="com.sphinx.services.ExamTopicServices" invoke="launchExam">
+        <attribute name="examId" type="String" mode="IN"/>
+    </service>
+    <!-- Exam topic services end -->
 
-		<attribute name="questionId" mode="IN" type="String" optional="false" />
-		
-	</service>
-	
-
-	
-	<service name="getAllQuestionByTopic" engine="java" location="com.sphinx.services.QuestionService"
-		invoke="getAllQuestionByTopic">
-		<attribute name="topicId" type="String" mode="IN" />
-		
-		<attribute name="questionId" type="List" mode="IN" />
-	</service>
-	
+    <!-- Exam services -->
 
    <service name="getExamTopicById" engine="java"
 	    location="com.sphinx.services.ExamTopicsServices" invoke="getExamTopicById">
@@ -150,10 +104,73 @@
 	</service>
 	
 	<service name="getAllQuestionTypes" engine="java"
-	    location="com.sphinx.services.ExamTopicsServices" invoke="getAllQuestionTypes">
+	    location="com.sphinx.services.QuestionService" invoke="getAllQuestionTypes">
 	    <attribute name="data" type="List" mode="OUT" optional="true" />
 	</service>
 	
+    <service name="createExam" engine="entity-auto" invoke="create" default-entity-name="ExamMaster">
+        <auto-attributes include="pk" mode="IN" optional="true"/>
+        <auto-attributes include="nonpk" mode="IN" optional="true"/>
+    </service>
+    
+    <service name="createExamWrapper" engine="java" location="com.sphinx.services.ExamServices" invoke="createExamWrapper">
+    <attribute name="examName" mode="IN" type="String" optional="false"/>
+    <attribute name="description" mode="IN" type="String" optional="true"/>
+    <attribute name="noOfQuestions" mode="IN" type="String" optional="false"/>
+    <attribute name="duration" mode="IN" type="String" optional="false"/>
+    <attribute name="passPercentage" mode="IN" type="String" optional="false"/>
+    <attribute name="questionsRandomized" mode="IN" type="String" optional="true"/>
+    <attribute name="answersMust" mode="IN" type="String" optional="true"/>
+    <attribute name="allowNegativeMarks" mode="IN" type="String" optional="true"/>
+    <attribute name="negativeMarkValue" mode="IN" type="String" optional="true"/>
+    <attribute name="examId" mode="OUT" type="String" optional="true"/>
+</service>
 
+    <service name="updateExam" engine="entity-auto" invoke="update" default-entity-name="ExamMaster">
+        <auto-attributes include="pk" mode="IN" optional="false"/>
+        <auto-attributes include="nonpk" mode="IN" optional="true"/>
+    </service>
+
+    <service name="deleteExam" engine="entity-auto" invoke="delete" default-entity-name="ExamMaster">
+        <attribute name="examId" type="String" mode="IN"/>
+    </service>
+
+    <service name="getExam" engine="java" location="com.sphinx.services.ExamServices" invoke="getExam">
+    <attribute name="examList" type="List" mode="OUT" optional="false" />
+    
+    </service>
+    <!-- Exam service ended  -->
+
+    <service name="questionFields" location="" invoke="" engine="interface">
+        <attribute name="questionDetail" mode="IN" type="String" optional="false" />
+        <attribute name="optionA" mode="IN" type="String" optional="false" />
+        <attribute name="optionB" mode="IN" type="String" optional="false" />
+        <attribute name="optionC" mode="IN" type="String" optional="true" />
+        <attribute name="optionD" mode="IN" type="String" optional="true" />
+        <attribute name="answer" mode="IN" type="String" optional="false" />
+        <attribute name="numAnswers" mode="IN" type="String" optional="false" />
+        <attribute name="questionType" mode="IN" type="String" optional="false" />
+        <attribute name="difficultyLevel" mode="IN" type="String" optional="true" />
+        <attribute name="answerValue" mode="IN" type="String" optional="true" />
+        <attribute name="topicId" mode="IN" type="String" optional="false"/>
+    </service>
+
+    <service name="createQuestion" default-entity-name="QuestionMaster" engine="entity-auto" invoke="create">
+        <implements service="questionFields" optional="false" />
+        <attribute name="questionId" mode="INOUT" type="String" optional="true" />
+    </service>
+    
+    <service name="updateQuestion" default-entity-name="QuestionMaster" engine="entity-auto" invoke="update">
+        <implements service="questionFields" optional="false" />
+        <attribute name="questionId" mode="IN" type="String" optional="true" />
+    </service>
+    
+    <service name="deleteQuestion" default-entity-name="QuestionMaster" engine="entity-auto" invoke="delete">
+        <attribute name="questionId" mode="IN" type="String" optional="false" />
+    </service>
+
+    <service name="getAllQuestionByTopic" engine="java" location="com.sphinx.services.QuestionService" invoke="getAllQuestionByTopic">
+        <attribute name="topicId" type="String" mode="IN" />
+    </service>
 
 </services>

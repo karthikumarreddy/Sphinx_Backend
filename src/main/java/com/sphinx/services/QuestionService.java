@@ -8,6 +8,8 @@ import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
+import org.apache.ofbiz.entity.condition.EntityCondition;
+import org.apache.ofbiz.entity.condition.EntityOperator;
 import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
@@ -79,7 +81,9 @@ public class QuestionService {
 		Delegator delegator = dctx.getDelegator();
 		try {
 			Map<String, Object> result = ServiceUtil.returnSuccess();
- 			List<GenericValue> questionTypes = EntityQuery.use(delegator).from("Enumeration").where("enumTypeId", "SPHINX_Q_TYPE").queryList();
+			List<GenericValue> questionTypes = EntityQuery.use(delegator).from("Enumeration")
+							.where(EntityCondition.makeCondition("enumTypeId", EntityOperator.LIKE, "%SPHINX_Q_TYPE%")).queryList();
+
 			result.put("data", questionTypes);
 			return result;
 		} catch (GenericEntityException e) {

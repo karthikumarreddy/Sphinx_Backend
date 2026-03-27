@@ -3,14 +3,49 @@ package com.sphinx.services;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.service.DispatchContext;
+import org.apache.ofbiz.service.ServiceUtil;
 
 import com.sphinx.util.ApiResponse;
 
 public class TopicServices {
-//
+	private static final String MODULE = TopicServices.class.getName();
+
+	public static Map<String, ? extends Object> getAllTopic(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
+		try {
+			Map<String, Object> result = ServiceUtil.returnSuccess();
+			Delegator delegator = dctx.getDelegator();
+			List<GenericValue> topics = delegator.findAll("TopicMaster", false);
+			if (topics.isEmpty()) {
+				return ServiceUtil.returnError("Cannot find the data ");
+			}
+			result.put("topicList", topics);
+			return result;
+		} catch (Exception e) {
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError(e.getMessage());		}
+	}
+
+	public static Map<String, Object> getTopicById(DispatchContext dctx, Map<String, Object> context) {
+		Delegator delegator = dctx.getDelegator();
+		try {
+			Map<String, Object> result = ServiceUtil.returnSuccess();
+			GenericValue topic = delegator.findOne("TopicMaster", false, Map.of("topicId", context.get("topicId")));
+			if (topic == null) {
+				return ServiceUtil.returnError("topic is empty");
+			}
+			result.put("topic", topic);
+			return result;
+		} catch (Exception e) {
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError(e.getMessage());		}
+	}
+
+	//
 //	public static Map<String, ? extends Object> createTopic(DispatchContext dctx,
 //			Map<String, ? extends Object> context) {
 //		try {
@@ -60,30 +95,4 @@ public class TopicServices {
 //	}
 //
 
-
-public static Map<String, ? extends Object> getAllTopic(DispatchContext dctx, Map<String, ? extends Object> context) {
-		try {
-			Delegator delegator = dctx.getDelegator();
-			List<GenericValue> topics = delegator.findAll("TopicMaster", false);
-			if (topics.isEmpty()) {
-				return ApiResponse.response(false, 400, "Topic not found", null);
-			}
-			return ApiResponse.response(true, 200, null, topics);
-		} catch (Exception e) {
-			return ApiResponse.response(false, 500, "Soething went wrong try later", null);
-		}
-	}
-
-	public static Map<String, Object> getTopicById(DispatchContext dctx, Map<String, Object> context) {
-		Delegator delegator = dctx.getDelegator();
-		try {
-			GenericValue topic = delegator.findOne("TopicMaster", false, Map.of("topicId", context.get("topicId")));
-			if (topic == null) {
-				return ApiResponse.response(false, 400, "Topic not found", null);
-			}
-			return ApiResponse.response(true, 200, null, topic);
-		} catch (Exception e) {
-			return ApiResponse.response(false, 500, "Soething went wrong try later", null);
-		}
-	}
 }
