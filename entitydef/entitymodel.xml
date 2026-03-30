@@ -45,10 +45,10 @@
 		<field name="optionC" type="name" />
 		<field name="optionD" type="name" />
 		<field name="optionE" type="name"/>
-		<field name="answer" type="name" />
+		<field name="answer" type="long-answer" />
 		<field name="numAnswers" type="numeric" />
 		<field name="questionType" type="name" />
-		<field name="difficultyLevel" type="integer" />
+		<field name="difficultyLevel" type="name" />
 		<field name="answerValue" type="name" />
 		<field name="topicId" type="id" />
 

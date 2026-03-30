@@ -50,7 +50,7 @@ public class QuestionResource {
 	private static final String MODULE = QuestionResource.class.getName();
 
 	@Context
-	private HttpServletRequest request;
+	HttpServletRequest request;
 
 	@Context
 	private ServletContext servletContext;
@@ -78,7 +78,6 @@ public class QuestionResource {
 		String optionC = (String) input.get("optionC");
 		String optionD = (String) input.get("optionD");
 		String answer = (String) input.get("answer");
-		String numAnswers = (String) input.get("numAnswers");
 		String questionType = (String) input.get("questionType");
 		String difficultyLevel = (String) input.get("difficultyLevel");
 		String answerValue = (String) input.get("answerValue");
@@ -86,22 +85,6 @@ public class QuestionResource {
 
 		if (UtilValidate.isEmpty(questionDetail)) {
 			return "Question detail is required";
-		}
-
-		if (UtilValidate.isEmpty(optionA)) {
-			return "Option A is required";
-		}
-
-		if (UtilValidate.isEmpty(optionB)) {
-			return "Option B is required";
-		}
-
-		if (UtilValidate.isEmpty(answer)) {
-			return "Answer is required";
-		}
-
-		if (UtilValidate.isEmpty(numAnswers)) {
-			return "Number of Answers is required";
 		}
 
 		if (UtilValidate.isEmpty(questionType)) {
@@ -113,26 +96,63 @@ public class QuestionResource {
 		}
 
 		if (UtilValidate.isEmpty(topicId)) {
-			return "Topic ID is required";
+			return "Invalid Topic, Choose a Valid one.";
 		}
 
-		if (!UtilValidate.isInteger(numAnswers)) {
-			return "Number of Answers must be a number";
+
+		// here we give the question types is based on the enum type (hard coded).
+
+		// Fill Ups or True/False question type
+		if (questionType.equals("FILL_UP") || questionType.equals("TRUE_FALSE") || questionType.equals("DETAILED_ANSWER")) {
+			if (UtilValidate.isEmpty(answerValue)) {
+				return "Answer value is mandatory for Fill Ups type questions.";
+			}
 		}
 
-		int answersCount = Integer.parseInt(numAnswers);
+		// Multiple, Single choice questions
+		if (questionType.equals("MULTIPLE_CHOICE") || questionType.equals("SINGLE_CHOICE")) {
+			if (UtilValidate.isEmpty(optionA)) {
+				return "Option A is mandatory";
+			}
 
-		if (answersCount < 1 || answersCount > 4) {
-			return "Number of Answers must be between 1 and 4";
+			if (UtilValidate.isEmpty(optionB)) {
+				return "Option B is mandatory";
+			}
+
+			if (UtilValidate.isEmpty(optionC)) {
+				return "Option C is mandatory";
+			}
+
+			if (UtilValidate.isEmpty(optionD)) {
+				return "Option D is mandatory";
+			}
+
+			if (UtilValidate.isEmpty(answer)) {
+				return "Answer is mandatory";
+			}
+
+			if (UtilValidate.isEmpty(input.get("numAnswers"))) {
+				return "Number of Answer is mandatory";
+			}
+
+			int numOfAnswers;
+			try {
+				numOfAnswers = (Integer) input.get("numAnswers");
+			} catch (ClassCastException e) {
+				return "Invalid Number of Answers";
+			}
+
+
+			if (questionType.equals("MULTIPLE_CHOICE") && numOfAnswers <= 0) {
+				return "Invalid Number of answers.";
+			}
+
+			if (questionType.equals("MULTIPLE_CHOICE") && (answer == null || answer.split(",").length != numOfAnswers)) {
+				return "Number of answers marked is invalid.";
+			}
+
 		}
 
-		if (answersCount >= 3 && UtilValidate.isEmpty(optionC)) {
-			return "Option C required when Number of Answers greater than 3";
-		}
-
-		if (answersCount >= 3 && UtilValidate.isEmpty(optionD)) {
-			return "Option D required when Number of Answers greater than 3";
-		}
 
 		return null;
 	}
@@ -141,6 +161,7 @@ public class QuestionResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getAllQuestionByTopic() {
 		try {
+
 			String topicIdStr = request.getQueryString();
 			String topicId = topicIdStr.split("=")[1];
 
@@ -149,7 +170,21 @@ public class QuestionResource {
 			}
 
 			Map<String, Object> result = getDispatcher().runSync("getAllQuestionByTopic", UtilMisc.toMap("topicId", topicId));
-			return Response.status(201).entity(result).build();
+			return Response.status(200).entity(result).build();
+
+		} catch (GenericServiceException e) {
+			Debug.logError(e, MODULE);
+			return Response.serverError().entity(ServiceUtil.returnError(e.getMessage())).build();
+		}
+	}
+
+	@GET
+	@Path("/questionTypes")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getAllQuestionTypes() {
+		try {
+			Map<String, Object> result = getDispatcher().runSync("getAllQuestionTypes", UtilMisc.toMap());
+			return Response.status(200).entity(result).build();
 
 		} catch (GenericServiceException e) {
 			Debug.logError(e, MODULE);
@@ -161,6 +196,7 @@ public class QuestionResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response updateQuestion(Map<String, Object> input) {
+
 
 		String errorMsg = validateQuestionData(input);
 
@@ -219,10 +255,12 @@ public class QuestionResource {
 				return Response.status(400).entity(ServiceUtil.returnError(errorMsg)).build();
 			}
 
-
 			Map<String, Object> result = getDispatcher().runSync("createQuestion", input);
 			if (result.get("responseMessage") != null && result.get("responseMessage").equals("error")) {
 				return Response.status(400).entity(result).build();
+			}
+			else {
+				result.put("successMessage", "Question added successfully!");
 			}
 			return Response.status(201).entity(result).build();
 
@@ -285,13 +323,17 @@ public class QuestionResource {
 							.build();
 		}
 
-
 		// process the excel file
 
 		try {
 			Workbook workbook = WorkbookFactory.create(file);
 			Sheet sheet = workbook.getSheetAt(0);
 			List<Map<String, Object>> questions = new ArrayList<>();
+
+			int totalRows = sheet.getLastRowNum();
+			if (totalRows <= 1) {
+				return Response.status(400).entity(ServiceUtil.returnError("Please fill the details and upload the file")).build();
+			}
 
 			for (int i = 1; i <= sheet.getLastRowNum(); i++) { // <= to include last row
 				Row row = sheet.getRow(i);

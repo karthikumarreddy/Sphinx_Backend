@@ -96,11 +96,6 @@
 
     <!-- Exam services -->
 
- <!--    <service name="createExam" engine="entity-auto" invoke="create" default-entity-name="ExamMaster">
-        <auto-attributes include="pk" mode="IN" optional="true"/>
-        <auto-attributes include="nonpk" mode="IN" optional="true"/>
-    </service> -->
-    
     <service name="createExam" engine="java" location="com.sphinx.services.ExamServices" invoke="createExam">
     <attribute name="examName" mode="IN" type="String" optional="false"/>
     <attribute name="description" mode="IN" type="String" optional="true"/>

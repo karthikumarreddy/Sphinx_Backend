@@ -8,6 +8,8 @@ import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
+import org.apache.ofbiz.entity.condition.EntityCondition;
+import org.apache.ofbiz.entity.condition.EntityOperator;
 import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
@@ -74,33 +76,20 @@ public class QuestionService {
 		}
 	}
 
-	public Map<String, ? extends Object> createBulkQuestions(DispatchContext dctx, Map<String, ? extends Object> context) {
+	public Map<String, ? extends Object> getAllQuestionTypes(DispatchContext dctx, Map<String, ? extends Object> context) {
 
+		Delegator delegator = dctx.getDelegator();
 		try {
+			Map<String, Object> result = ServiceUtil.returnSuccess();
+			List<GenericValue> questionTypes = EntityQuery.use(delegator).from("Enumeration")
+							.where(EntityCondition.makeCondition("enumTypeId", EntityOperator.LIKE, "%SPHINX_Q_TYPE%")).queryList();
 
-			Delegator delegator = dctx.getDelegator();
-
-			List<Map<String, ? extends Object>> questions = (List<Map<String, ? extends Object>>) context.get("listOfQuestions");
-
-			for (Map<String, ? extends Object> question : questions) {
-
-				GenericValue questionRecord = delegator.makeValue("QuestionMaster");
-
-				questionRecord.setNextSeqId();
-
-				questionRecord.setNonPKFields(question);
-
-				questionRecord.create();
-
-			}
-
-			return ApiResponse.response(true, 201, "Questions addedd successfully!", null);
-
+			result.put("data", questionTypes);
+			return result;
 		} catch (GenericEntityException e) {
 			Debug.logError(e, MODULE);
-			return ApiResponse.response(true, 500, "Unexpected error occured", null);
+			return ServiceUtil.returnError(e.getMessage());
 		}
-
 	}
 
 }
