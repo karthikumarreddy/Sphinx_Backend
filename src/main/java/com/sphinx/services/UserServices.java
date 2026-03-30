@@ -41,13 +41,13 @@ public class UserServices {
 
 			if (!user.get("enabled").equals("Y"))
 				return ApiResponse.response(false, 400,
-						"Your account has been suspended.\n Please contact the administrator for further assistance.",
+						"Your account has been suspended. Please contact the administrator for further assistance.",
 						null);
 
-			if (!party.get("statusId").equals("PARTY_ENABLED"))
-				return ApiResponse.response(false, 400,
-						"Your account is pending administrator approval. You will be notified once access is granted.",
-						null);
+//			if (!party.get("statusId").equals("PARTY_ENABLED"))
+//				return ApiResponse.response(false, 400,
+//						"Your account is pending administrator approval. You will be notified once access is granted.",
+//						null);
 
 			if (user.get("currentPassword").equals(context.get("password"))) {
 				return ApiResponse.response(true, 200, "Login successful. Welcome back!", null);
@@ -105,7 +105,7 @@ public class UserServices {
 			userLogin.set("userLoginId", userName);
 			userLogin.set("partyId", partyId);
 			userLogin.set("currentPassword", password);
-			userLogin.set("enabled", "N"); // Account disabled until admin enables it
+			userLogin.set("enabled", "Y"); // Account disabled until admin enables it
 
 			delegator.create(userLogin);
 
@@ -117,6 +117,7 @@ public class UserServices {
 			} else if (role.equals("admin")) {
 				partyRole.set("roleTypeId", "SphinxAdmin");
 			}
+			party.set("statusId", "PARTY_ENABLED");
 			delegator.create(partyRole);
 
 			// Insert email contact mechanism
