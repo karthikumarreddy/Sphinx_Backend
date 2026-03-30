@@ -1,5 +1,6 @@
 package com.sphinx.resources;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -13,7 +14,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.DelegatorFactory;
@@ -51,10 +51,15 @@ public class LoginResource {
 
 	@POST
 	@Path("/login")
-	public Response loginUser(Map<String, Object> input) {
+	public Response loginUser(@Context HttpServletRequest request) {
 		try {
-			String userName = (String) input.get("userName");
-			String password = (String) input.get("password");
+			String userName = (String) request.getAttribute("userName");
+			String password = (String) request.getAttribute("password");
+			
+			Map<String,Object> input=new HashMap<String, Object>();
+			input.put("userName", userName);
+			input.put("password", password);
+					
 
 			if (userName == null || password == null)
 				return Response.status(400).entity(Map.of("error", "Username and password are required.")).build();
@@ -98,21 +103,28 @@ public class LoginResource {
 
 	@POST
 	@Path("/signup")
-	public Response signupUser(Map<String, Object> input) {
-		System.out.println("INPUT : " + input);
-
+	public Response signupUser(@Context HttpServletRequest request) {
 		try {
+
+			String userName = (String) request.getAttribute("userName");
+			String firstName = (String) request.getAttribute("firstName");
+			String lastName = (String) request.getAttribute("lastName");
+			String mobileNo = (String) request.getAttribute("mobileNo");
+			String email = (String) request.getAttribute("email");
+			String password = (String) request.getAttribute("password");
+			String role = (String) request.getAttribute("role");
+			
+			Map<String,Object> input=new HashMap<String, Object>();
+			input.put("userName", userName);
+			input.put("firstName", firstName);
+			input.put("lastName", lastName);
+			input.put("mobileNo", mobileNo);
+			input.put("email",email);
+			input.put("password", password);
+			input.put("role", role);
+			
 			if (input == null)
-				return Response.status(400).entity(Map.of("error", "Request body is missing or malformed.")).build();
-
-			String userName = (String) input.get("userName");
-			String firstName = (String) input.get("firstName");
-			String lastName = (String) input.get("lastName");
-			String mobileNo = (String) input.get("mobileNo");
-			String email = (String) input.get("email");
-			String password = (String) input.get("password");
-
-			String role = (String) input.get("role");
+				return Response.status(400).entity(Map.of("error", "Request body is missing .")).build();
 
 			if (userName == null || firstName == null || lastName == null || mobileNo == null || email == null
 					|| password == null || role == null)
