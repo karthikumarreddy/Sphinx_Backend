@@ -71,7 +71,7 @@
 	
 	 <filter-mapping>
         <filter-name>ContextFilter</filter-name>
-        <url-pattern>/api/*</url-pattern>       <!-- ← THIS WAS MISSING -->
+        <url-pattern>/api/*</url-pattern>       
     </filter-mapping>
 
 	<listener>

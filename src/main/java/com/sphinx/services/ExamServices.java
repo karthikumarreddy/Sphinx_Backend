@@ -1,16 +1,17 @@
-	package com.sphinx.services;
+package com.sphinx.services;
 	
-	import java.util.List;
-	import java.util.Map;
-	
-	import org.apache.ofbiz.base.util.UtilDateTime;
-	import org.apache.ofbiz.base.util.UtilMisc;
-	import org.apache.ofbiz.entity.Delegator;
-	import org.apache.ofbiz.entity.GenericValue;
-	import org.apache.ofbiz.service.DispatchContext;
-	import org.apache.ofbiz.service.ServiceUtil;
-	
-	import com.sphinx.util.ApiResponse;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.ofbiz.base.util.Debug;
+import org.apache.ofbiz.base.util.UtilDateTime;
+import org.apache.ofbiz.base.util.UtilMisc;
+import org.apache.ofbiz.entity.Delegator;
+import org.apache.ofbiz.entity.GenericValue;
+import org.apache.ofbiz.service.DispatchContext;
+import org.apache.ofbiz.service.ServiceUtil;
+
+import com.sphinx.util.ApiResponse;
 	
 	public class ExamServices {
 		private static final String MODULE = ExamServices.class.getName();
@@ -26,6 +27,7 @@
 				result.put("examList", examList);
 				return result;
 			} catch (Exception e) {
+				Debug.logError(e, MODULE);
 				return ApiResponse.response(false, 500, "Something went wrong try later .", null);
 			}
 	
@@ -74,6 +76,7 @@
 				return ServiceUtil.returnSuccess("Exam created successfully with ID: " + examId);
 	
 			} catch (Exception e) {
+				Debug.logError(e, MODULE);
 				return ServiceUtil.returnError("Something went wrong: " + e.getMessage());
 			}
 		}
@@ -121,7 +124,7 @@
 				return ServiceUtil.returnSuccess("Updated successfully");
 	
 			} catch (Exception e) {
-				e.printStackTrace(); // helpful for debugging
+				Debug.logError(e, MODULE);
 				return ServiceUtil.returnError("Something went wrong, try later");
 			}
 		}

@@ -112,13 +112,23 @@ public class TopicResource {
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createTopic(Map<String, Object> input) {
+	public Response createTopic(@Context HttpServletRequest request) {
 		try {
-			if (input.get("topicName") == null || input.get("topicName").toString().isEmpty()) {
+			if (request.getAttribute("topicName") == null || request.getAttribute("topicName").toString().isEmpty()) {
 				return Response.status(400).entity(ServiceUtil.returnError("Topic name is empty ")).build();
 			}
-			Map<String, Object> result = getDispatcher().runSync("createTopic", input);
-			return Response.status(200).entity(ServiceUtil.returnSuccess("Topic created suceddfully .")).build();
+
+			String topicName = (String) request.getAttribute("topicName");
+			Map<String, Object> result = getDispatcher().runSync("createTopicValidator", UtilMisc.toMap("topicName", topicName));
+
+			if (result.get("responseMessage") != null && result.get("responseMessage").equals("success")) {
+				result.put("successMessage", "Topic created successfully!");
+				return Response.status(201).entity(result).build();
+			}
+			else {
+				return Response.status(400).entity(result).build();
+			}
+
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
 			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();		}

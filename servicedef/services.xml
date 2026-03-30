@@ -35,10 +35,20 @@
         <attribute name="userName" mode="IN" type="String" />
     </service>
 
+
+    <!-- ====================================================================== -->
+    <!-- ======================== TOPIC SERVICES =========================== -->
+    <!-- ====================================================================== -->
+
     <!-- Topic Services -->
+    <service name="createTopicValidator" engine="java" location="com.sphinx.services.TopicServices"  invoke="createTopic" default-entity-name="TopicMaster">
+        <auto-attributes include="pk" mode="INOUT" optional="true" />
+        <auto-attributes include="nonpk" mode="INOUT" optional="false" />
+    </service>
+    
     <service name="createTopic" engine="entity-auto" invoke="create" default-entity-name="TopicMaster">
         <auto-attributes include="pk" mode="INOUT" optional="true" />
-        <auto-attributes include="nonpk" mode="IN" optional="false" />
+        <auto-attributes include="nonpk" mode="INOUT" optional="false" />
     </service>
 
     <service name="updateTopic" engine="entity-auto" invoke="update" default-entity-name="TopicMaster">
@@ -59,7 +69,13 @@
         <attribute name="topic" type="Map" mode="OUT" optional="true" />
     </service>
 
-    <!-- Exam Topic Services -->
+    
+
+    <!-- ====================================================================== -->
+    <!-- ======================== EXAM TOPIC SERVICES =========================== -->
+    <!-- ====================================================================== -->
+    
+    
     <service name="addExamTopics" default-entity-name="ExamTopicDetails" engine="entity-auto" invoke="create" auth="true">
         <auto-attributes include="pk" mode="IN" optional="false"/>
         <auto-attributes include="nonpk" mode="IN" optional="true"/>
@@ -94,6 +110,12 @@
     </service>
     <!-- Exam topic services end -->
 
+
+
+    <!-- ====================================================================== -->
+    <!-- ======================== EXAM SERVICES =========================== -->
+    <!-- ====================================================================== -->
+    
     <!-- Exam services -->
     <service name="createExam" engine="java" location="com.sphinx.services.ExamServices" invoke="createExam">
     <attribute name="examName" mode="IN" type="String" optional="false"/>
@@ -126,6 +148,11 @@
     
     </service>
     <!-- Exam service ended  -->
+    
+    
+    <!-- ====================================================================== -->
+    <!-- ======================== QUESTION SERVICES =========================== -->
+    <!-- ====================================================================== -->
 
     <service name="questionFields" location="" invoke="" engine="interface">
         <attribute name="questionDetail" mode="IN" type="String" optional="false" />
@@ -163,5 +190,17 @@
 	    location="com.sphinx.services.QuestionService" invoke="getAllQuestionTypes">
 	    <attribute name="data" type="List" mode="OUT" optional="true" />
 	</service>
+	
+	<service name="downloadTemplateDocument" engine="java" location="com.sphinx.services.QuestionService" invoke="getTemplateDocument">
+        <attribute name="bytes" mode="OUT" type="Byte []" optional="true" />
+    </service>
+    
+    <service name="uploadBulkQuestion" engine="java" location="com.sphinx.services.QuestionService" invoke="uploadBulkQuestion">
+        
+        <attribute name="file" mode="IN" type="InputStream" optional="true" />
+        
+        
+    </service>
+    
 	
 </services>

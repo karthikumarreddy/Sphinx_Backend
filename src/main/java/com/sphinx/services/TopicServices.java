@@ -4,12 +4,17 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.ofbiz.base.util.Debug;
+import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.entity.Delegator;
+import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
+import org.apache.ofbiz.entity.condition.EntityCondition;
+import org.apache.ofbiz.entity.condition.EntityFunction;
+import org.apache.ofbiz.entity.condition.EntityOperator;
+import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
+import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.ServiceUtil;
-
-import com.sphinx.util.ApiResponse;
 
 public class TopicServices {
 	private static final String MODULE = TopicServices.class.getName();
@@ -45,54 +50,33 @@ public class TopicServices {
 			return ServiceUtil.returnError(e.getMessage());		}
 	}
 
-	//
-//	public static Map<String, ? extends Object> createTopic(DispatchContext dctx,
-//			Map<String, ? extends Object> context) {
-//		try {
-//			Delegator delegator = dctx.getDelegator();
-//			String topicId = delegator.getNextSeqId("TopicMaster");
-//			GenericValue topicMaster = delegator.makeValue("TopicMaster");
-//			topicMaster.set("topicId", topicId);
-//			topicMaster.set("topicName", context.get("topicName"));
-//			delegator.create(topicMaster);
-//			return ApiResponse.response(true, 200, "Topic created sucessfully", null);
-//		} catch (Exception e) {
-//			return ApiResponse.response(false, 500, "Something went wrong try again later", null);
-//		}
-//	}
-//
-//	public static Map<String, ? extends Object> updateTopic(DispatchContext dctx,
-//			Map<String, ? extends Object> context) {
-//		try {
-//			Delegator delegator = dctx.getDelegator();
-//			GenericValue topicMaster = delegator.findOne("TopicMaster", false,
-//					UtilMisc.toMap("topicId", context.get("topicId")));
-//			topicMaster.set("topicName", context.get("topicName"));
-//			delegator.store(topicMaster);
-//			return ApiResponse.response(true, 200, "Topic name updated sucessfully .", null);
-//		} catch (Exception e) {
-//			// TODO: handle exception
-//			return ApiResponse.response(false, 500, "Something went wrong try again later .", null);
-//		}
-//
-//	}
-//
-//	public static Map<String, ? extends Object> deleteTopic(DispatchContext dctx,
-//			Map<String, ? extends Object> context) {
-//		try {
-//			Delegator delegator = dctx.getDelegator();
-//			GenericValue topicMaster = delegator.findOne("TopicMaster", false,
-//					UtilMisc.toMap("topicId", context.get("topicId")));
-//			if (topicMaster == null) {
-//				return ApiResponse.response(false, 400, "Topic not found", null);
-//			}
-//			delegator.removeValue(topicMaster);
-//			return ApiResponse.response(true, 200, "Topic deleted", null);
-//		} catch (Exception e) {
-//			return ApiResponse.response(false, 500, "Something went wrong try later", null);
-//
-//		}
-//	}
-//
+
+	public static Map<String, Object> createTopic(DispatchContext dctx, Map<String, Object> context) {
+
+		Delegator delegator = dctx.getDelegator();
+		try {
+
+			String topicName = (String) context.get("topicName");
+			GenericValue isPresent = EntityQuery.use(delegator).from("TopicMaster")
+							.where(EntityCondition.makeCondition(EntityFunction.upperField("topicName"), EntityOperator.LIKE,
+											EntityFunction.upper("%" + topicName + "%")))
+							.queryFirst();
+			
+
+			if (isPresent == null) {
+				return dctx.getDispatcher().runSync("createTopic", UtilMisc.toMap("topicName", (String) context.get("topicName")));
+			} else {
+				return ServiceUtil.returnError("Given Topic is Already Present!");
+			}
+
+		} catch (GenericEntityException e) {
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError("Unexpected Error Occured! Try Again sometime!");
+		} catch (GenericServiceException e) {
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError("Unexpected Error Occured! Try Again sometime!");
+		}
+
+	}
 
 }
