@@ -1,18 +1,29 @@
 package com.sphinx.resources;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
-import org.apache.ofbiz.entity.DelegatorFactory;
-import org.apache.ofbiz.service.*;
+import org.apache.ofbiz.service.LocalDispatcher;
+import org.apache.ofbiz.service.ServiceContainer;
+import org.apache.ofbiz.service.ServiceUtil;
 
 @Path("/exam")
 public class ExamResource {
@@ -26,10 +37,7 @@ public class ExamResource {
 	private ServletContext servletContext;
 
 	private Delegator getDelegator() {
-		Delegator delegator = (Delegator) servletContext.getAttribute("delegator");
-		if (delegator == null) {
-			delegator = DelegatorFactory.getDelegator("default");
-		}
+		Delegator delegator = (Delegator) request.getAttribute("delegator");
 		return delegator;
 	}
 
@@ -41,14 +49,14 @@ public class ExamResource {
 		return dispatcher;
 	}
 
-	private String validateExam(Map<String, Object> input) {
-		if (UtilValidate.isEmpty(input.get("examName")))
+	private String validateExam(Map<String, String> map) {
+		if (UtilValidate.isEmpty(map.get("examName")))
 			return "Exam name is required";
-		if (UtilValidate.isEmpty(input.get("noOfQuestions")))
+		if (UtilValidate.isEmpty(map.get("noOfQuestions")))
 			return "Number of questions required";
-		if (UtilValidate.isEmpty(input.get("duration")))
+		if (UtilValidate.isEmpty(map.get("duration")))
 			return "Duration required";
-		if (UtilValidate.isEmpty(input.get("passPercentage")))
+		if (UtilValidate.isEmpty(map.get("passPercentage")))
 			return "Pass percentage required";
 		return null;
 	}
@@ -75,15 +83,30 @@ public class ExamResource {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response createExam(Map<String, Object> input) {
+	public Response createExam(@Context HttpServletRequest request,@Context HttpServletResponse response) {
+		
+		Map<String, String> map = new HashMap<>();
 
-		String error = validateExam(input);
+		map.put("examName", (String) request.getAttribute("examName"));
+		map.put("description", (String) request.getAttribute("description"));
+		map.put("noOfQuestions", (String) request.getAttribute("noOfQuestions"));
+		map.put("duration", (String) request.getAttribute("duration"));
+		map.put("passPercentage", (String) request.getAttribute("passPercentage"));
+		map.put("questionsRandomized", (String) request.getAttribute("questionsRandomized"));
+		map.put("answersMust", (String) request.getAttribute("answersMust"));
+		map.put("allowNegativeMarks", (String) request.getAttribute("allowNegativeMarks"));
+		map.put("negativeMarkValue", (String) request.getAttribute("negativeMarkValue"));
+		map.put("userLoginId", (String) request.getAttribute("userLoginId"));
+
+		String error = validateExam(map);
 		if (error != null) {
 			return Response.status(400).entity(ServiceUtil.returnError(error)).build();
 		}
 		try {
-			Map<String, Object> result = getDispatcher().runSync("createExamWrapper", input);
+			Map<String, Object> result = getDispatcher().runSync("createExam", map);
+			 request.getAttribute("");
 			return Response.status(201).entity(result).build();
+			
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
 			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
@@ -93,15 +116,29 @@ public class ExamResource {
 	@PUT
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response updateExam(Map<String, Object> input) {
+	public Response updateExam(@Context HttpServletRequest request,@Context HttpServletResponse response) {
+		
+		Map<String, String> map = new HashMap<>();
+		
+		map.put("examId",(String) request.getAttribute("examId"));
+		map.put("examName", (String) request.getAttribute("examName"));
+		map.put("description", (String) request.getAttribute("description"));
+		map.put("noOfQuestions", (String) request.getAttribute("noOfQuestions"));
+		map.put("duration", (String) request.getAttribute("duration"));
+		map.put("passPercentage", (String) request.getAttribute("passPercentage"));
+		map.put("questionsRandomized", (String) request.getAttribute("questionsRandomized"));
+		map.put("answersMust", (String) request.getAttribute("answersMust"));
+		map.put("allowNegativeMarks", (String) request.getAttribute("allowNegativeMarks"));
+		map.put("negativeMarkValue", (String) request.getAttribute("negativeMarkValue"));
+		map.put("userLoginId", (String) request.getAttribute("userLoginId"));
 
-		String error = validateExamId((String) input.get("examId"));
+		String error = validateExam(map);
 		if (error != null) {
 			return Response.status(400).entity(ServiceUtil.returnError(error)).build();
 		}
 
 		try {
-			Map<String, Object> result = getDispatcher().runSync("updateExam", input);
+			Map<String, Object> result = getDispatcher().runSync("updateExam", map);
 			return Response.status(201).entity(result).build();
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
@@ -112,15 +149,18 @@ public class ExamResource {
 	@DELETE
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response deleteExam(Map<String, Object> input) {
+	public Response deleteExam(@Context HttpServletRequest request,@Context HttpServletResponse response) {
 
-		String error = validateExamId((String) input.get("examId"));
+		String error = validateExamId((String) request.getAttribute("examId"));
+		Map<String,Object> examMap=new HashMap<String, Object>();
+		examMap.put("examId",(String) request.getAttribute("examId"));
+		
 		if (error != null) {
 			return Response.status(400).entity(ServiceUtil.returnError(error)).build();
 		}
 
 		try {
-			Map<String, Object> result = getDispatcher().runSync("deleteExam", input);
+			Map<String, Object> result = getDispatcher().runSync("deleteExam",examMap );
 			return Response.status(201).entity(result).build();
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);

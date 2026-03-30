@@ -96,12 +96,12 @@
 
     <!-- Exam services -->
 
-    <service name="createExam" engine="entity-auto" invoke="create" default-entity-name="ExamMaster">
+ <!--    <service name="createExam" engine="entity-auto" invoke="create" default-entity-name="ExamMaster">
         <auto-attributes include="pk" mode="IN" optional="true"/>
         <auto-attributes include="nonpk" mode="IN" optional="true"/>
-    </service>
+    </service> -->
     
-    <service name="createExamWrapper" engine="java" location="com.sphinx.services.ExamServices" invoke="createExamWrapper">
+    <service name="createExam" engine="java" location="com.sphinx.services.ExamServices" invoke="createExam">
     <attribute name="examName" mode="IN" type="String" optional="false"/>
     <attribute name="description" mode="IN" type="String" optional="true"/>
     <attribute name="noOfQuestions" mode="IN" type="String" optional="false"/>
@@ -114,9 +114,13 @@
     <attribute name="examId" mode="OUT" type="String" optional="true"/>
 </service>
 
-    <service name="updateExam" engine="entity-auto" invoke="update" default-entity-name="ExamMaster">
-        <auto-attributes include="pk" mode="IN" optional="false"/>
-        <auto-attributes include="nonpk" mode="IN" optional="true"/>
+    <service name="updateExam" engine="java" location="com.sphinx.services.ExamServices" invoke="updateExam" >
+    <attribute name="examId" mode="IN" type="String" optional="false"/>
+    <attribute name="examName" mode="IN" type="String" optional="false"/>
+    <attribute name="description" mode="IN" type="String" optional="true"/>
+    <attribute name="noOfQuestions" mode="IN" type="String" optional="false"/>
+    <attribute name="duration" mode="IN" type="String" optional="false"/>
+    <attribute name="passPercentage" mode="IN" type="String" optional="false"/>
     </service>
 
     <service name="deleteExam" engine="entity-auto" invoke="delete" default-entity-name="ExamMaster">
