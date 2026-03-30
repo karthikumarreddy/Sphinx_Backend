@@ -95,7 +95,6 @@
     <!-- Exam topic services end -->
 
     <!-- Exam services -->
-
     <service name="createExam" engine="java" location="com.sphinx.services.ExamServices" invoke="createExam">
     <attribute name="examName" mode="IN" type="String" optional="false"/>
     <attribute name="description" mode="IN" type="String" optional="true"/>
@@ -159,5 +158,10 @@
     <service name="getAllQuestionByTopic" engine="java" location="com.sphinx.services.QuestionService" invoke="getAllQuestionByTopic">
         <attribute name="topicId" type="String" mode="IN" />
     </service>
-
+    
+	<service name="getAllQuestionTypes" engine="java"
+	    location="com.sphinx.services.QuestionService" invoke="getAllQuestionTypes">
+	    <attribute name="data" type="List" mode="OUT" optional="true" />
+	</service>
+	
 </services>
