@@ -33,7 +33,7 @@ public class TopicResource {
 	
 
 	private LocalDispatcher getDispatcher() {
-		LocalDispatcher dispatcher = (LocalDispatcher) servletContext.getAttribute("dispatcher");
+		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 		return dispatcher;
 	}
 
@@ -51,7 +51,8 @@ public class TopicResource {
 			Map<String, Object> result = getDispatcher().runSync("getAllTopics", UtilMisc.toMap());
 			return Response.ok(result).build();
 		} catch (Exception e) {
-
+			Debug.log(MODULE);
+			e.printStackTrace();
 			return Response.serverError().build();
 		}
 	}
