@@ -60,17 +60,17 @@
     </service>
 
     <!-- Exam Topic Services -->
-    <service name="addExamTopics" default-entity-name="ExamTopicDetails" engine="entity-auto" invoke="create" auth="true">
+    <service name="addExamTopics" default-entity-name="ExamTopicDetails" engine="entity-auto" invoke="create" >
         <auto-attributes include="pk" mode="IN" optional="false"/>
         <auto-attributes include="nonpk" mode="IN" optional="true"/>
     </service>
 
-    <service name="updateExamTopics" default-entity-name="ExamTopicDetails" engine="entity-auto" invoke="update" auth="true">
+    <service name="updateExamTopics" default-entity-name="ExamTopicDetails" engine="entity-auto" invoke="update">
         <auto-attributes include="pk" mode="IN" optional="false"/>
         <auto-attributes include="nonpk" mode="IN" optional="true"/>
     </service>
 
-    <service name="deleteExamTopics" engine="entity-auto" invoke="delete" default-entity-name="ExamTopicDetails" auth="true">
+    <service name="deleteExamTopics" engine="entity-auto" invoke="delete" default-entity-name="ExamTopicDetails">
         <attribute name="examId" type="String" mode="IN" />
         <attribute name="topicId" type="String" mode="IN" />
     </service>
