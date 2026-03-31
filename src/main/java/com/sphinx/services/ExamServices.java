@@ -10,8 +10,6 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
-import com.sphinx.util.ApiResponse;
-
 public class ExamServices {
 	private static final String MODULE = ExamServices.class.getName();
 

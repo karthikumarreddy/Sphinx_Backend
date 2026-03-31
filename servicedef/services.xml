@@ -15,12 +15,54 @@
     <vendor></vendor>
     <version>1.0</version>
 
-    <!-- User Services -->
+    <!-- ====================================================================== -->
+    <!-- ======================== USER SERVICES =========================== -->
+    <!-- ====================================================================== -->
+    
     <service name="loginUser" engine="java" location="com.sphinx.services.UserServices" invoke="loginUser">
         <attribute name="userName" mode="IN" type="String" />
         <attribute name="password" mode="IN" type="String" />
     </service>
+    
+    <service name="createParty" engine="entity-auto" default-entity-name="Party" invoke="create" auth="false">
+    	<attribute name="partyId" mode="INOUT" type="String" optional="false"/>
+    	<attribute name="partyTypeId" mode="IN" type="String" optional="false" />
+    	<attribute name="statusId" mode="IN" type="String" optional="false" />
+    </service>
 
+	<service name="createPerson" engine="entity-auto" default-entity-name="Person" invoke="create" auth="false">
+    	<attribute name="partyId" mode="INOUT" type="String" optional="false"/>
+    	<attribute name="firstName" mode="IN" type="String" optional="false" />
+    	<attribute name="lastName" mode="IN" type="String" optional="false" />
+    </service>
+    
+   	<service name="createUserLogin" engine="entity-auto" default-entity-name="UserLogin" invoke="create" auth="false">
+   		<attribute name="userLoginId" mode="INOUT" type="String" optional="false" />
+   		<attribute name="currentPassword" mode="IN" type="String" optional="false" />
+   		<attribute name="partyId" mode="IN" type="String" optional="false" />
+   		<attribute name="requirePasswordChange" mode="IN" type="String" optional="false" />
+   		<attribute name="enabled" mode="IN" type="String" optional="false"/>
+   	</service>
+   	
+   	<service name="createPartyRole" engine="entity-auto" default-entity-name="PartyRole" invoke="create" auth="false">
+   		<attribute name="partyId" mode="IN" type="String" optional="false" />
+   		<attribute name="roleTypeId" mode="IN" type="String" optional="false" />
+   		<attribute name="statusId" mode="IN" type="String" optional="false"/>
+   	</service>
+   	
+   	<service name="createContactMech" engine="entity-auto" default-entity-name="ContactMech" invoke="create" auth="false">
+   		<attribute name="contactMechId" mode="INOUT" type="String" optional="true" />
+   		<attribute name="contactMechTypeId" mode="IN" type="String" optional="false" />
+   		<attribute name="infoString" mode="IN" type="String" optional="false" />
+   	</service>
+   	
+   	<service name="createPartyContactMech" engine="entity-auto" default-entity-name="PartyContactMech" invoke="create" auth="false">
+   		<attribute name="partyId" mode="IN" type="" optional="false" />
+   		<attribute name="contactMechId" mode="IN" type="String" optional="false" />
+   		<attribute name="fromDate" mode="IN" type="java.sql.Timestamp" optional="false" />
+   	</service>
+   	
+    
     <service name="signupUser" engine="java" location="com.sphinx.services.UserServices" invoke="signupUser">
         <attribute name="userName" mode="IN" type="String" />
         <attribute name="firstName" mode="IN" type="String" />
@@ -35,10 +77,20 @@
         <attribute name="userName" mode="IN" type="String" />
     </service>
 
+
+    <!-- ====================================================================== -->
+    <!-- ======================== TOPIC SERVICES =========================== -->
+    <!-- ====================================================================== -->
+
     <!-- Topic Services -->
+    <service name="createTopicValidator" engine="java" location="com.sphinx.services.TopicServices"  invoke="createTopic" default-entity-name="TopicMaster">
+        <auto-attributes include="pk" mode="INOUT" optional="true" />
+        <auto-attributes include="nonpk" mode="INOUT" optional="false" />
+    </service>
+    
     <service name="createTopic" engine="entity-auto" invoke="create" default-entity-name="TopicMaster">
         <auto-attributes include="pk" mode="INOUT" optional="true" />
-        <auto-attributes include="nonpk" mode="IN" optional="false" />
+        <auto-attributes include="nonpk" mode="INOUT" optional="false" />
     </service>
 
     <service name="updateTopic" engine="entity-auto" invoke="update" default-entity-name="TopicMaster">
@@ -59,8 +111,15 @@
         <attribute name="topic" type="Map" mode="OUT" optional="true" />
     </service>
 
-    <!-- Exam Topic Services -->
-    <service name="addExamTopics" default-entity-name="ExamTopicDetails" engine="entity-auto" invoke="create" >
+
+
+    <!-- ====================================================================== -->
+    <!-- ======================== EXAM TOPIC SERVICES =========================== -->
+    <!-- ====================================================================== -->
+    
+    
+    <service name="addExamTopics" default-entity-name="ExamTopicDetails" engine="entity-auto" invoke="create" auth="true">
+
         <auto-attributes include="pk" mode="IN" optional="false"/>
         <auto-attributes include="nonpk" mode="IN" optional="true"/>
     </service>
@@ -94,6 +153,12 @@
     </service>
     <!-- Exam topic services end -->
 
+
+
+    <!-- ====================================================================== -->
+    <!-- ======================== EXAM SERVICES =========================== -->
+    <!-- ====================================================================== -->
+    
     <!-- Exam services -->
     <service name="createExam" engine="java" location="com.sphinx.services.ExamServices" invoke="createExam">
     <attribute name="examName" mode="IN" type="String" optional="false"/>
@@ -126,6 +191,11 @@
     
     </service>
     <!-- Exam service ended  -->
+    
+    
+    <!-- ====================================================================== -->
+    <!-- ======================== QUESTION SERVICES =========================== -->
+    <!-- ====================================================================== -->
 
     <service name="questionFields" location="" invoke="" engine="interface">
         <attribute name="questionDetail" mode="IN" type="String" optional="false" />
@@ -163,5 +233,14 @@
 	    location="com.sphinx.services.QuestionService" invoke="getAllQuestionTypes">
 	    <attribute name="data" type="List" mode="OUT" optional="true" />
 	</service>
+	
+	<service name="downloadTemplateDocument" engine="java" location="com.sphinx.services.QuestionService" invoke="getTemplateDocument">
+        <attribute name="bytes" mode="OUT" type="Byte []" optional="true" />
+    </service>
+    
+    <service name="uploadBulkQuestion" engine="java" location="com.sphinx.services.QuestionService" invoke="uploadBulkQuestion">
+        <attribute name="file" mode="IN" type="java.nio.ByteBuffer" optional="true" />
+    </service>
+    
 	
 </services>
