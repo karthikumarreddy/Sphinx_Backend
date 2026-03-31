@@ -1,8 +1,10 @@
 package com.sphinx.services;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -277,11 +279,20 @@ public class QuestionService {
 		// process the excel file
 
 		try {
-			InputStream file = (InputStream) context.get("file");
+
+			ByteBuffer buffer = (ByteBuffer) context.get("file");
+
+			byte[] bytes = new byte[buffer.remaining()];
+
+			buffer.get(bytes);
+
+			InputStream is = new ByteArrayInputStream(bytes);
+
+			// InputStream file = (InputStream) context.get("file");
 
 			Map<String, Object> result = ServiceUtil.returnSuccess();
 
-			Workbook workbook = WorkbookFactory.create(file);
+			Workbook workbook = WorkbookFactory.create(is);
 			Sheet sheet = workbook.getSheetAt(0);
 
 			// list of questions map

@@ -1,10 +1,15 @@
 package com.sphinx.resources;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.Map;
 
 import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.Part;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -25,8 +30,6 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceContainer;
 import org.apache.ofbiz.service.ServiceUtil;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataParam;
 
 @Path("/questions")
 public class QuestionResource {
@@ -277,33 +280,67 @@ public class QuestionResource {
 
 	}
 
+
 	@POST
 	@Path("/upload")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response uploadQuestions(@FormDataParam("file") InputStream file, @FormDataParam("file") FormDataContentDisposition fileDetail) {
+	// public Response uploadQuestions(@FormDataParam("file") InputStream file, @FormDataParam("file") FormDataContentDisposition
+	// fileDetail) {
+	public Response uploadQuestions(@Context HttpServletRequest request, @Context HttpServletResponse response) {
 
-		if (file == null || fileDetail == null) {
-			return Response.status(400).entity(ServiceUtil.returnError("File not received by server")).build();
+		// if (file == null || fileDetail == null) {
+		// return Response.status(400).entity(ServiceUtil.returnError("File not received by server")).build();
+		// }
+		//
+		// String fileName = fileDetail.getFileName();
+		//
+		// // file type check
+		// if (!fileName.endsWith(".xlsx")) {
+		// Debug.logWarning("Invalid file upload by user.", MODULE);
+		// return Response.status(400).entity(ServiceUtil.returnError("Only files with .xlsx are allowed")).build();
+		// }
+
+		InputStream file;
+		Part filePart;
+		ByteBuffer buffer;
+		try {
+			filePart = request.getPart("file");
+
+			if (filePart == null) {
+				return Response.status(400).entity(ServiceUtil.returnError("File was not found on Request!")).build();
+			}
+
+			String fileName = filePart.getSubmittedFileName();
+
+			if (!fileName.endsWith(".xlsx")) {
+				return Response.status(400).entity(ServiceUtil.returnError("Only Excel file are allowed!")).build();
+			}
+
+			byte[] bytes = filePart.getInputStream().readAllBytes();
+
+			buffer = ByteBuffer.wrap(bytes);
+
+			System.out.println("Uploaded: " + fileName);
+
+		} catch (IOException | ServletException e) {
+			return Response.status(500).entity(ServiceUtil.returnError("Unexpected error occured, try again after sometime!")).build();
 		}
 
-		String fileName = fileDetail.getFileName();
 
-		// file type check
-		if (!fileName.endsWith(".xlsx")) {
-			Debug.logWarning("Invalid file upload by user.", MODULE);
-			return Response.status(400).entity(ServiceUtil.returnError("Only files with .xlsx are allowed")).build();
-		}
 
 		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 		
 		try {
-			Map<String, Object> result = dispatcher.runSync("uploadBulkQuestion", UtilMisc.toMap("file", file));
+			Map<String, Object> result = dispatcher.runSync("uploadBulkQuestion", UtilMisc.toMap("file", buffer));
 			if (result.get("responseMessage") != null && result.get("responseMessage").equals("error")) {
 				return Response.status(400).entity(result).build();
-			} else {
-				return Response.status(201).entity(result).build();
 			}
+			else {
+				result.put("successMessage", "Questions uploaded successfully!");
+			}
+
+			return Response.status(201).entity(result).build();
 
 		} catch (GenericServiceException e) {
 			Debug.logError(e, MODULE);
