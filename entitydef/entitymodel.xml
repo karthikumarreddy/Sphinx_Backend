@@ -64,7 +64,7 @@
 		</relation>
 	</entity>
 	
-	 <entity entity-name="QuestionBankMasterB" package-name="in.vastpro.sphinx">
+	 <entity entity-name="QuestionBankMasterB" package-name="">
 		<field name="examId" type="id-ne"></field>
 		<field name="qId" type="numeric"></field>
 		<field name="topicId" type="numeric" not-null="true"/>
@@ -87,7 +87,7 @@
 		</relation>			
     </entity>
     
-    <entity entity-name="QuestionBankMaster" package-name="in.vastpro.sphinx">
+    <entity entity-name="QuestionBankMaster" package-name="">
 		<field name="examId" type="id-ne"></field>
 		<field name="qId" type="numeric"></field>
 		<field name="topicId" type="numeric" not-null="true"/>
@@ -112,15 +112,14 @@
 	
 
 	<entity entity-name="ExamTopicDetails" package-name="">
-		<field name="examId" type="id"></field>
-		<field name="topicId" type="id"></field>
+		<field name="examId" type="id"/>
+		<field name="topicId" type="id"/>
 		<field name="topicName" type="short-varchar" not-null="true" />
-		<field name="percentage" type="numeric" not-null="true"></field>
-		<field name="startingQid" type="numeric" not-null="true"></field>
-		<field name="endingQid" type="numeric" not-null="true" />
-		<field name="questionsPerExam" type="numeric" not-null="true"></field>
-		<field name="topicPassPercentage" type="floating-point"
-			not-null="true"></field>
+		<field name="percentage" type="numeric" not-null="true"/>
+		<field name="startingQid" type="numeric" />
+		<field name="endingQid" type="numeric"/>
+		<field name="questionsPerExam" type="numeric" />
+		<field name="topicPassPercentage" type="floating-point"/>
 		<prim-key field="examId" />
 		<prim-key field="topicId" />
 		<relation rel-entity-name="ExamMaster"
@@ -152,7 +151,7 @@
 	</entity>
 
 	<entity entity-name="ExamSetupDetails"
-		package-name="in.vastpro.sphinx">
+		package-name="">
 		<field name="examId" type="id-ne"></field>
 		<field name="setupType" type="id-ne" not-null="true"></field>
 		<field name="setupDetails" type="very-long" not-null="true"></field>

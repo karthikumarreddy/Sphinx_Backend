@@ -83,8 +83,8 @@ public class ExamResource {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response createExam(@Context HttpServletRequest request,@Context HttpServletResponse response) {
-		
+	public Response createExam(@Context HttpServletRequest request, @Context HttpServletResponse response) {
+
 		Map<String, String> map = new HashMap<>();
 
 		map.put("examName", (String) request.getAttribute("examName"));
@@ -104,9 +104,9 @@ public class ExamResource {
 		}
 		try {
 			Map<String, Object> result = getDispatcher().runSync("createExam", map);
-			 request.getAttribute("");
+			request.getAttribute("");
 			return Response.status(201).entity(result).build();
-			
+
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
 			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
@@ -116,11 +116,11 @@ public class ExamResource {
 	@PUT
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response updateExam(@Context HttpServletRequest request,@Context HttpServletResponse response) {
-		
+	public Response updateExam(@Context HttpServletRequest request, @Context HttpServletResponse response) {
+
 		Map<String, String> map = new HashMap<>();
-		
-		map.put("examId",(String) request.getAttribute("examId"));
+
+		map.put("examId", (String) request.getAttribute("examId"));
 		map.put("examName", (String) request.getAttribute("examName"));
 		map.put("description", (String) request.getAttribute("description"));
 		map.put("noOfQuestions", (String) request.getAttribute("noOfQuestions"));
@@ -149,18 +149,18 @@ public class ExamResource {
 	@DELETE
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response deleteExam(@Context HttpServletRequest request,@Context HttpServletResponse response) {
+	public Response deleteExam(@Context HttpServletRequest request, @Context HttpServletResponse response) {
 
 		String error = validateExamId((String) request.getAttribute("examId"));
-		Map<String,Object> examMap=new HashMap<String, Object>();
-		examMap.put("examId",(String) request.getAttribute("examId"));
-		
+		Map<String, Object> examMap = new HashMap<String, Object>();
+		examMap.put("examId", (String) request.getAttribute("examId"));
+
 		if (error != null) {
 			return Response.status(400).entity(ServiceUtil.returnError(error)).build();
 		}
 
 		try {
-			Map<String, Object> result = getDispatcher().runSync("deleteExam",examMap );
+			Map<String, Object> result = getDispatcher().runSync("deleteExam", examMap);
 			return Response.status(201).entity(result).build();
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
@@ -174,11 +174,17 @@ public class ExamResource {
 	@Path("/topics")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response addExamTopics(Map<String, Object> input) {
+	public Response addExamTopics(@Context HttpServletRequest request) {
 
-		if (input.get("examId").toString().isEmpty() || input.get("topicId").toString().isEmpty()) {
+		if (request.getAttribute("examId").toString().isEmpty()
+				|| request.getAttribute("topicId").toString().isEmpty()) {
 			return Response.status(400).entity(ServiceUtil.returnError("ExamId and TopicId required")).build();
 		}
+		Map<String, Object> input = new HashMap<String, Object>();
+		input.put("examId", request.getAttribute("examId"));
+		input.put("topicId", request.getAttribute("topicId"));
+		input.put("topicName", (String) request.getAttribute("topicName"));
+		input.put("percentage", request.getAttribute("percentage"));
 
 		try {
 			Map<String, Object> result = getDispatcher().runSync("addExamTopics", input);
@@ -189,19 +195,82 @@ public class ExamResource {
 		}
 	}
 
+	@GET
+	@Path("/topics")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getExamTopics(@Context HttpServletRequest request) {
+		try {
+			String examId = request.getParameter("examId");
+
+			Map<String, Object> result = getDispatcher().runSync("getAllExamTopics", UtilMisc.toMap("examId", examId));
+
+			return Response.status(200).entity(result).build();
+		} catch (Exception e) {
+			Debug.logError(e, MODULE);
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
+		}
+	}
+
+	@PUT
+	@Path("/topics")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response updateExamTopic(@Context HttpServletRequest request) {
+		try {
+			String examId = (String) request.getAttribute("examId");
+			String percentage = (String) request.getAttribute("percentage");
+			String questionsPerExam = (String) request.getAttribute("questionsPerExam");
+			String topicId = (String) request.getAttribute("topicId");
+			String topicName = (String) request.getAttribute("topicName");
+
+			Map<String, Object> input = new HashMap<String, Object>();
+			input.put("examId", examId);
+			input.put("percentage", percentage);
+			input.put("topicId", topicId);
+			input.put("topicName", topicName);
+
+			LocalDispatcher dispatcher = getDispatcher();
+			Map<String, Object> result = dispatcher.runSync("updateExamTopics", input);
+			return Response.status(201).entity(result).build();
+
+		} catch (Exception e) {
+			return Response.status(500).entity("Something went wrong try later").build();
+		}
+	}
+
+	@DELETE
+	@Path("/topics")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response DeleteEamTopic(@Context HttpServletRequest request) {
+		try {
+			String examId = (String) request.getAttribute("examId");
+			String topicId = (String) request.getAttribute("topicId");
+			LocalDispatcher dispatcher = getDispatcher();
+			Map<String, Object> input = new HashMap<String, Object>();
+			input.put("examId", examId);
+			input.put("topicId", topicId);
+
+			Map<String, Object> result = dispatcher.runSync("deleteExamTopics", input);
+			return Response.status(201).entity(result).build();
+
+		} catch (Exception e) {
+			return Response.status(5000).entity(ServiceUtil.returnError("Something went wrong try later")).build();
+		}
+	}
+
 	// generate questions to the topic
 	@POST
 	@Path("/generate")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response generateQuestions(Map<String, Object> input) {
-
-		String error = validateExamId((String) input.get("examId"));
-		if (error != null) {
-			return Response.status(400).entity(ServiceUtil.returnError(error)).build();
-		}
-
+	public Response generateQuestions(@Context HttpServletRequest request) {
 		try {
+			String examId=(String) request.getAttribute("examId");
+			if (examId == null) {
+				return Response.status(400).entity(ServiceUtil.returnError("exami id is null")).build();
+			}
+			Map<String, Object> input=new HashMap<String, Object>();
+			input.put("examId", examId);
 			Map<String, Object> result = getDispatcher().runSync("generateExamQuestions", input);
 			return Response.status(201).entity(result).build();
 		} catch (Exception e) {
@@ -215,14 +284,14 @@ public class ExamResource {
 	@Path("/launch")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response launchExam(Map<String, Object> input) {
-
-		String error = validateExamId((String) input.get("examId"));
-		if (error != null) {
-			return Response.status(400).entity(ServiceUtil.returnError(error)).build();
-		}
-
+	public Response launchExam(@Context HttpServletRequest request) {
 		try {
+			String examId=(String) request.getAttribute("examId");
+			if (examId == null) {
+				return Response.status(400).entity(ServiceUtil.returnError("exam id is null")).build();
+			}
+			Map<String, Object> input=new HashMap<String, Object>();
+			input.put("examId", examId);
 			Map<String, Object> result = getDispatcher().runSync("launchExam", input);
 			return Response.status(201).entity(result).build();
 		} catch (Exception e) {

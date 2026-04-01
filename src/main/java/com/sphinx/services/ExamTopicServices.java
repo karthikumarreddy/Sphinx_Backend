@@ -10,8 +10,11 @@ import org.apache.ofbiz.entity.condition.EntityCondition;
 import org.apache.ofbiz.entity.condition.EntityOperator;
 import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
+import org.apache.ofbiz.service.ServiceUtil;
 
 import com.sphinx.util.ApiResponse;
+
+import clojure.lang.RT;
 
 public class ExamTopicServices {
 	private static final String MODULE = ExamTopicServices.class.getName();
@@ -20,11 +23,14 @@ public class ExamTopicServices {
 			Map<String, ? extends Object> context) {
 		try {
 			Delegator delegator = dctx.getDelegator();
-			List<GenericValue> topics = delegator.findAll("ExamTopicDetails", false);
+			List<GenericValue> topics = EntityQuery.use(delegator).from("ExamTopicDetails")
+					.where("examId", context.get("examId")).queryList();
 			if (topics.isEmpty()) {
-				return ApiResponse.response(false, 400, "No topics available", null);
+				return ServiceUtil.returnError("topics is null");
 			}
-			return ApiResponse.response(true, 200, "Available topics", topics);
+			Map<String, Object> result = ServiceUtil.returnSuccess();
+			result.put("examTopicList", topics);
+			return result;
 		} catch (Exception e) {
 			return ApiResponse.response(false, 500, "Something went wrong try again later", null);
 		}
@@ -112,14 +118,8 @@ public class ExamTopicServices {
 					return ApiResponse.response(false, 400,
 							"Topic " + topicId + " percentage too low — results in 0 questions", null);
 				}
-				Long startingQid = (Long) topic.get("startingQid");
-				Long endingQid = (Long) topic.get("endingQid");
 
-				EntityCondition condition = EntityCondition.makeCondition(UtilMisc.toList(
-						EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId),
-						EntityCondition.makeCondition("questionId", EntityOperator.GREATER_THAN_EQUAL_TO, startingQid),
-						EntityCondition.makeCondition("questionId", EntityOperator.LESS_THAN_EQUAL_TO, endingQid)),
-						EntityOperator.AND);
+				EntityCondition condition = EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId);
 
 				List<GenericValue> questions = EntityQuery.use(delegator).from("QuestionMaster").where(condition)
 						.orderBy("RANDOM()").limit(questionCount).queryList();
