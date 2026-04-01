@@ -2,6 +2,7 @@ package com.sphinx.services;
 
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilDateTime;
@@ -18,15 +19,17 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
 import com.sphinx.util.ApiResponse;
+import com.sphinx.util.RandomPasswordGenerator;
 
 public class UserServices {
 
 	private static final String MODULE = UserServices.class.getName();
 	private static final String UNEXPECTED_ERROR_MSG = "Unexpected Error Occured! Try Again After Sometime!";
 	private static final String PARTY_PREFIX = "SPX_";
-	private static final String ROLE_SPHINX_ADMIN = "SPHINX_ADMIN";
-	private static final String ROLE_SPHINX_USER = "SPHINX_USER";
-	private static final String PARTY_STATUS_ENABLED = "STATUS_ENABLED";
+	private static final String ROLE_SPHINX_ADMIN = "SphinxAdmin";
+	private static final String ROLE_SPHINX_USER = "SphinxUser";
+	private static final String PARTY_STATUS_ENABLED = "PARTY_ENABLED";
+	private static final int USER_PASSWORD_LEN = 6;
 
 	public static Map<String, ? extends Object> loginUser(DispatchContext dctx, Map<String, ? extends Object> context) {
 		Delegator delegator = dctx.getDelegator();
@@ -78,6 +81,7 @@ public class UserServices {
 
 		try {
 
+
 			LocalDispatcher dispatcher = dctx.getDispatcher();
 
 			if (dispatcher == null) {
@@ -94,33 +98,61 @@ public class UserServices {
 			String role = (String) context.get("role");
 			boolean isAdmin;
 
+			if (UtilValidate.isEmpty(role)) {
+				return ServiceUtil.returnError("Role is required!");
+			}
 
-			if (UtilValidate.isEmpty(userName)) {
+			if ("admin".equalsIgnoreCase(role)) {
+				isAdmin = true;
+				role = ROLE_SPHINX_ADMIN;
+			} else if ("user".equalsIgnoreCase(role)) {
+				isAdmin = false;
+				role = ROLE_SPHINX_USER;
+			} else {
+				return ServiceUtil.returnError("Invalid role provided");
+			}
+
+			// when creating the user username is not comes from frontend.
+			if (isAdmin && UtilValidate.isEmpty(userName)) {
 				return ServiceUtil.returnError("Username is required!");
 			}
+
+			if (isAdmin) {
+				Delegator delegator = dctx.getDelegator();
+				GenericValue user = delegator.findOne("UserLogin", true, UtilMisc.toMap("userLoginId", userName));
+
+				if (user != null) {
+					return ServiceUtil.returnError("This username is already taken.  Please choose a different username.");
+				}
+			}
+
+
 			if (UtilValidate.isEmpty(firstName)) {
 				return ServiceUtil.returnError("Firstname is required!");
 			}
+			if (!Pattern.matches("^[A-Za-z ]{2,20}$", firstName))
+				return ServiceUtil.returnError("Invalid first name. It must be 2–20 characters and contain only letters.");
+
+			if (!Pattern.matches("^[A-Za-z ]{1,20}$", lastName))
+				return ServiceUtil.returnError("Invalid last name. It must be 2–20 characters and contain only letters.");
+
 			if (UtilValidate.isEmpty(lastName)) {
 				return ServiceUtil.returnError("Lastname is required!");
 			}
 			if (UtilValidate.isEmpty(email)) {
 				return ServiceUtil.returnError("Email is required!");
 			}
-			if (UtilValidate.isEmail(email)) {
+			if (!UtilValidate.isEmail(email)) {
 				return ServiceUtil.returnError("Invalid Email ID format!");
 			}
-			if (UtilValidate.isEmpty(password)) {
+			if (isAdmin && UtilValidate.isEmpty(password)) {
 				return ServiceUtil.returnError("Password is required!");
 			}
-			if (password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$")) {
+
+			if (isAdmin && !password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$")) {
 				return ServiceUtil.returnError(
 								"Password should at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character");
 			}
-			if (UtilValidate.isEmpty(role)) {
-				return ServiceUtil.returnError("Role is required!");
-			}
-
 
 			Map<String, Object> serviceResult = null;
 			Delegator delegator = dctx.getDelegator();
@@ -147,16 +179,6 @@ public class UserServices {
 			// PartyRole Record Creation
 			// =========================
 
-			if (role.equalsIgnoreCase("admin")) {
-				isAdmin = true;
-				role = ROLE_SPHINX_ADMIN;
-			} else if ("user".equalsIgnoreCase(role)) {
-				isAdmin = false;
-				role = ROLE_SPHINX_USER;
-			} else {
-				return ServiceUtil.returnError("Invalid role provided");
-			}
-
 			serviceResult = createPartyRole(dctx, UtilMisc.toMap("partyId", partyId, "roleTypeId", role, "statusId", PARTY_STATUS_ENABLED));
 
 			if (isError(serviceResult)) {
@@ -178,7 +200,8 @@ public class UserServices {
 			// UserLogin Record Creation
 			// =========================
 
-			serviceResult = createUserLogin(dctx, UtilMisc.toMap("userName", userName, "partyId", partyId, "currentPassword", password),
+			serviceResult = createUserLogin(dctx,
+							UtilMisc.toMap("userName", userName, "partyId", partyId, "currentPassword", password, "firstName", firstName),
 							isAdmin);
 			if (isError(serviceResult)) {
 				return handleError(serviceResult);
@@ -272,7 +295,7 @@ public class UserServices {
 	private static Map<String, Object> createUserLogin(DispatchContext dctx, Map<String, ? extends Object> context,
 					boolean isAdmin) {
 
-		String username = (String) context.get("userName");
+		String username;
 		String partyId = (String) context.get("partyId");
 		String currentPassword;
 		String requirePasswordChange;
@@ -280,10 +303,13 @@ public class UserServices {
 		// if not admin generate password dynamically.
 		if (isAdmin) {
 			currentPassword = (String) context.get("currentPassword");
+			username = (String) context.get("userName");
 			requirePasswordChange = "N";
 
 		} else {
-			currentPassword = ""; // Random generation
+			// if role is user we generate username and password
+			username = (String) context.get("firstName") + "-" + partyId;
+			currentPassword = "" + RandomPasswordGenerator.generatePassword(USER_PASSWORD_LEN); // Random generation
 			requirePasswordChange = "Y"; // password valid for only one session. hence this flag.
 		}
 

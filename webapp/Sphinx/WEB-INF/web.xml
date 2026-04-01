@@ -54,10 +54,25 @@
 		<filter-name>SameSiteFilter</filter-name>
 		<filter-class>org.apache.ofbiz.webapp.control.SameSiteFilter</filter-class>
 	</filter>
+	
+	
 	<filter-mapping>
 		<filter-name>ControlFilter</filter-name>
 		<url-pattern>/*</url-pattern>
 	</filter-mapping> 
+	
+	
+<filter>
+  	  <filter-name>corsFilter</filter-name>
+  	  <filter-class>com.sphinx.config.CorsFilter</filter-class>
+	</filter>
+
+	<filter-mapping>
+ 	   <filter-name>corsFilter</filter-name>
+  	  <url-pattern>/*</url-pattern>
+	</filter-mapping>
+    
+    
 	
 <filter-mapping>
 		<filter-name>ContextFilter</filter-name>
@@ -134,5 +149,7 @@
 		<welcome-file>index.html</welcome-file>
 		<welcome-file>index.htm</welcome-file>
 	</welcome-file-list>
+	
+	
 </web-app>
 

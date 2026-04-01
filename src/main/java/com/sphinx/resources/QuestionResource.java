@@ -231,11 +231,20 @@ public class QuestionResource {
 	}
 
 	@POST
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response addQuestions(Map<String, Object> input) {
-		try {
 
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response addQuestions(@Context HttpServletRequest request) {
+		try {
+			Map<String, Object> input = UtilMisc.toMap("questionDetail", request.getAttribute("questionDetail"),
+			"questionType", request.getAttribute("questionType"),
+			"topicId", request.getAttribute("topicId"),
+			"optionA", request.getAttribute("optionA"),
+			"optionB", request.getAttribute("optionB"),
+			"optionC", request.getAttribute("optionC"),
+			"optionD", request.getAttribute("optionD"),
+							"answer", request.getAttribute("answer"), "numAnswers", request.getAttribute("numAnswers"), "difficultyLevel",
+							request.getAttribute("difficultyLevel"), "answerValue", request.getAttribute("answerValue"));
+			
 			String errorMsg = validateQuestionData(input);
 
 			if (errorMsg != null) {
