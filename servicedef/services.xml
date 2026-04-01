@@ -123,31 +123,31 @@
         <auto-attributes include="nonpk" mode="IN" optional="true"/>
     </service>
 
-    <service name="updateExamTopics" default-entity-name="ExamTopicDetails" engine="entity-auto" invoke="update">
+    <service name="updateExamTopics" default-entity-name="ExamTopicDetails" engine="entity-auto" invoke="update" auth="false">
         <auto-attributes include="pk" mode="IN" optional="false"/>
         <auto-attributes include="nonpk" mode="IN" optional="true"/>
     </service>
 
-    <service name="deleteExamTopics" engine="entity-auto" invoke="delete" default-entity-name="ExamTopicDetails">
+    <service name="deleteExamTopics" engine="entity-auto" invoke="delete" default-entity-name="ExamTopicDetails" auth="false">
         <attribute name="examId" type="String" mode="IN" />
         <attribute name="topicId" type="String" mode="IN" />
     </service>
 
-    <service name="getAllExamTopics" engine="java" location="com.sphinx.services.ExamTopicServices" invoke="getAllExamTopics">
+    <service name="getAllExamTopics" engine="java" location="com.sphinx.services.ExamTopicServices" invoke="getAllExamTopics" auth="false">
         <attribute name="examTopicList" type="List" mode="OUT" optional="false" />
     </service>
 
-    <service name="getExamTopicById" engine="java" location="com.sphinx.services.ExamTopicServices" invoke="getExamTopicById">
+    <service name="getExamTopicById" engine="java" location="com.sphinx.services.ExamTopicServices" invoke="getExamTopicById" auth="false">
         <attribute name="examId" type="String" mode="IN" optional="false" />
         <attribute name="topicId" type="String" mode="IN" optional="false" />
         <attribute name="examTopic" type="Map" mode="OUT" optional="true" />
     </service>
 
-    <service name="generateExamQuestions" engine="java" location="com.sphinx.services.ExamTopicServices" invoke="generateExamQuestions">
+    <service name="generateExamQuestions" engine="java" location="com.sphinx.services.ExamTopicServices" invoke="generateExamQuestions" auth="false">
         <attribute name="examId" type="String" mode="IN"/>
     </service>
 
-    <service name="launchExam" engine="java" location="com.sphinx.services.ExamTopicServices" invoke="launchExam">
+    <service name="launchExam" engine="java" location="com.sphinx.services.ExamTopicServices" invoke="launchExam" auth="false">
         <attribute name="examId" type="String" mode="IN"/>
     </service>
     <!-- Exam topic services end -->
@@ -183,7 +183,8 @@
     <attribute name="answersMust" mode="IN" type="String" optional="true"/>
     <attribute name="allowNegativeMarks" mode="IN" type="String" optional="true"/>
     <attribute name="negativeMarkValue" mode="IN" type="String" optional="true"/>
-    </service>
+
+  </service>
 
     <service name="deleteExam" engine="entity-auto" invoke="delete" default-entity-name="ExamMaster">
         <attribute name="examId" type="String" mode="IN"/>
