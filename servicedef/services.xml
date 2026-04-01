@@ -195,11 +195,36 @@
     
     </service>
     
+
     <service name="getExamById" engine="java"  location="in.vastpro.sphinx.ExamServices"  invoke="getExamById" auth="true" export="true">
     <attribute name="examId" type="String" mode="IN" optional="false"/>
     <attribute name="exam" type="GenericValue" mode="OUT"/>
 
 </service>
+
+    <service  name="createPartyExamRelationshipInterface" engine="interface">
+    	<attribute name="partyId" mode="IN" type="String" optional="false" />
+    	<attribute name="examId" mode="IN" type="String" optional="false" />
+    	<attribute name="allowedAttempts" mode="IN" type="Long" optional="false" />
+    	<attribute name="noOfAttempts" mode="IN" type="Long" optional="false" />
+    	<attribute name="timeoutDays" mode="IN" type="Long" optional="false" />
+    	<attribute name="fromDate" mode="IN" type="Timestamp" optional="true" />
+    	<attribute name="thruDate" mode="IN" type="Timestamp" optional="true" />
+    </service>
+   
+   <service name="createPartyExamRelationshipWrapper" engine="java" location="com.sphinx.services.ExamServices" invoke="assignUserToExam" auth="false">
+    	<implements service="createPartyExamRelationshipInterface"/>
+    </service>
+    
+    <service name="createPartyExamRelationship" engine="entity-auto" default-entity-name="PartyExamRelationship" invoke="create" auth="false">
+    	<implements service="createPartyExamRelationshipInterface"/>
+    </service>
+    
+    <service name="getAllUsers" engine="java" location="com.sphinx.services.UserServices"  invoke="getAllUsers" auth="false">
+    	<attribute name="users" mode="OUT" type="List"></attribute>
+    </service>
+    
+
     <!-- Exam service ended  -->
     
     

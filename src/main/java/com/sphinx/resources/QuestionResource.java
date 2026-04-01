@@ -153,15 +153,15 @@ public class QuestionResource {
 			String topicId = topicIdStr.split("=")[1];
 
 			if (topicId == null) {
-				return Response.status(400).entity(ServiceUtil.returnError("Invalid topic Id")).build();
+				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError("Invalid topic Id")).build();
 			}
 
 			Map<String, Object> result = getDispatcher().runSync("getAllQuestionByTopic", UtilMisc.toMap("topicId", topicId));
-			return Response.status(200).entity(result).build();
+			return Response.status(Response.Status.OK).entity(result).build();
 
 		} catch (GenericServiceException e) {
 			Debug.logError(e, MODULE);
-			return Response.serverError().entity(ServiceUtil.returnError(e.getMessage())).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 
@@ -171,11 +171,11 @@ public class QuestionResource {
 	public Response getAllQuestionTypes() {
 		try {
 			Map<String, Object> result = getDispatcher().runSync("getAllQuestionTypes", UtilMisc.toMap());
-			return Response.status(200).entity(result).build();
+			return Response.status(Response.Status.OK).entity(result).build();
 
 		} catch (GenericServiceException e) {
 			Debug.logError(e, MODULE);
-			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 
@@ -188,19 +188,19 @@ public class QuestionResource {
 		String errorMsg = validateQuestionData(input);
 
 		if (errorMsg != null) {
-			return Response.status(400).entity(ServiceUtil.returnError(errorMsg)).build();
+			return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError(errorMsg)).build();
 		}
 
 		Map<String, Object> result;
 		try {
 			result = getDispatcher().runSync("updateQuestion", input);
 			if (result.get("responseMessage") != null && result.get("responseMessage").equals("error")) {
-				return Response.status(400).entity(result).build();
+				return Response.status(Response.Status.BAD_REQUEST).entity(result).build();
 			}
-			return Response.status(201).entity(result).build();
+			return Response.status(Response.Status.CREATED).entity(result).build();
 		} catch (GenericServiceException e) {
 			Debug.logError(e, MODULE);
-			return Response.serverError().entity(ServiceUtil.returnError(e.getMessage())).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 
 	}
@@ -213,19 +213,19 @@ public class QuestionResource {
 		String qId = (String) input.get("questionId");
 
 		if (UtilValidate.isEmpty(qId)) {
-			return Response.status(400).entity(ServiceUtil.returnError("Question Id is required")).build();
+			return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError("Question Id is required")).build();
 		}
 
 		Map<String, Object> result;
 		try {
 			result = getDispatcher().runSync("deleteQuestion", input);
 			if (result.get("responseMessage") != null && result.get("responseMessage").equals("error")) {
-				return Response.status(400).entity(result).build();
+				return Response.status(Response.Status.BAD_REQUEST).entity(result).build();
 			}
-			return Response.status(200).entity(result).build();
+			return Response.status(Response.Status.OK).entity(result).build();
 		} catch (GenericServiceException e) {
 			Debug.logError(e, MODULE);
-			return Response.serverError().entity(ServiceUtil.returnError(e.getMessage())).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 
 	}
@@ -248,21 +248,21 @@ public class QuestionResource {
 			String errorMsg = validateQuestionData(input);
 
 			if (errorMsg != null) {
-				return Response.status(400).entity(ServiceUtil.returnError(errorMsg)).build();
+				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError(errorMsg)).build();
 			}
 
 			Map<String, Object> result = getDispatcher().runSync("createQuestion", input);
 			if (result.get("responseMessage") != null && result.get("responseMessage").equals("error")) {
-				return Response.status(400).entity(result).build();
+				return Response.status(Response.Status.BAD_REQUEST).entity(result).build();
 			}
 			else {
 				result.put("successMessage", "Question added successfully!");
 			}
-			return Response.status(201).entity(result).build();
+			return Response.status(Response.Status.CREATED).entity(result).build();
 
 		} catch (GenericServiceException e) {
 			Debug.logError(e, MODULE);
-			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 
@@ -317,13 +317,14 @@ public class QuestionResource {
 			filePart = request.getPart("file");
 
 			if (filePart == null) {
-				return Response.status(400).entity(ServiceUtil.returnError("File was not found on Request!")).build();
+				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError("File was not found on Request!"))
+								.build();
 			}
 
 			String fileName = filePart.getSubmittedFileName();
 
 			if (!fileName.endsWith(".xlsx")) {
-				return Response.status(400).entity(ServiceUtil.returnError("Only Excel file are allowed!")).build();
+				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError("Only Excel file are allowed!")).build();
 			}
 
 			byte[] bytes = filePart.getInputStream().readAllBytes();
@@ -333,7 +334,8 @@ public class QuestionResource {
 			System.out.println("Uploaded: " + fileName);
 
 		} catch (IOException | ServletException e) {
-			return Response.status(500).entity(ServiceUtil.returnError("Unexpected error occured, try again after sometime!")).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+							.entity(ServiceUtil.returnError("Unexpected error occured, try again after sometime!")).build();
 		}
 
 
@@ -343,17 +345,18 @@ public class QuestionResource {
 		try {
 			Map<String, Object> result = dispatcher.runSync("uploadBulkQuestion", UtilMisc.toMap("file", buffer));
 			if (result.get("responseMessage") != null && result.get("responseMessage").equals("error")) {
-				return Response.status(400).entity(result).build();
+				return Response.status(Response.Status.BAD_REQUEST).entity(result).build();
 			}
 			else {
 				result.put("successMessage", "Questions uploaded successfully!");
 			}
 
-			return Response.status(201).entity(result).build();
+			return Response.status(Response.Status.CREATED).entity(result).build();
 
 		} catch (GenericServiceException e) {
 			Debug.logError(e, MODULE);
-			return Response.status(500).entity(ServiceUtil.returnError("Unexpected error occured, try again after sometime!")).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+							.entity(ServiceUtil.returnError("Unexpected error occured, try again after sometime!")).build();
 		}
 
 	}

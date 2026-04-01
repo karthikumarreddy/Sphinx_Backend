@@ -319,4 +319,30 @@ public class ExamResource {
 			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
+
+	// launch th exam
+	@POST
+	@Path("/assignUser")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response assignUser(@Context HttpServletRequest request) {
+		try {
+			Map<String, Object> result = getDispatcher().runSync("createPartyExamRelationshipWrapper", UtilMisc.toMap("partyId",
+							request.getAttribute("partyId"),
+							"examId", request.getAttribute("examId"), "allowedAttempts",
+							request.getAttribute("allowedAttempts"), "noOfAttempts", request.getAttribute("noOfAttempts"), "timeoutDays",
+							request.getAttribute("timeoutDays"), "fromDate", request.getAttribute("fromDate"), "thruDate",
+							request.getAttribute("thruDate")));
+
+			if (result.containsKey("responseMessage") && result.get("responseMessage").equals("success")) {
+				result.put("successMessage", "User Assigned to the Exam!");
+				return Response.status(Response.Status.CREATED).entity(result).build();
+			} else {
+				return Response.status(Response.Status.BAD_REQUEST).entity(result).build();
+			}
+
+		} catch (Exception e) {
+			Debug.logError(e, MODULE);
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ServiceUtil.returnError(e.getMessage())).build();
+		}
+	}
 }
