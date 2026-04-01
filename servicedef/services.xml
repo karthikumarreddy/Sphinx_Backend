@@ -57,19 +57,18 @@
    	</service>
    	
    	<service name="createPartyContactMech" engine="entity-auto" default-entity-name="PartyContactMech" invoke="create" auth="false">
-   		<attribute name="partyId" mode="IN" type="" optional="false" />
+   		<attribute name="partyId" mode="IN" type="String" optional="false" />
    		<attribute name="contactMechId" mode="IN" type="String" optional="false" />
-   		<attribute name="fromDate" mode="IN" type="java.sql.Timestamp" optional="false" />
+   		<attribute name="fromDate" mode="IN" type="Timestamp" optional="false" />
    	</service>
    	
     
     <service name="signupUser" engine="java" location="com.sphinx.services.UserServices" invoke="signupUser">
-        <attribute name="userName" mode="IN" type="String" />
+        <attribute name="userName" mode="IN" type="String" optional="true"/>
         <attribute name="firstName" mode="IN" type="String" />
         <attribute name="lastName" mode="IN" type="String" />
-        <attribute name="mobileNo" mode="IN" type="String" />
         <attribute name="email" mode="IN" type="String" />
-        <attribute name="password" mode="IN" type="String" />
+        <attribute name="password" mode="IN" type="String" optional="true" />
         <attribute name="role" mode="IN" type="String" />
     </service>
 
@@ -179,6 +178,10 @@
     <attribute name="noOfQuestions" mode="IN" type="String" optional="false"/>
     <attribute name="duration" mode="IN" type="String" optional="false"/>
     <attribute name="passPercentage" mode="IN" type="String" optional="false"/>
+    <attribute name="questionsRandomized" mode="IN" type="String" optional="true"/>
+    <attribute name="answersMust" mode="IN" type="String" optional="true"/>
+    <attribute name="allowNegativeMarks" mode="IN" type="String" optional="true"/>
+    <attribute name="negativeMarkValue" mode="IN" type="String" optional="true"/>
     </service>
 
     <service name="deleteExam" engine="entity-auto" invoke="delete" default-entity-name="ExamMaster">

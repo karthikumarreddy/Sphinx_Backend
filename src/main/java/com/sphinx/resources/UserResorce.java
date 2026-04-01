@@ -25,7 +25,7 @@ import org.apache.ofbiz.service.ServiceUtil;
 @Path("/auth")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public class LoginResource {
+public class UserResorce {
 
 	@Context
 	private HttpServletRequest request;
@@ -109,76 +109,21 @@ public class LoginResource {
 			String userName = (String) request.getAttribute("userName");
 			String firstName = (String) request.getAttribute("firstName");
 			String lastName = (String) request.getAttribute("lastName");
-			String mobileNo = (String) request.getAttribute("mobileNo");
 			String email = (String) request.getAttribute("email");
 			String password = (String) request.getAttribute("password");
 			String role = (String) request.getAttribute("role");
-			
-			Map<String,Object> input=new HashMap<String, Object>();
-			input.put("userName", userName);
-			input.put("firstName", firstName);
-			input.put("lastName", lastName);
-			input.put("mobileNo", mobileNo);
-			input.put("email",email);
-			input.put("password", password);
-			input.put("role", role);
-			
-			if (input == null)
-				return Response.status(400).entity(Map.of("error", "Request body is missing .")).build();
 
-			if (userName == null || firstName == null || lastName == null || mobileNo == null || email == null
-					|| password == null || role == null)
-				return Response.status(400)
-						.entity(Map.of("error", "All fields are required. Please ensure no fields are left empty."))
-						.build();
-
-			if (!Pattern.matches("^[a-zA-Z0-9]{4,20}$", userName))
-				return Response.status(400).entity(Map.of("error",
-						"Invalid username. \n It must be 4–20 characters long \n and contain only letters and numbers."))
-						.build();
-
-			Delegator delegator = getDelegator();
-			GenericValue user = delegator.findOne("UserLogin", true, UtilMisc.toMap("userLoginId", userName));
-
-			if (user != null)
-				return Response.status(409).entity(
-						Map.of("error", "This username is already taken. \n Please choose a different username."))
-						.build();
-
-			if (!Pattern.matches("^[A-Za-z ]{2,20}$", firstName))
-				return Response.status(400)
-						.entity(Map.of("error",
-								"Invalid first name. \n It must be 2–20 characters \n and contain only letters."))
-						.build();
-
-			if (!Pattern.matches("^[A-Za-z ]{1,20}$", lastName))
-				return Response.status(400).entity(Map.of("error", "Invalid last name. ")).build();
-
-			if (!Pattern.matches("^[6-9]\\d{9}$", mobileNo))
-				return Response.status(400)
-						.entity(Map.of("error",
-								"Invalid mobile number. \n Please enter a valid 10-digit Indian mobile number."))
-						.build();
-
-			if (!Pattern.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$", email))
-				return Response.status(400)
-						.entity(Map.of("error", "Invalid email address. \n Please provide a valid email.")).build();
-
-			if (!Pattern.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$", password))
-				return Response.status(400).entity(Map.of("error",
-						"Password must be at least 8 characters \n and include uppercase, lowercase, a number, and a special character (@$!%*?&)."))
-						.build();
-
-			if (!role.equals("admin") && !role.equals("user"))
-				return Response.status(400)
-						.entity(Map.of("error", "Invalid role. Accepted values are 'admin' or 'user'.")).build();
 
 			LocalDispatcher dispatcher = getDispatcher();
-			Map<String, Object> result = dispatcher.runSync("signupUser", input);
-			return Response.status(201).entity(result).build();
+			Map<String, Object> result = dispatcher.runSync("signupUser", UtilMisc.toMap("userName", userName, "firstName", firstName,
+							"lastName", lastName, "email", email, "password", password, "role", role));
+			if (result.containsKey("responseMessage") && "error".equalsIgnoreCase((String) result.get("responseMessage"))) {
+				return Response.status(Response.Status.BAD_REQUEST).entity(result).build();
+			}
+			return Response.status(Response.Status.CREATED).entity(result).build();
 
 		} catch (Exception e) {
-			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 }
