@@ -161,4 +161,55 @@
 			<key-map field-name="examId" rel-field-name="examId" />
 		</relation>
 	</entity>
+	
+	
+	<entity entity-name="PartyExamRelationship" package-name="com.sphinx">
+		<field name="partyId" type="id"></field>
+		<field name="examId" type="id"></field>
+		<field name="allowedAttempts" type="numeric" not-null="true"/>
+		<field name="noOfAttempts" type="numeric" not-null="true"></field>
+		<field name="lastPerformanceDate" type="date-time"></field>
+		<field name="certificatePrinted" type="numeric"/>
+		<field name="timeoutDays" type="numeric" not-null="true"></field>
+		<field name="passwordChangesAuto" type="numeric"></field>
+		<field name="canSplitExams" type="numeric"/>
+		<field name="canSeeDetailedResults" type="numeric"></field>
+		<field name="maxSplitAttempts" type="numeric"></field>
+		<!-- A party can take th exam only within these stipulated dates -->
+		<field name="fromDate" type="date-time"></field>
+		<field name="thruDate" type="date-time"></field>
+		<prim-key field="partyId" />
+		<prim-key field="examId" />
+		<relation rel-entity-name="Party" fk-name="USER_EXAM_UID_FK" type="many">
+			<key-map field-name="partyId" rel-field-name="partyId" />
+		</relation>	
+		<relation rel-entity-name="ExamMaster" fk-name="USER_EXAM_EID_FK" type="many">
+			<key-map field-name="examId" rel-field-name="examid" />
+		</relation>			
+    </entity>
+    
+    
+    <view-entity entity-name="PartyPersonalInfo" package-name="com.sphinx">
+        <member-entity entity-alias="PY" entity-name="Party"/>
+        <member-entity entity-alias="PN" entity-name="Person"/>
+        <member-entity entity-alias="PR" entity-name="PartyRole"/>
+        
+        <alias entity-alias="PR" name="roleTypeId"/>
+        <alias entity-alias="PY" name="partyId"/>
+        <alias entity-alias="PY" name="partyTypeId"/>
+        <alias entity-alias="PY" name="statusId"/>
+        <alias entity-alias="PN" name="firstName"/>
+        <alias entity-alias="PN" name="lastName"/> 
+        
+        <view-link entity-alias="PY" rel-entity-alias="PN">
+            <key-map field-name="partyId"/>
+        </view-link>
+        
+        <view-link entity-alias="PY" rel-entity-alias="PR">
+            <key-map field-name="partyId"/>
+        </view-link>
+       
+ 
+    </view-entity>
+    
 </entitymodel>

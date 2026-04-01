@@ -13,6 +13,7 @@ import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.transaction.GenericTransactionException;
 import org.apache.ofbiz.entity.transaction.TransactionUtil;
+import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
@@ -30,6 +31,30 @@ public class UserServices {
 	private static final String ROLE_SPHINX_USER = "SphinxUser";
 	private static final String PARTY_STATUS_ENABLED = "PARTY_ENABLED";
 	private static final int USER_PASSWORD_LEN = 6;
+
+	public static Map<String, ? extends Object> getAllUsers(DispatchContext dctx, Map<String, ? extends Object> context) {
+
+		Delegator delegator = dctx.getDelegator();
+
+		if (delegator == null) {
+			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+		}
+
+		try {
+			List<GenericValue> users = EntityQuery.use(delegator).from("PartyPersonalInfo")
+							.where("partyTypeId", "PERSON", "statusId", "PARTY_ENABLED", "roleTypeId", "SphinxUser").queryList();
+
+			Map<String, Object> result = ServiceUtil.returnSuccess("List of User");
+			result.put("users", users);
+			return result;
+
+		} catch (GenericEntityException e) {
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+		}
+
+
+	}
 
 	public static Map<String, ? extends Object> loginUser(DispatchContext dctx, Map<String, ? extends Object> context) {
 		Delegator delegator = dctx.getDelegator();

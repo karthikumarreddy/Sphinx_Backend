@@ -1,5 +1,6 @@
 package com.sphinx.resources;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -7,6 +8,7 @@ import java.util.regex.Pattern;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -18,6 +20,7 @@ import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.DelegatorFactory;
 import org.apache.ofbiz.entity.GenericValue;
+import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceContainer;
 import org.apache.ofbiz.service.ServiceUtil;
@@ -47,6 +50,26 @@ public class UserResorce {
 			dispatcher = ServiceContainer.getLocalDispatcher("Sphinx", getDelegator());
 		}
 		return dispatcher;
+	}
+
+	@GET
+	@Path("/getAllUsers")
+	public Response getAllUsers(@Context HttpServletRequest request) {
+
+		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+		if (dispatcher == null)
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+							.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after sometime!")).build();
+		else
+			try {
+
+				Map<String, Object> result = dispatcher.runSync("getAllUsers", Collections.emptyMap());
+				return Response.status(Response.Status.OK).entity(result).build();
+			} catch (GenericServiceException e) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+								.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after sometime!")).build();
+			}
 	}
 
 	@POST

@@ -117,7 +117,7 @@
     <!-- ====================================================================== -->
     
     
-    <service name="addExamTopics" default-entity-name="ExamTopicDetails" engine="entity-auto" invoke="create" auth="true">
+    <service name="addExamTopics" default-entity-name="ExamTopicDetails" engine="entity-auto" invoke="create" auth="false">
 
         <auto-attributes include="pk" mode="IN" optional="false"/>
         <auto-attributes include="nonpk" mode="IN" optional="true"/>
@@ -193,6 +193,29 @@
     <attribute name="examList" type="List" mode="OUT" optional="false" />
     
     </service>
+    
+    <service  name="createPartyExamRelationshipInterface" engine="interface">
+    	<attribute name="partyId" mode="IN" type="String" optional="false" />
+    	<attribute name="examId" mode="IN" type="String" optional="false" />
+    	<attribute name="allowedAttempts" mode="IN" type="Long" optional="false" />
+    	<attribute name="noOfAttempts" mode="IN" type="Long" optional="false" />
+    	<attribute name="timeoutDays" mode="IN" type="Long" optional="false" />
+    	<attribute name="fromDate" mode="IN" type="Timestamp" optional="true" />
+    	<attribute name="thruDate" mode="IN" type="Timestamp" optional="true" />
+    </service>
+   
+   <service name="createPartyExamRelationshipWrapper" engine="java" location="com.sphinx.services.ExamServices" invoke="assignUserToExam" auth="false">
+    	<implements service="createPartyExamRelationshipInterface"/>
+    </service>
+    
+    <service name="createPartyExamRelationship" engine="entity-auto" default-entity-name="PartyExamRelationship" invoke="create" auth="false">
+    	<implements service="createPartyExamRelationshipInterface"/>
+    </service>
+    
+    <service name="getAllUsers" engine="java" location="com.sphinx.services.UserServices"  invoke="getAllUsers" auth="false">
+    	<attribute name="users" mode="OUT" type="List"></attribute>
+    </service>
+    
     <!-- Exam service ended  -->
     
     
