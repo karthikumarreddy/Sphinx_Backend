@@ -64,19 +64,20 @@
 		</relation>
 	</entity>
 	
+
 	 <entity entity-name="QuestionBankMasterB" package-name="">
-		<field name="examId" type="id-ne"></field>
-		<field name="qId" type="numeric"></field>
-		<field name="topicId" type="numeric" not-null="true"/>
+		<field name="examId" type="id"></field>
+		<field name="qId" type="id"></field>
+		<field name="topicId" type="id" not-null="true"/>
 		<field name="questionDetail" type="very-long" not-null="true"></field>
 		<field name="optionA" type="very-long" not-null="true"></field>
 		<field name="optionB" type="very-long" not-null="true"/>
 		<field name="optionC" type="very-long" not-null="true"></field>
 		<field name="optionD" type="very-long" not-null="true"></field>
 		<field name="optionE" type="very-long" not-null="true"></field>
-		<field name="answer" type="id-ne" not-null="true"></field>
+		<field name="answer" type="id" not-null="true"></field>
 		<field name="numAnswers" type="numeric" not-null="true"/>
-		<field name="questiontype" type="numeric" not-null="true"></field>
+		<field name="questiontype" type="name" not-null="true"></field>
 		<field name="difficultyLevel" type="numeric"></field>
 		<field name="answerValue" type="currency-amount"/>
 		<field name="negativeMarkValue" type="currency-amount"></field>			
@@ -88,18 +89,18 @@
     </entity>
     
     <entity entity-name="QuestionBankMaster" package-name="">
-		<field name="examId" type="id-ne"></field>
-		<field name="qId" type="numeric"></field>
-		<field name="topicId" type="numeric" not-null="true"/>
+		<field name="examId" type="id"/>
+		<field name="qId" type="id"></field>
+		<field name="topicId" type="id" not-null="true"/>
 		<field name="questionDetail" type="very-long" not-null="true"></field>
 		<field name="optionA" type="very-long" not-null="true"></field>
 		<field name="optionB" type="very-long" not-null="true"/>
 		<field name="optionC" type="very-long" not-null="true"></field>
 		<field name="optionD" type="very-long" not-null="true"></field>
 		<field name="optionE" type="very-long" not-null="true"></field>
-		<field name="answer" type="id-ne" not-null="true"></field>
+		<field name="answer" type="id" not-null="true"></field>
 		<field name="numAnswers" type="numeric" not-null="true"/>
-		<field name="questionType" type="numeric" not-null="true"></field>
+		<field name="questionType" type="name" not-null="true"></field>
 		<field name="difficultyLevel" type="numeric"></field>
 		<field name="answerValue" type="currency-amount"/>
 		<field name="negativeMarkValue" type="currency-amount"></field>		
@@ -152,8 +153,8 @@
 
 	<entity entity-name="ExamSetupDetails"
 		package-name="">
-		<field name="examId" type="id-ne"></field>
-		<field name="setupType" type="id-ne" not-null="true"></field>
+		<field name="examId" type="id"></field>
+		<field name="setupType" type="id" not-null="true"></field>
 		<field name="setupDetails" type="very-long" not-null="true"></field>
 		<prim-key field="examId" />
 		<relation rel-entity-name="ExamMaster"
@@ -161,4 +162,6 @@
 			<key-map field-name="examId" rel-field-name="examId" />
 		</relation>
 	</entity>
+	
+
 </entitymodel>

@@ -1,5 +1,6 @@
 package com.sphinx.services;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -13,8 +14,6 @@ import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
 import com.sphinx.util.ApiResponse;
-
-import clojure.lang.RT;
 
 public class ExamTopicServices {
 	private static final String MODULE = ExamTopicServices.class.getName();
@@ -58,110 +57,131 @@ public class ExamTopicServices {
 	}
 
 	public static Map<String, ? extends Object> generateExamQuestions(DispatchContext dctx,
-			Map<String, ? extends Object> context) {
-		try {
-			Delegator delegator = dctx.getDelegator();
-			String examId = (String) context.get("examId");
+	        Map<String, ? extends Object> context) {
+	    try {
+	        Delegator delegator = dctx.getDelegator();
+	        String examId = (String) context.get("examId");
 
-			if (examId == null || examId.trim().isEmpty()) {
-				return ApiResponse.response(false, 400, "examId is required", null);
-			}
+	        if (examId == null || examId.trim().isEmpty()) {
+	            return ApiResponse.response(false, 400, "examId is required", null);
+	        }
 
-			GenericValue exam = delegator.findOne("ExamMaster", false, UtilMisc.toMap("examId", examId));
-			if (exam == null) {
-				return ApiResponse.response(false, 404, "Exam not found", null);
-			}
+	        // 1. Fetch exam
+	        GenericValue exam = delegator.findOne("ExamMaster", false, UtilMisc.toMap("examId", examId));
+	        if (exam == null) {
+	            return ApiResponse.response(false, 404, "Exam not found", null);
+	        }
 
-			Object setupProper = exam.get("examSetupProper");
-			if (setupProper != null && ((Long) setupProper).intValue() == 1) {
-				return ApiResponse.response(false, 400, "Exam already launched. Cannot regenerate questions", null);
-			}
+	        // 2. Check if already launched
+	        Long setupProper = exam.getLong("examSetupProper");
+	        if (setupProper != null && setupProper == 1) {
+	            return ApiResponse.response(false, 400, "Exam already launched. Cannot regenerate questions", null);
+	        }
 
-			if (exam.get("noOfQuestions") == null) {
-				return ApiResponse.response(false, 400, "Exam has no question count set", null);
-			}
-			int totalQuestions = ((Long) exam.get("noOfQuestions")).intValue();
-			if (totalQuestions <= 0) {
-				return ApiResponse.response(false, 400, "Exam question count must be greater than 0", null);
-			}
+	        // 3. Validate question count
+	        if (exam.get("noOfQuestions") == null) {
+	            return ApiResponse.response(false, 400, "Exam has no question count set", null);
+	        }
+	        int totalQuestions = exam.getLong("noOfQuestions").intValue();
+	        if (totalQuestions <= 0) {
+	            return ApiResponse.response(false, 400, "Exam question count must be greater than 0", null);
+	        }
 
-			List<GenericValue> topics = delegator.findByAnd("ExamTopicDetails", UtilMisc.toMap("examId", examId), null,
-					false);
-			if (topics == null || topics.isEmpty()) {
-				return ApiResponse.response(false, 400, "No topics found. Add topics before generating questions",
-						null);
-			}
+	        // 4. Fetch topics for this exam
+	        List<GenericValue> topics = delegator.findByAnd("ExamTopicDetails",
+	                UtilMisc.toMap("examId", examId), null, false);
+	        if (topics == null || topics.isEmpty()) {
+	            return ApiResponse.response(false, 400, "No topics found. Add topics before generating questions", null);
+	        }
 
-			int totalPercentage = 0;
-			for (GenericValue topic : topics) {
-				if (topic.get("percentage") == null) {
-					return ApiResponse.response(false, 400,
-							"Topic " + topic.getString("topicId") + " has no percentage set", null);
-				}
-				totalPercentage += ((Long) topic.get("percentage")).intValue();
-			}
-			if (totalPercentage != 100) {
-				return ApiResponse.response(false, 400,
-						"Topic percentages must add up to 100. Current total: " + totalPercentage, null);
-			}
+	        // 5. Validate percentages sum to 100
+	        int totalPercentage = 0;
+	        for (GenericValue topic : topics) {
+	            if (topic.get("percentage") == null) {
+	                return ApiResponse.response(false, 400,
+	                        "Topic " + topic.getString("topicId") + " has no percentage set", null);
+	            }
+	            totalPercentage += topic.getLong("percentage").intValue();
+	        }
+	        if (totalPercentage != 100) {
+	            return ApiResponse.response(false, 400,
+	                    "Topic percentages must add up to 100. Current total: " + totalPercentage, null);
+	        }
 
-			delegator.removeByCondition("QuestionBankMasterB", EntityCondition.makeCondition("examId", examId));
+	        // 6. Clear existing generated questions for this exam
+	        delegator.removeByCondition("QuestionBankMasterB",
+	                EntityCondition.makeCondition("examId", examId));
 
-			int totalSaved = 0;
+	        // 7. Resolve shuffle flag once, outside the loop
+	        Long questionsRandomized = exam.getLong("questionsRandomized");
+	        boolean shouldShuffle = questionsRandomized != null && questionsRandomized == 1;
 
-			for (GenericValue topic : topics) {
-				String topicId = topic.getString("topicId");
-				int percentage = ((Long) topic.get("percentage")).intValue();
-				int questionCount = (totalQuestions * percentage) / 100;
+	        int totalSaved = 0;
 
-				if (questionCount <= 0) {
-					return ApiResponse.response(false, 400,
-							"Topic " + topicId + " percentage too low — results in 0 questions", null);
-				}
+	        // 8. For each topic, fetch questions from QuestionMaster and copy to QuestionBankMasterB
+	        for (GenericValue topic : topics) {
+	            String topicId = topic.getString("topicId");
+	            int percentage = topic.getLong("percentage").intValue();
+	            int questionCount = (totalQuestions * percentage) / 100;
 
-				EntityCondition condition = EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId);
+	            if (questionCount <= 0) {
+	                return ApiResponse.response(false, 400,
+	                        "Topic " + topicId + " percentage too low — results in 0 questions", null);
+	            }
 
-				List<GenericValue> questions = EntityQuery.use(delegator).from("QuestionMaster").where(condition)
-						.orderBy("RANDOM()").limit(questionCount).queryList();
+	            EntityCondition condition = EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId);
+	            List<GenericValue> questions = EntityQuery.use(delegator)
+	                    .from("QuestionMaster")
+	                    .where(condition)
+	                    .limit(questionCount)
+	                    .queryList();
 
-				if (questions == null || questions.isEmpty()) {
-					return ApiResponse.response(false, 400, "No questions found for topic: " + topicId, null);
-				}
-				if (questions.size() < questionCount) {
-					return ApiResponse.response(false, 400, "Topic " + topicId + " needs " + questionCount
-							+ " questions but only " + questions.size() + " available", null);
-				}
-				for (GenericValue q : questions) {
+	            // 9. Validate before shuffle
+	            if (questions == null || questions.isEmpty()) {
+	                return ApiResponse.response(false, 400, "No questions found for topic: " + topicId, null);
+	            }
+	            if (questions.size() < questionCount) {
+	                return ApiResponse.response(false, 400, "Topic " + topicId + " needs " + questionCount
+	                        + " questions but only " + questions.size() + " available", null);
+	            }
 
-					Long newQid = Long.parseLong(delegator.getNextSeqId("QuestionBankMasterB"));
-					GenericValue draft = delegator.makeValue("QuestionBankMasterB");
-					draft.set("examId", examId);
-					draft.set("qId", newQid);
-					draft.set("topicId", q.get("topicId"));
-					draft.set("questionDetail", q.get("questionDetail"));
-					draft.set("optionA", q.get("optionA"));
-					draft.set("optionB", q.get("optionB"));
-					draft.set("optionC", q.get("optionC"));
-					draft.set("optionD", q.get("optionD"));
-					draft.set("optionE", q.get("optionE"));
-					draft.set("answer", q.get("answer"));
-					draft.set("numAnswers", q.get("numAnswers"));
-					draft.set("questiontype", q.get("questionType"));
-					draft.set("difficultyLevel", q.get("difficultyLevel"));
-					draft.set("answerValue", q.get("answerValue"));
-					draft.set("negativeMarkValue", exam.get("negativeMarkValue"));
+	            // 10. Shuffle after validation if flag is set
+	            if (shouldShuffle) {
+	                Collections.shuffle(questions);
+	            }
 
-					delegator.create(draft);
-					totalSaved++;
-				}
-			}
+	            // 11. Copy each question into QuestionBankMasterB
+	            for (GenericValue q : questions) {
+	                String newQid = delegator.getNextSeqId("QuestionBankMasterB");
+	                GenericValue draft = delegator.makeValue("QuestionBankMasterB");
 
-			return ApiResponse.response(true, 200, "Questions generated successfully. Total saved: " + totalSaved,
-					null);
+	                draft.set("qId", newQid);
+	                draft.set("examId", examId);
+	                draft.set("topicId", q.get("topicId"));
+	                draft.set("questionDetail", q.get("questionDetail"));
+	                draft.set("optionA", q.get("optionA"));
+	                draft.set("optionB", q.get("optionB"));
+	                draft.set("optionC", q.get("optionC"));
+	                draft.set("optionD", q.get("optionD"));
+	                draft.set("optionE", q.get("optionE"));
+	                draft.set("answer", q.get("answer"));
+	                draft.set("numAnswers", q.get("numAnswers"));
+	                draft.set("questionType", q.get("questionType")); // fixed casing
+	                draft.set("difficultyLevel", q.get("difficultyLevel"));
+	                draft.set("answerValue", q.get("answerValue"));
+	                draft.set("negativeMarkValue", exam.get("negativeMarkValue"));
 
-		} catch (Exception e) {
-			return ApiResponse.response(false, 500, "Something went wrong: " + e.getMessage(), null);
-		}
+	                delegator.create(draft);
+	                totalSaved++;
+	            }
+	        }
+
+	        return ApiResponse.response(true, 200,
+	                "Questions generated successfully. Total saved: " + totalSaved, null);
+
+	    } catch (Exception e) {
+	        return ApiResponse.response(false, 500, "Something went wrong: " + e.getMessage(), null);
+	    }
 	}
 
 	public static Map<String, ? extends Object> launchExam(DispatchContext dctx,

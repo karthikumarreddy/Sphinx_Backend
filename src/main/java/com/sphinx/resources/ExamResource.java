@@ -99,6 +99,7 @@ public class ExamResource {
 		map.put("userLoginId", (String) request.getAttribute("userLoginId"));
 
 		String error = validateExam(map);
+		if(map.)
 		if (error != null) {
 			return Response.status(400).entity(ServiceUtil.returnError(error)).build();
 		}
