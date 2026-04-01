@@ -79,6 +79,25 @@ public class ExamResource {
 			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
+	
+	@GET
+	@Path("/getbyid")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getExamById(@Context HttpServletRequest request) {
+		try {
+			if(request.getAttribute("examId") == null || request.getAttribute("examId").toString().isEmpty()) {
+				return Response.status(400).entity(ServiceUtil.returnError("Input is empty")).build();
+			}
+			Map<String,Object> input=new HashMap<String, Object>();
+			input.put("examId", request.getAttribute("examId"));
+			Map<String,Object> result=getDispatcher().runSync("getExamById",input );
+			return Response.status(200).entity(result).build();
+		}catch (Exception e) {
+			return Response.status(400).entity(ServiceUtil.returnError("Something went wrong try again later")).build();
+
+		}
+	}
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)

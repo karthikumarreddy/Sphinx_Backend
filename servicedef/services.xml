@@ -194,6 +194,12 @@
     <attribute name="examList" type="List" mode="OUT" optional="false" />
     
     </service>
+    
+    <service name="getExamById" engine="java"  location="in.vastpro.sphinx.ExamServices"  invoke="getExamById" auth="true" export="true">
+    <attribute name="examId" type="String" mode="IN" optional="false"/>
+    <attribute name="exam" type="GenericValue" mode="OUT"/>
+
+</service>
     <!-- Exam service ended  -->
     
     

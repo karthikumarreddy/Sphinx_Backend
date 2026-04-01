@@ -251,6 +251,22 @@ public class ExamTopicServices {
 			return ApiResponse.response(false, 500, "Something went wrong: " + e.getMessage(), null);
 		}
 	}
+	
+	public static Map<String, ? extends Object> getExamById(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
+		try {
+			Delegator delegator=dctx.getDelegator();
+			GenericValue exam=delegator.findOne("ExamMaster", false, UtilMisc.toMap("examId",context.get("examId")));
+			if(exam == null || exam.isEmpty()) {
+			 return ServiceUtil.returnError("Exam is not available ");
+			}
+			Map<String,Object>result= ServiceUtil.returnSuccess();
+			result.put("exam", exam);
+		}catch (Exception e) {
+			return ServiceUtil.returnError("Something went wrong try later");
+		}
+		return ServiceUtil.returnError("Exam is not available");
+	}
 
 //	public static Map<String, ? extends Object> addExamTopics(DispatchContext dctx,
 //			Map<String, ? extends Object> context) {
