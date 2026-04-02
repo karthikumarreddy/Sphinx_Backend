@@ -14,8 +14,6 @@ import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
-import com.sphinx.util.ApiResponse;
-
 public class ExamTopicServices {
 	private static final String MODULE = ExamTopicServices.class.getName();
 
@@ -32,7 +30,7 @@ public class ExamTopicServices {
 			result.put("examTopicList", topics);
 			return result;
 		} catch (Exception e) {
-			return ApiResponse.response(false, 500, "Something went wrong try again later", null);
+			return ServiceUtil.returnError("Something went wrong try again later");
 		}
 	}
 
@@ -75,50 +73,47 @@ public class ExamTopicServices {
 			String examId = (String) context.get("examId");
 
 			if (examId == null || examId.trim().isEmpty()) {
-				return ApiResponse.response(false, 400, "examId is required", null);
+				return ServiceUtil.returnError("examId is required");
 			}
 
 			// 1. Fetch exam
 			GenericValue exam = delegator.findOne("ExamMaster", false, UtilMisc.toMap("examId", examId));
 			if (exam == null) {
-				return ApiResponse.response(false, 404, "Exam not found", null);
+				return ServiceUtil.returnError("Exam not found");
 			}
 
 			// 2. Check if already launched
 			Long setupProper = exam.getLong("examSetupProper");
 			if (setupProper != null && setupProper == 1) {
-				return ApiResponse.response(false, 400, "Exam already launched. Cannot regenerate questions", null);
+				return ServiceUtil.returnError("Exam already launched. Cannot regenerate questions");
 			}
 
 			// 3. Validate question count
 			if (exam.get("noOfQuestions") == null) {
-				return ApiResponse.response(false, 400, "Exam has no question count set", null);
+				return ServiceUtil.returnError("Exam has no question count set");
 			}
 			int totalQuestions = exam.getLong("noOfQuestions").intValue();
 			if (totalQuestions <= 0) {
-				return ApiResponse.response(false, 400, "Exam question count must be greater than 0", null);
+				return ServiceUtil.returnError("Exam question count must be greater than 0");
 			}
 
 			// 4. Fetch topics for this exam
 			List<GenericValue> topics = delegator.findByAnd("ExamTopicDetails", UtilMisc.toMap("examId", examId), null,
 					false);
 			if (topics == null || topics.isEmpty()) {
-				return ApiResponse.response(false, 400, "No topics found. Add topics before generating questions",
-						null);
+				return ServiceUtil.returnError("No topics found. Add topics before generating questions");
 			}
 
 			// 5. Validate percentages sum to 100
 			int totalPercentage = 0;
 			for (GenericValue topic : topics) {
 				if (topic.get("percentage") == null) {
-					return ApiResponse.response(false, 400,
-							"Topic " + topic.getString("topicId") + " has no percentage set", null);
+					return ServiceUtil.returnError("Topic " + topic.getString("topicId"));
 				}
 				totalPercentage += topic.getLong("percentage").intValue();
 			}
 			if (totalPercentage != 100) {
-				return ApiResponse.response(false, 400,
-						"Topic percentages must add up to 100. Current total: " + totalPercentage, null);
+				return ServiceUtil.returnError("Topic percentages must add up to 100. Current total: " + totalPercentage);
 			}
 
 			// 6. Clear existing generated questions for this exam
@@ -136,8 +131,7 @@ public class ExamTopicServices {
 				int questionCount = (totalQuestions * percentage) / 100;
 
 				if (questionCount <= 0) {
-					return ApiResponse.response(false, 400,
-							"Topic " + topicId + " percentage too low — results in 0 questions", null);
+					return ServiceUtil.returnError("Topic " + topicId + " percentage too low — results in 0 questions");
 				}
 
 				EntityCondition condition = EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId);
@@ -146,11 +140,11 @@ public class ExamTopicServices {
 
 				// 9. Validate before shuffle
 				if (questions == null || questions.isEmpty()) {
-					return ApiResponse.response(false, 400, "No questions found for topic: " + topicId, null);
+					return ServiceUtil.returnError("No questions found for topic: " );
 				}
 				if (questions.size() < questionCount) {
-					return ApiResponse.response(false, 400, "Topic " + topicId + " needs " + questionCount
-							+ " questions but only " + questions.size() + " available", null);
+					return ServiceUtil.returnError("Topic " + topicId + " needs " + questionCount
+							+ " questions but only " + questions.size() + " available");
 				}
 
 				// 10. Shuffle after validation if flag is set
@@ -183,12 +177,11 @@ public class ExamTopicServices {
 					totalSaved++;
 				}
 			}
+			return ServiceUtil.returnSuccess("Questions generated successfully. Total saved: " + totalSaved );
 
-			return ApiResponse.response(true, 200, "Questions generated successfully. Total saved: " + totalSaved,
-					null);
 
 		} catch (Exception e) {
-			return ApiResponse.response(false, 500, "Something went wrong: " + e.getMessage(), null);
+			return ServiceUtil.returnError("Something went wrong try again later " );
 		}
 	}
 
@@ -199,30 +192,29 @@ public class ExamTopicServices {
 			String examId = (String) context.get("examId");
 
 			if (examId == null || examId.trim().isEmpty()) {
-				return ApiResponse.response(false, 400, "examId is required", null);
+				return ServiceUtil.returnError("examId is required" );
 			}
 
 			GenericValue exam = delegator.findOne("ExamMaster", false, UtilMisc.toMap("examId", examId));
 			if (exam == null) {
-				return ApiResponse.response(false, 404, "Exam not found", null);
+				return ServiceUtil.returnError( "Exam not found" );
 			}
 
 			Object setupProper = exam.get("examSetupProper");
 			if (setupProper != null && ((Long) setupProper).intValue() == 1) {
-				return ApiResponse.response(false, 400, "Exam is already launched", null);
+				return ServiceUtil.returnError("Exam is already launched");
 			}
 
 			List<GenericValue> draftQuestions = delegator.findByAnd("QuestionBankMasterB",
 					UtilMisc.toMap("examId", examId), null, false);
 			if (draftQuestions == null || draftQuestions.isEmpty()) {
-				return ApiResponse.response(false, 400, "No draft questions found. Run generateExamQuestions first",
-						null);
+				return ServiceUtil.returnError("No draft questions found. Run generateExamQuestions first" );
 			}
 
 			int expectedTotal = ((Long) exam.get("noOfQuestions")).intValue();
 			if (draftQuestions.size() != expectedTotal) {
-				return ApiResponse.response(false, 400, "Draft has " + draftQuestions.size()
-						+ " questions but exam expects " + expectedTotal + ". Please regenerate questions", null);
+				return ServiceUtil.returnError("Draft has " + draftQuestions.size()
+				+ " questions but exam expects " + expectedTotal + ". Please regenerate questions");
 			}
 
 			delegator.removeByCondition("QuestionBankMaster", EntityCondition.makeCondition("examId", examId));
@@ -251,12 +243,12 @@ public class ExamTopicServices {
 
 			exam.set("examSetupProper", 1);
 			delegator.store(exam);
+			
+			return ServiceUtil.returnSuccess("Exam launched successfully. " + draftQuestions.size() + " questions ready" );
 
-			return ApiResponse.response(true, 200,
-					"Exam launched successfully. " + draftQuestions.size() + " questions ready", null);
 
 		} catch (Exception e) {
-			return ApiResponse.response(false, 500, "Something went wrong: " + e.getMessage(), null);
+			return ServiceUtil.returnError("Something went wrong try again later ");
 		}
 	}
 

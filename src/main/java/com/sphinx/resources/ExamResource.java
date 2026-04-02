@@ -34,20 +34,15 @@ public class ExamResource {
 	@Context
 	private HttpServletRequest request;
 
-	@Context
-	private ServletContext servletContext;
-
 	private Delegator getDelegator() {
 		Delegator delegator = (Delegator) request.getAttribute("delegator");
 		return delegator;
 	}
 
 	private LocalDispatcher getDispatcher() {
-		LocalDispatcher dispatcher = (LocalDispatcher) servletContext.getAttribute("dispatcher");
-		if (dispatcher == null) {
-			dispatcher = ServiceContainer.getLocalDispatcher("Sphinx", getDelegator());
-		}
+		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 		return dispatcher;
+		
 	}
 
 	private String validateExam(Map<String, String> map) {
