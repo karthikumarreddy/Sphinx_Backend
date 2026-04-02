@@ -167,15 +167,13 @@ public class ExamServices {
 				return ServiceUtil.returnError("Invalid Thru Date!");
 			}
 
-
 			LocalDispatcher dispatcher = dctx.getDispatcher();
 
 			if (dispatcher == null) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
-			
-			return dispatcher.runSync("createPartyExamRelationship", context);
 
+			return dispatcher.runSync("createPartyExamRelationship", context);
 
 		} catch (ClassCastException e) {
 			Debug.logError(e, MODULE);
@@ -184,38 +182,8 @@ public class ExamServices {
 			Debug.logError(e, MODULE);
 			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 		}
-
-
+		
 	}
 
-	// public static Map<String, ? extends Object> updateExam(DispatchContext dctx,
-	// Map<String, ? extends Object> context) {
-	// try {
-	// Delegator delegator = dctx.getDelegator();
-	// GenericValue examMaster = delegator.findOne("ExamMaster", false,
-	// UtilMisc.toMap("examId", context.get("examId")));
-	// examMaster.setNonPKFields(context);
-	// delegator.store(examMaster);
-	// return ApiResponse.response(true, 200, "Exam updated sucessfully", null);
-	//
-	// } catch (Exception e) {
-	// return ApiResponse.response(false, 500, "Something went wrong try later .",
-	// null);
-	// }
-	// }
-	//
-	// public static Map<String, ? extends Object> deleteExam(DispatchContext dctx,
-	// Map<String, ? extends Object> context) {
-	// try {
-	// Delegator delegator = dctx.getDelegator();
-	// GenericValue examMaster = delegator.findOne("ExamMasterf", false,
-	// UtilMisc.toMap("examId", context.get("examId")));
-	// delegator.removeValue(examMaster);
-	//
-	// return ApiResponse.response(true, 200, "Exam deleted sucessfully", null);
-	// } catch (Exception e) {
-	// return ApiResponse.response(false, 500, "Something went wrong try later",
-	// null);
-	// }
-	// }
+
 }

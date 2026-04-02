@@ -375,4 +375,30 @@ public class ExamResource {
 					.entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
+	
+	@GET
+	@Path("/assignedExams/{partyId}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getUserAssignedExams(@PathParam("partyId") String partyId) {
+	    try {
+	        if (partyId == null || partyId.isEmpty()) {
+	            return Response.status(400)
+	                    .entity(ServiceUtil.returnError("PartyId is required"))
+	                    .build();
+	        }
+
+	        Map<String, Object> input = new HashMap<>();
+	        input.put("partyId", partyId);
+
+	        Map<String, Object> result = getDispatcher().runSync("getUserAssignedExams", input);
+
+	        return Response.status(200).entity(result).build();
+
+	    } catch (Exception e) {
+	        Debug.logError(e, MODULE);
+	        return Response.status(500)
+	                .entity(ServiceUtil.returnError("Something went wrong"))
+	                .build();
+	    }
+	}
 }

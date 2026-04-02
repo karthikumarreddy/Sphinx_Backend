@@ -283,5 +283,10 @@
         <attribute name="file" mode="IN" type="java.nio.ByteBuffer" optional="true" />
     </service>
     
+    
+    <service name="getUserAssignedExams" engine="java" location="in.vastpro.sphinx.ExamServices" invoke="getUserAssignedExams" auth="true">
+    <attribute name="partyId"   type="String" mode="IN"  optional="false"/>
+    <attribute name="examList"  type="List"   mode="OUT" optional="false"/>
+</service>
 	
 </services>
