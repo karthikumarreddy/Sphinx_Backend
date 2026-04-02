@@ -21,8 +21,6 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
-import clojure.pprint.utilities__init;
-
 public class ExamServices {
 	private static final String MODULE = ExamServices.class.getName();
 	private static final String UNEXPECTED_ERROR_MSG = "Unexpected Error Occured! Try Again After Sometime!";
@@ -185,10 +183,10 @@ public class ExamServices {
 
 				String partyId = (String) user.get("partyId");
 				String examId = (String) user.get("examId");
-				long allowedAttempts = (long) user.get("allowedAttempts");
-				long timeoutDays = (long) user.get("timeoutDays");
+				int allowedAttempts = (Integer) user.get("allowedAttempts");
+				int timeoutDays = (Integer) user.get("timeoutDays");
 
-				GenericValue party = EntityQuery.use(null).from("Party").where("partyId", partyId).queryFirst();
+				GenericValue party = EntityQuery.use(dctx.getDelegator()).from("Party").where("partyId", partyId).queryFirst();
 
 				if (UtilValidate.isEmpty(examId)) {
 					return ServiceUtil.returnError("Give Exam Details is Invalid!");
@@ -203,7 +201,7 @@ public class ExamServices {
 				}
 
 				if (firstTime) {
-					GenericValue exam = EntityQuery.use(null).from("ExamMaster").where("examId", examId).queryFirst();
+					GenericValue exam = EntityQuery.use(dctx.getDelegator()).from("ExamMaster").where("examId", examId).queryFirst();
 
 					if (exam == null) {
 						return ServiceUtil.returnError("Invalid Exam Details! Record Not Found!");

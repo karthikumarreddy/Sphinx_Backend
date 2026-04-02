@@ -1,6 +1,5 @@
 package com.sphinx.resources;
 
-import java.lang.module.ModuleDescriptor.Builder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +46,8 @@ public class ExamResource {
 	}
 
 	private String validateExam(Map<String, String> map) {
+		if (UtilValidate.isEmpty(map.get("partyId")))
+			return "Admin Details are Invalid";
 		if (UtilValidate.isEmpty(map.get("examName")))
 			return "Exam name is required";
 		if (UtilValidate.isEmpty(map.get("noOfQuestions")))
@@ -106,6 +107,7 @@ public class ExamResource {
 
 		Map<String, String> map = new HashMap<>();
 
+		map.put("partyId", (String) request.getAttribute("partyId"));
 		map.put("examName", (String) request.getAttribute("examName"));
 		map.put("description", (String) request.getAttribute("description"));
 		map.put("noOfQuestions", (String) request.getAttribute("noOfQuestions"));
