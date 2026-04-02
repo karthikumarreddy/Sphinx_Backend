@@ -223,6 +223,23 @@ public class ExamServices {
 		}
 	}
 
+	/**
+	 * Get All users (parties) for the given exam Id.
+	 *
+	 * </ul>
+	 *
+	 * @param ctx
+	 *            the OFBiz DispatchContext containing delegator and dispatcher
+	 * @param context
+	 *            a map of input parameters including:
+	 *            <ul>
+	 *            <li><b>examId</b> - the id of the exam</li>
+	 *            </ul>
+	 * @return a Map containing the OFBiz service result. Returns {@link ServiceUtil#returnSuccess()} if users are found or
+	 *         {@link ServiceUtil#returnError(String)} if any error occurs.
+	 *
+	 * @throws None
+	 */
 	public static Map<String, Object> getAllAssignedUsersForExam(DispatchContext dctx, Map<String, ? extends Object> context) {
 
 		try {
