@@ -84,9 +84,11 @@ public class UserServices {
 
 
 			if (user.get("currentPassword").equals(context.get("password"))) {
-				result.put("successMessage","login sucessfull");
+				result.put("successMessage", "Login sucessfull!");
 				result.put("partyId", user.getString("partyId"));
-				
+				return result;
+			} else {
+				return ServiceUtil.returnError("Invalid username or password. Please check your credentials and try again.");
 			}
 
 		} catch (GenericEntityException e) {
@@ -94,8 +96,8 @@ public class UserServices {
 			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 		}
 
-		return ServiceUtil.returnError("Invalid username or password. Please check your credentials and try again.");
 		
+
 	}
 
 	public static Map<String, ? extends Object> signupUser(DispatchContext dctx,
