@@ -196,9 +196,15 @@
     </service>
     
 
-    <service name="getExamById" engine="java"  location="in.vastpro.sphinx.ExamServices"  invoke="getExamById" auth="true" export="true">
+    <service name="getExamById" engine="java"  location="com.sphinx.services.ExamTopicServices"  invoke="getExamById" >
     <attribute name="examId" type="String" mode="IN" optional="false"/>
-    <attribute name="exam" type="GenericValue" mode="OUT"/>
+    <attribute name="exam" type="Map" mode="OUT"/>
+
+</service>
+
+<service name="getExamTopicsByExamId"  engine="java"   location="com.sphinx.services.ExamTopicServices"   invoke="getExamTopicsByExamId" auth="false">
+    <attribute name="examId" type="String" mode="IN" optional="false"/>
+    <attribute name="examTopicList" type="List" mode="OUT" optional="true"/>
 
 </service>
 
