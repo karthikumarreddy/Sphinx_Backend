@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
@@ -13,6 +12,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -24,7 +24,6 @@ import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
-import org.apache.ofbiz.service.ServiceContainer;
 import org.apache.ofbiz.service.ServiceUtil;
 
 @Path("/exam")
@@ -35,20 +34,15 @@ public class ExamResource {
 	@Context
 	private HttpServletRequest request;
 
-	@Context
-	private ServletContext servletContext;
-
 	private Delegator getDelegator() {
 		Delegator delegator = (Delegator) request.getAttribute("delegator");
 		return delegator;
 	}
 
 	private LocalDispatcher getDispatcher() {
-		LocalDispatcher dispatcher = (LocalDispatcher) servletContext.getAttribute("dispatcher");
-		if (dispatcher == null) {
-			dispatcher = ServiceContainer.getLocalDispatcher("Sphinx", getDelegator());
-		}
+		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 		return dispatcher;
+		
 	}
 
 	private String validateExam(Map<String, String> map) {
@@ -82,6 +76,28 @@ public class ExamResource {
 		}
 	}
 
+	@GET
+	@Path("/{examId}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getExamById(@PathParam("examId") String examId) {
+
+		try {
+			if (examId == null || examId.isEmpty()) {
+				return Response.status(400).entity(ServiceUtil.returnError("Input is empty")).build();
+			}
+
+			Map<String, Object> input = new HashMap<>();
+			input.put("examId", examId);
+
+			Map<String, Object> result = getDispatcher().runSync("getExamById", input);
+
+			return Response.status(200).entity(result).build();
+
+		} catch (Exception e) {
+			return Response.status(400).entity(ServiceUtil.returnError("Something went wrong")).build();
+		}
+	}
+
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -101,7 +117,7 @@ public class ExamResource {
 		map.put("userLoginId", (String) request.getAttribute("userLoginId"));
 
 		String error = validateExam(map);
-		
+
 		if (error != null) {
 			return Response.status(400).entity(ServiceUtil.returnError(error)).build();
 		}
@@ -204,6 +220,8 @@ public class ExamResource {
 	public Response getExamTopics(@Context HttpServletRequest request) {
 		try {
 			String examId = request.getParameter("examId");
+			if (examId == null)
+				return Response.status(400).entity(ServiceUtil.returnError("Exam is null ")).build();
 
 			Map<String, Object> result = getDispatcher().runSync("getAllExamTopics", UtilMisc.toMap("examId", examId));
 
@@ -260,6 +278,33 @@ public class ExamResource {
 			return Response.status(5000).entity(ServiceUtil.returnError("Something went wrong try later")).build();
 		}
 	}
+	
+	@GET
+	@Path("/topics/{examId}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getExamTopicsByExamId(@PathParam("examId") String examId) {
+
+	    try {
+	        if (examId == null || examId.isEmpty()) {
+	            return Response.status(400)
+	                    .entity(ServiceUtil.returnError("ExamId is required"))
+	                    .build();
+	        }
+
+	        Map<String, Object> input = new HashMap<>();
+	        input.put("examId", examId);
+
+	        Map<String, Object> result =
+	                getDispatcher().runSync("getExamTopicsByExamId", input);
+
+	        return Response.status(200).entity(result).build();
+
+	    } catch (Exception e) {
+	        return Response.status(500)
+	                .entity(ServiceUtil.returnError("Something went wrong"))
+	                .build();
+	    }
+	}	
 
 	// generate questions to the topic
 	@POST
@@ -268,11 +313,11 @@ public class ExamResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response generateQuestions(@Context HttpServletRequest request) {
 		try {
-			String examId=(String) request.getAttribute("examId");
+			String examId = (String) request.getAttribute("examId");
 			if (examId == null) {
 				return Response.status(400).entity(ServiceUtil.returnError("exami id is null")).build();
 			}
-			Map<String, Object> input=new HashMap<String, Object>();
+			Map<String, Object> input = new HashMap<String, Object>();
 			input.put("examId", examId);
 			Map<String, Object> result = getDispatcher().runSync("generateExamQuestions", input);
 			return Response.status(201).entity(result).build();
@@ -289,11 +334,11 @@ public class ExamResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response launchExam(@Context HttpServletRequest request) {
 		try {
-			String examId=(String) request.getAttribute("examId");
+			String examId = (String) request.getAttribute("examId");
 			if (examId == null) {
 				return Response.status(400).entity(ServiceUtil.returnError("exam id is null")).build();
 			}
-			Map<String, Object> input=new HashMap<String, Object>();
+			Map<String, Object> input = new HashMap<String, Object>();
 			input.put("examId", examId);
 			Map<String, Object> result = getDispatcher().runSync("launchExam", input);
 			return Response.status(201).entity(result).build();
@@ -303,7 +348,7 @@ public class ExamResource {
 		}
 	}
 
-	// launch th exam
+	// launch the exam
 	@POST
 	@Path("/assignUser")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -338,7 +383,8 @@ public class ExamResource {
 
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ServiceUtil.returnError(e.getMessage())).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 

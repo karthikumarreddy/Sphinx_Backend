@@ -36,7 +36,6 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import com.sphinx.util.ApiResponse;
 import com.sphinx.util.QuestionColumnConfigUtil;
 import com.sphinx.util.QuestionColumnConfigUtil.ColumnConfig;
 
@@ -46,11 +45,14 @@ public class QuestionService {
 
 	// QUESTION SERVICE
 
-	// public Map<String, ? extends Object> getUploadFormatDocument(DispatchContext dctx, Map<String, ? extends Object> context) {
+	// public Map<String, ? extends Object> getUploadFormatDocument(DispatchContext
+	// dctx, Map<String, ? extends Object> context) {
 	//
-	// List<GenericValue> topics = EntityQuery.use(null).from("TopicMaster").queryList();
+	// List<GenericValue> topics =
+	// EntityQuery.use(null).from("TopicMaster").queryList();
 	// List<GenericValue> types = EntityQuery.use(null).from("Enumeration")
-	// .where(EntityCondition.makeCondition(EntityFunction.upperField("enumTypeId"), EntityOperator.LIKE,
+	// .where(EntityCondition.makeCondition(EntityFunction.upperField("enumTypeId"),
+	// EntityOperator.LIKE,
 	// EntityFunction.upper("%SPHINX_Q_TYPE%")))
 	// .queryList();
 	//
@@ -64,7 +66,8 @@ public class QuestionService {
 	// refSheet.createRow(i).createCell(0).setCellValue(types.get(i).getString("enumId"));
 	//
 	// for (int i = 0; i < topics.size(); i++) {
-	// Row row = refSheet.getRow(i) != null ? refSheet.getRow(i) : refSheet.createRow(i);
+	// Row row = refSheet.getRow(i) != null ? refSheet.getRow(i) :
+	// refSheet.createRow(i);
 	// row.createCell(1).setCellValue(topics.get(i).getString("topicName"));
 	// }
 	//
@@ -107,15 +110,19 @@ public class QuestionService {
 	// workbook.write(out);
 	// workbook.close();
 	//
-	// return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=questions_template.xlsx")
+	// return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,
+	// "attachment; filename=questions_template.xlsx")
 	// .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
 	// .body(out.toByteArray());
 	// }
 	//
-	// private void addDropdown(Sheet sheet, DataValidationHelper dvHelper, String formula, int firstRow, int lastRow, int firstCol,
+	// private void addDropdown(Sheet sheet, DataValidationHelper dvHelper, String
+	// formula, int firstRow, int lastRow, int firstCol,
 	// int lastCol) {
-	// DataValidationConstraint constraint = dvHelper.createFormulaListConstraint(formula);
-	// CellRangeAddressList range = new CellRangeAddressList(firstRow, lastRow, firstCol, lastCol);
+	// DataValidationConstraint constraint =
+	// dvHelper.createFormulaListConstraint(formula);
+	// CellRangeAddressList range = new CellRangeAddressList(firstRow, lastRow,
+	// firstCol, lastCol);
 	// DataValidation dv = dvHelper.createValidation(constraint, range);
 	// dv.setShowErrorBox(true);
 	// dv.createErrorBox("Invalid value", "Please select from the dropdown list.");
@@ -123,7 +130,8 @@ public class QuestionService {
 	// sheet.addValidationData(dv);
 	// }
 
-	public Map<String, ? extends Object> getTemplateDocument(DispatchContext dctx, Map<String, ? extends Object> context) {
+	public Map<String, ? extends Object> getTemplateDocument(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
 
 		try {
 
@@ -166,7 +174,6 @@ public class QuestionService {
 
 			return result;
 
-
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
 			return ServiceUtil.returnError("Unexpected error occured, try again after sometime!");
@@ -174,7 +181,8 @@ public class QuestionService {
 
 	}
 
-	public Map<String, ? extends Object> getAllQuestionByTopic(DispatchContext dctx, Map<String, ? extends Object> context) {
+	public Map<String, ? extends Object> getAllQuestionByTopic(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
 
 		Delegator delegator = dctx.getDelegator();
 
@@ -182,12 +190,12 @@ public class QuestionService {
 		try {
 
 			String topicId = (String) context.get("topicId");
-			if(topicId == null) {
+			if (topicId == null) {
 				return ServiceUtil.returnError("Invalid topic id.");
 			}
-			
+
 			List<GenericValue> questionsByCategory = EntityQuery.use(delegator).from("QuestionMaster")
-							.where("topicId", topicId).queryList();
+					.where("topicId", topicId).queryList();
 			result.put("questions", questionsByCategory);
 			return result;
 
@@ -196,9 +204,7 @@ public class QuestionService {
 			return ServiceUtil.returnError(e.getMessage());
 		}
 
-
 	}
-
 
 	public Map<String, ? extends Object> createQuestion(DispatchContext dctx, Map<String, ? extends Object> context) {
 
@@ -214,22 +220,22 @@ public class QuestionService {
 			GenericValue topic = delegator.findOne("TopicMaster", true, UtilMisc.toMap("topicId", topicId));
 
 			if (topic == null) {
-				return ApiResponse.response(false, 400, "Question Topic was not a valid one!", null);
+				return ServiceUtil.returnError("Question Topic was not a valid one!");
 			}
 
 			questionRecord.setNonPKFields(context);
 
 			questionRecord.create();
 
-			return ApiResponse.response(true, 201, "Question addedd successfully!", null);
-
+			return ServiceUtil.returnSuccess("Question addedd successfully!");
 		} catch (GenericEntityException e) {
 			Debug.logError(e, MODULE);
-			return ApiResponse.response(true, 500, "Unexpected error occured", null);
+			return ServiceUtil.returnError("Unexpected error occured");
 		}
 	}
 
-	public Map<String, ? extends Object> createBulkQuestions(DispatchContext dctx, Map<String, ? extends Object> context) {
+	public Map<String, ? extends Object> createBulkQuestions(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
 
 		try {
 			Delegator delegator = dctx.getDelegator();
@@ -243,28 +249,29 @@ public class QuestionService {
 			GenericValue topic = delegator.findOne("TopicMaster", true, UtilMisc.toMap("topicId", topicId));
 
 			if (topic == null) {
-				return ApiResponse.response(false, 400, "Question Topic was not a valid one!", null);
+				return ServiceUtil.returnError("Question Topic was not a valid one!");
 			}
 
 			questionRecord.setNonPKFields(context);
 
 			questionRecord.create();
 
-			return ApiResponse.response(true, 201, "Question addedd successfully!", null);
-
+			return ServiceUtil.returnSuccess("Question addedd successfully!");
 		} catch (GenericEntityException e) {
 			Debug.logError(e, MODULE);
-			return ApiResponse.response(true, 500, "Unexpected error occured", null);
+			return ServiceUtil.returnError("Unexpected error occured");
 		}
 	}
 
-	public Map<String, ? extends Object> getAllQuestionTypes(DispatchContext dctx, Map<String, ? extends Object> context) {
+	public Map<String, ? extends Object> getAllQuestionTypes(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
 
 		Delegator delegator = dctx.getDelegator();
 		try {
 			Map<String, Object> result = ServiceUtil.returnSuccess();
 			List<GenericValue> questionTypes = EntityQuery.use(delegator).from("Enumeration")
-							.where(EntityCondition.makeCondition("enumTypeId", EntityOperator.LIKE, "%SPHINX_Q_TYPE%")).queryList();
+					.where(EntityCondition.makeCondition("enumTypeId", EntityOperator.LIKE, "%SPHINX_Q_TYPE%"))
+					.queryList();
 
 			result.put("data", questionTypes);
 			return result;
@@ -274,7 +281,8 @@ public class QuestionService {
 		}
 	}
 
-	public Map<String, ? extends Object> uploadBulkQuestion(DispatchContext dctx, Map<String, ? extends Object> context) {
+	public Map<String, ? extends Object> uploadBulkQuestion(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
 
 		// process the excel file
 
@@ -319,7 +327,8 @@ public class QuestionService {
 					Cell cell = row.getCell(col.index);
 
 					if (col.required && (cell == null || cell.getCellType() == CellType.BLANK)) {
-						return ServiceUtil.returnError("Row " + i + ", Column " + col.index + " " + col.label + " is required");
+						return ServiceUtil
+								.returnError("Row " + i + ", Column " + col.index + " " + col.label + " is required");
 					}
 
 					if (cell == null) {
@@ -359,8 +368,10 @@ public class QuestionService {
 
 			for (Map<String, ? extends Object> question : questions) {
 				Map<String, Object> serviceResult = dctx.getDispatcher().runSync("createQuestion", question);
-				if (serviceResult.get("responseMessage") != null && serviceResult.get("responseMessage").equals("error")) {
-					Map<String, Object> errorResult = ServiceUtil.returnError((String) serviceResult.get("errorMessage"));
+				if (serviceResult.get("responseMessage") != null
+						&& serviceResult.get("responseMessage").equals("error")) {
+					Map<String, Object> errorResult = ServiceUtil
+							.returnError((String) serviceResult.get("errorMessage"));
 
 					// Transaction ROLL BACK
 

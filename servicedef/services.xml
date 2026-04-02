@@ -206,6 +206,19 @@
     
     </service>
     
+
+    <service name="getExamById" engine="java"  location="com.sphinx.services.ExamTopicServices"  invoke="getExamById" >
+    <attribute name="examId" type="String" mode="IN" optional="false"/>
+    <attribute name="exam" type="Map" mode="OUT"/>
+
+</service>
+
+<service name="getExamTopicsByExamId"  engine="java"   location="com.sphinx.services.ExamTopicServices"   invoke="getExamTopicsByExamId" auth="false">
+    <attribute name="examId" type="String" mode="IN" optional="false"/>
+    <attribute name="examTopicList" type="List" mode="OUT" optional="true"/>
+
+</service>
+
     <service  name="createPartyExamRelationshipInterface" engine="interface">
     	<attribute name="partyId" mode="IN" type="String" optional="false" />
     	<attribute name="examId" mode="IN" type="String" optional="false" />
@@ -237,6 +250,7 @@
     </service>
 
     
+
     <!-- Exam service ended  -->
     
     

@@ -164,7 +164,7 @@
 	</entity>
 	
 	
-	<entity entity-name="PartyExamRelationship" package-name="com.sphinx">
+	<entity entity-name="PartyExamRelationship" package-name="">
 		<field name="partyId" type="id"></field>
 		<field name="examId" type="id"></field>
 		<field name="allowedAttempts" type="numeric" not-null="true"/>

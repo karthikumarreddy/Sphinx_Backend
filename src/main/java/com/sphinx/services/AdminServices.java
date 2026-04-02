@@ -9,8 +9,6 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
-import com.sphinx.util.ApiResponse;
-
 public class AdminServices {
 	private static final String MODULE = AdminServices.class.getName();
 
@@ -18,24 +16,24 @@ public class AdminServices {
 			Map<String, ? extends Object> context) {
 		try {
 			if (context.get("userName") == null)
-				return ApiResponse.response(false, 400, "userName is required", null);
+				return ServiceUtil.returnError("userName is required");
 
 			Delegator delegator = dctx.getDelegator();
 			GenericValue user = delegator.findOne("UserLogin", false,
 					UtilMisc.toMap("userLoginId", context.get("userName")));
 			if (user == null)
-				return ApiResponse.response(false, 400,"user not found", null);
+				return ServiceUtil.returnError("user not found");
+			
 			user.set("enabled", "Y");
 			delegator.store(user);
 
 			GenericValue party = delegator.findOne("Party", false, UtilMisc.toMap("partyId", user.getString("partyId")));
 			if (party == null)
-				return ApiResponse.response(false, 400, "party not found", null);
+				return ServiceUtil.returnError("party not found");
 			
 			party.set("statusId", "PARTY_ENABLED");
 			delegator.store(party);
-
-			return ApiResponse.response(true, 200, "User approved successfully", null);
+			return ServiceUtil.returnSuccess("User approved successfully");
 
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
