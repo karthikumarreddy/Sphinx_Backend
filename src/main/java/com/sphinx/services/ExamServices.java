@@ -1,5 +1,8 @@
 package com.sphinx.services;
 
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,6 +46,7 @@ public class ExamServices {
 			Delegator delegator = dctx.getDelegator();
 
 			String examId = delegator.getNextSeqId("ExamMaster");
+			String partyId=(String)context.get("partyId");
 
 			GenericValue examMaster = delegator.makeValue("ExamMaster");
 			examMaster.set("examId", examId);
@@ -73,6 +77,11 @@ public class ExamServices {
 			}
 
 			delegator.create(examMaster);
+			
+			GenericValue adminPartRel=delegator.makeValue("AdminPartyExamRel");
+			adminPartRel.set("examId",examId );
+			adminPartRel.set("partyId", partyId);
+			delegator.create(adminPartRel);
 
 			Map<String, Object> result = ServiceUtil.returnSuccess();
 			result.put("examId", examId);
@@ -81,6 +90,15 @@ public class ExamServices {
 		} catch (Exception e) {
 			return ServiceUtil.returnError("Something went wrong: " + e.getMessage());
 		}
+//		
+//		try {
+//			Delegator delegator=dctx.getDelegator();
+//			String examId = delegator.getNextSeqId("ExamMaster");
+//			context.put("examId", examId);
+//			
+//		}catch (Exception e) {
+//			// TODO: handle exception
+//		}
 	}
 
 	public static Map<String, Object> updateExam(DispatchContext dctx, Map<String, ? extends Object> context) {
@@ -346,6 +364,84 @@ public class ExamServices {
 			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 		}
 
+	}
+	
+	public static Map<String, ? extends Object> getUserAssignedExams(DispatchContext dctx,
+	        Map<String, ? extends Object> context) {
+	    try {
+	        Delegator delegator = dctx.getDelegator();
+	        String partyId = (String) context.get("partyId");
+	        Map<String, Object> result = ServiceUtil.returnSuccess();
+
+	        List<GenericValue> assignedExams = delegator.findByAnd(
+	            "PartyExamRelationship",
+	            UtilMisc.toMap("partyId", partyId), null, false);
+
+	        List<Map<String, Object>> examList = new ArrayList<>();
+
+	        for (GenericValue assigned : assignedExams) {
+	            String examId = assigned.getString("examId");
+
+	            // Problem 1 fix — queryFirst() returns one GenericValue, not a List
+	            GenericValue exam = EntityQuery.use(delegator)
+	                .from("ExamMaster")
+	                .where("examId", examId)
+	                .queryFirst();
+
+	            // Problem 2 fix — skip instead of error
+	            if (exam == null) continue;
+
+	            // Problem 3 fix — merge both entities into one flat map
+	            Map<String, Object> examMap = new HashMap<>();
+
+	            examMap.put("examId", examId);
+	            examMap.put("examName", exam.getString("examName"));
+	            examMap.put("description", exam.getString("description"));
+	            examMap.put("duration", exam.getLong("duration"));
+	            examMap.put("noOfQuestions", exam.getLong("noOfQuestions"));
+	            examMap.put("passPercentage", exam.getBigDecimal("passPercentage"));
+
+	            examMap.put("allowedAttempts", assigned.getLong("allowedAttempts"));
+	            examMap.put("noOfAttempts", assigned.getLong("noOfAttempts"));
+	            examMap.put("fromDate", assigned.getTimestamp("fromDate"));
+	            examMap.put("thruDate", assigned.getTimestamp("thruDate"));
+	            examMap.put("canSplitExams", assigned.getLong("canSplitExams"));
+	            examMap.put("canSeeDetailedResults", assigned.getLong("canSeeDetailedResults"));
+	            examMap.put("lastPerformanceDate", assigned.getTimestamp("lastPerformanceDate"));
+
+	            GenericValue inProgress = EntityQuery.use(delegator)
+	                .from("InProgressParty")
+	                .where("partyId", partyId, "examId", examId)
+	                .queryFirst();
+
+	            long noOfAttempts = assigned.getLong("noOfAttempts") != null
+	                                ? assigned.getLong("noOfAttempts") : 0L;
+	            long allowedAttempts = assigned.getLong("allowedAttempts") != null
+	                                   ? assigned.getLong("allowedAttempts") : 1L;
+	            Timestamp today = UtilDateTime.nowTimestamp();
+	            Timestamp thruDate = assigned.getTimestamp("thruDate");
+
+	            String examStatus;
+	            if (inProgress != null && Long.valueOf(1L).equals(inProgress.getLong("isExamActive"))) {
+	                examStatus = "IN_PROGRESS";
+	            } else if (thruDate != null && today.after(thruDate)) {
+	                examStatus = "EXPIRED";
+	            } else if (noOfAttempts >= allowedAttempts) {
+	                examStatus = "ATTEMPTS_EXHAUSTED";
+	            } else {
+	                examStatus = "AVAILABLE";
+	            }
+
+	            examMap.put("examStatus", examStatus);
+	            examList.add(examMap);
+	        }
+
+	        result.put("examList", examList);
+	        return result;
+
+	    } catch (Exception e) {
+	        return ServiceUtil.returnError("Something went wrong, please try later.");
+	    }
 	}
 
 
