@@ -1,9 +1,9 @@
 package com.sphinx.resources;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
@@ -22,8 +22,8 @@ import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
+import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
-import org.apache.ofbiz.service.ServiceContainer;
 import org.apache.ofbiz.service.ServiceUtil;
 
 @Path("/exam")
@@ -220,9 +220,8 @@ public class ExamResource {
 	public Response getExamTopics(@Context HttpServletRequest request) {
 		try {
 			String examId = request.getParameter("examId");
-			if(examId == null ) {
+			if (examId == null)
 				return Response.status(400).entity(ServiceUtil.returnError("Exam is null ")).build();
-			}
 
 			Map<String, Object> result = getDispatcher().runSync("getAllExamTopics", UtilMisc.toMap("examId", examId));
 
@@ -355,12 +354,25 @@ public class ExamResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response assignUser(@Context HttpServletRequest request) {
 		try {
-			Map<String, Object> result = getDispatcher().runSync("createPartyExamRelationshipWrapper",
-					UtilMisc.toMap("partyId", request.getAttribute("partyId"), "examId", request.getAttribute("examId"),
-							"allowedAttempts", request.getAttribute("allowedAttempts"), "noOfAttempts",
-							request.getAttribute("noOfAttempts"), "timeoutDays", request.getAttribute("timeoutDays"),
-							"fromDate", request.getAttribute("fromDate"), "thruDate",
-							request.getAttribute("thruDate")));
+
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (dispatcher == null) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+								.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
+
+			// Map<String, Object> result = dispatcher.runSync("createPartyExamRelationshipWrapper", UtilMisc.toMap("partyId",
+			// request.getAttribute("partyId"),
+			// "examId", request.getAttribute("examId"), "allowedAttempts",
+			// request.getAttribute("allowedAttempts"), "noOfAttempts", request.getAttribute("noOfAttempts"), "timeoutDays",
+			// request.getAttribute("timeoutDays"), "fromDate", request.getAttribute("fromDate"), "thruDate",
+			// request.getAttribute("thruDate")));
+
+			List<Map<String, Object>> listOfUsers = (List<Map<String, Object>>) request.getAttribute("users");
+
+			Map<String, Object> result = dispatcher.runSync("createPartyExamRelationshipWrapper",
+							UtilMisc.toMap("users", listOfUsers));
 
 			if (result.containsKey("responseMessage") && result.get("responseMessage").equals("success")) {
 				result.put("successMessage", "User Assigned to the Exam!");
@@ -375,6 +387,7 @@ public class ExamResource {
 					.entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
+
 	
 	@GET
 	@Path("/assignedExams/{partyId}")
@@ -401,4 +414,78 @@ public class ExamResource {
 	                .build();
 	    }
 	}
+
+
+	@POST
+	@Path("/removeAssignedUserFromExam")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response removeAssignedUser(@Context HttpServletRequest request) {
+		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (dispatcher == null) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+								.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
+			
+			Map<String, Object> result = dispatcher.runSync("removeAssignedUserFromExamWrapper",
+							UtilMisc.toMap("partyId", request.getAttribute("partyId"), "examId", request.getAttribute("examId")));
+
+			return Response.ok().entity(result).build();
+
+		} catch (Exception e) {
+			Debug.logError(e, MODULE);
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ServiceUtil.returnError(e.getMessage())).build();
+		}
+	}
+
+	@POST
+	@Path("/getAssignedUsers")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getAssignedUsers(@Context HttpServletRequest request) {
+
+		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+		if (dispatcher == null) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+							.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+		}
+
+		try {
+			Map<String, Object> result = dispatcher.runSync("getAllAssignedUsersForExam",
+							UtilMisc.toMap("examId", request.getAttribute("examId")));
+
+			return Response.status(Response.Status.OK).entity(result).build();
+		} catch (GenericServiceException e) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+							.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+		}
+
+	}
+
+	@POST
+	@Path("/getAllExamAssignedForUser")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getAllExamAssignedForUser(@Context HttpServletRequest request) {
+
+		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+		if (dispatcher == null) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+							.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+		}
+
+		try {
+			Map<String, Object> result = dispatcher.runSync("getAllExamAssignedForUser",
+							UtilMisc.toMap("partyId", request.getAttribute("partyId")));
+
+			return Response.status(Response.Status.OK).entity(result).build();
+		} catch (GenericServiceException e) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+							.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+		}
+
+	}
+
+
 }
