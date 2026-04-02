@@ -92,12 +92,26 @@ public class ExamServices {
 		}
 //		
 //		try {
-//			Delegator delegator=dctx.getDelegator();
+//			Delegator delegator = dctx.getDelegator();
 //			String examId = delegator.getNextSeqId("ExamMaster");
+//			String partyId = (String) context.get("partyId");
 //			context.put("examId", examId);
-//			
-//		}catch (Exception e) {
-//			// TODO: handle exception
+//			LocalDispatcher dispatcher = dctx.getDispatcher();
+//			Map<String, Object> examResult = dispatcher.runSync("createExam", context);
+//			if (ServiceUtil.isError(examResult)) {
+//				return ServiceUtil.returnError("A porblem occured while creating the exam");
+//			}
+//			Map<String, Object> adminPartyRel = dispatcher.runSync("AdminPartyRel",
+//					UtilMisc.toMap("examId", examId, "partyId", partyId));
+//			if (ServiceUtil.isError(adminPartyRel)) {
+//				return ServiceUtil.returnError("A problem occured while creating the exam");
+//			}
+//			Map<String, Object> result = ServiceUtil.returnSuccess();
+//			result.put("examId", examId);
+//			return result;
+//
+//		} catch (Exception e) {
+//			return ServiceUtil.returnError("Something went wrong try again later");
 //		}
 	}
 
@@ -171,9 +185,9 @@ public class ExamServices {
 				String examId = (String) user.get("examId");
 				long allowedAttempts = (long) user.get("allowedAttempts");
 				long timeoutDays = (long) user.get("timeoutDays");
-				
+
 				GenericValue party = EntityQuery.use(null).from("Party").where("partyId", partyId).queryFirst();
-				
+
 				if (UtilValidate.isEmpty(examId)) {
 					return ServiceUtil.returnError("Give Exam Details is Invalid!");
 				}
@@ -194,7 +208,6 @@ public class ExamServices {
 					}
 				}
 
-
 				if (allowedAttempts <= 0 && allowedAttempts > 5) {
 					return ServiceUtil.returnError("Invalid Allowed Attempts! Should in between 0 and 5");
 				}
@@ -204,8 +217,8 @@ public class ExamServices {
 				}
 
 				Map<String, Object> result = dispatcher.runSync("createPartyExamRelationship",
-								UtilMisc.toMap("partyId", partyId, "examId", examId, "allowedAttempts", allowedAttempts, "timeoutDays",
-												timeoutDays, "noOfAttempts", 0));
+						UtilMisc.toMap("partyId", partyId, "examId", examId, "allowedAttempts", allowedAttempts,
+								"timeoutDays", timeoutDays, "noOfAttempts", 0));
 
 				if (ServiceUtil.isError(result)) {
 					result.put("errorMessage", UNEXPECTED_ERROR_MSG);
@@ -219,7 +232,6 @@ public class ExamServices {
 			TransactionUtil.commit();
 
 			return ServiceUtil.returnSuccess("Users Assigned Successfully!");
-
 
 		} catch (ClassCastException e) {
 			try {
@@ -241,7 +253,8 @@ public class ExamServices {
 		}
 	}
 
-	public static Map<String, Object> getAllAssignedUsersForExam(DispatchContext dctx, Map<String, ? extends Object> context) {
+	public static Map<String, Object> getAllAssignedUsersForExam(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
 
 		try {
 			String examId = (String) context.get("examId");
@@ -256,7 +269,8 @@ public class ExamServices {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 
-			List<GenericValue> assignedUsers = EntityQuery.use(delegator).from("PartyExamRelationship").where("examId", examId).queryList();
+			List<GenericValue> assignedUsers = EntityQuery.use(delegator).from("PartyExamRelationship")
+					.where("examId", examId).queryList();
 
 			Map<String, Object> result = ServiceUtil.returnSuccess("User Details!");
 			result.put("data", assignedUsers);
@@ -272,7 +286,8 @@ public class ExamServices {
 
 	}
 
-	public static Map<String, Object> getAllExamAssignedForUser(DispatchContext dctx, Map<String, ? extends Object> context) {
+	public static Map<String, Object> getAllExamAssignedForUser(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
 
 		try {
 			String partyId = (String) context.get("partyId");
@@ -287,8 +302,8 @@ public class ExamServices {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 
-			List<GenericValue> assignedExams = EntityQuery.use(delegator).from("PartyExamRelationship").where("partyId", partyId)
-							.queryList();
+			List<GenericValue> assignedExams = EntityQuery.use(delegator).from("PartyExamRelationship")
+					.where("partyId", partyId).queryList();
 
 			Map<String, Object> result = ServiceUtil.returnSuccess("Exam Details!");
 			result.put("data", assignedExams);
@@ -304,7 +319,8 @@ public class ExamServices {
 
 	}
 
-	public static Map<String, Object> removeAssignedUserFromExam(DispatchContext dctx, Map<String, ? extends Object> context) {
+	public static Map<String, Object> removeAssignedUserFromExam(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
 
 		try {
 
@@ -326,16 +342,15 @@ public class ExamServices {
 				return ServiceUtil.returnError("Invalid User!");
 			}
 
-
 			GenericValue assignedUserRecord = EntityQuery.use(delegator).from("PartyExamRelationship")
-							.where("partyId", partyId, "examId", examId).queryFirst();
+					.where("partyId", partyId, "examId", examId).queryFirst();
 
 			if (assignedUserRecord == null) {
 				return ServiceUtil.returnSuccess("User already Removed!");
 			}
 
 			Map<String, Object> result = dispatcher.runSync("removeAssignedUserFromExam",
-							UtilMisc.toMap("partyId", partyId, "examId", examId));
+					UtilMisc.toMap("partyId", partyId, "examId", examId));
 
 			return result;
 
@@ -348,114 +363,79 @@ public class ExamServices {
 		}
 
 	}
-	
+
 	public static Map<String, ? extends Object> getUserAssignedExams(DispatchContext dctx,
-	        Map<String, ? extends Object> context) {
-	    try {
-	        Delegator delegator = dctx.getDelegator();
-	        String partyId = (String) context.get("partyId");
-	        Map<String, Object> result = ServiceUtil.returnSuccess();
+			Map<String, ? extends Object> context) {
+		try {
+			Delegator delegator = dctx.getDelegator();
+			String partyId = (String) context.get("partyId");
+			Map<String, Object> result = ServiceUtil.returnSuccess();
 
-	        List<GenericValue> assignedExams = delegator.findByAnd(
-	            "PartyExamRelationship",
-	            UtilMisc.toMap("partyId", partyId), null, false);
+			List<GenericValue> assignedExams = delegator.findByAnd("PartyExamRelationship",
+					UtilMisc.toMap("partyId", partyId), null, false);
 
-	        List<Map<String, Object>> examList = new ArrayList<>();
+			List<Map<String, Object>> examList = new ArrayList<>();
 
-	        for (GenericValue assigned : assignedExams) {
-	            String examId = assigned.getString("examId");
+			for (GenericValue assigned : assignedExams) {
+				String examId = assigned.getString("examId");
 
-	            // Problem 1 fix — queryFirst() returns one GenericValue, not a List
-	            GenericValue exam = EntityQuery.use(delegator)
-	                .from("ExamMaster")
-	                .where("examId", examId)
-	                .queryFirst();
+				// Problem 1 fix — queryFirst() returns one GenericValue, not a List
+				GenericValue exam = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId).queryFirst();
 
-	            // Problem 2 fix — skip instead of error
-	            if (exam == null) continue;
+				// Problem 2 fix — skip instead of error
+				if (exam == null)
+					continue;
 
-	            // Problem 3 fix — merge both entities into one flat map
-	            Map<String, Object> examMap = new HashMap<>();
+				// Problem 3 fix — merge both entities into one flat map
+				Map<String, Object> examMap = new HashMap<>();
 
-	            examMap.put("examId", examId);
-	            examMap.put("examName", exam.getString("examName"));
-	            examMap.put("description", exam.getString("description"));
-	            examMap.put("duration", exam.getLong("duration"));
-	            examMap.put("noOfQuestions", exam.getLong("noOfQuestions"));
-	            examMap.put("passPercentage", exam.getBigDecimal("passPercentage"));
+				examMap.put("examId", examId);
+				examMap.put("examName", exam.getString("examName"));
+				examMap.put("description", exam.getString("description"));
+				examMap.put("duration", exam.getLong("duration"));
+				examMap.put("noOfQuestions", exam.getLong("noOfQuestions"));
+				examMap.put("passPercentage", exam.getBigDecimal("passPercentage"));
 
-	            examMap.put("allowedAttempts", assigned.getLong("allowedAttempts"));
-	            examMap.put("noOfAttempts", assigned.getLong("noOfAttempts"));
-	            examMap.put("fromDate", assigned.getTimestamp("fromDate"));
-	            examMap.put("thruDate", assigned.getTimestamp("thruDate"));
-	            examMap.put("canSplitExams", assigned.getLong("canSplitExams"));
-	            examMap.put("canSeeDetailedResults", assigned.getLong("canSeeDetailedResults"));
-	            examMap.put("lastPerformanceDate", assigned.getTimestamp("lastPerformanceDate"));
+				examMap.put("allowedAttempts", assigned.getLong("allowedAttempts"));
+				examMap.put("noOfAttempts", assigned.getLong("noOfAttempts"));
+				examMap.put("fromDate", assigned.getTimestamp("fromDate"));
+				examMap.put("thruDate", assigned.getTimestamp("thruDate"));
+				examMap.put("canSplitExams", assigned.getLong("canSplitExams"));
+				examMap.put("canSeeDetailedResults", assigned.getLong("canSeeDetailedResults"));
+				examMap.put("lastPerformanceDate", assigned.getTimestamp("lastPerformanceDate"));
 
-	            GenericValue inProgress = EntityQuery.use(delegator)
-	                .from("InProgressParty")
-	                .where("partyId", partyId, "examId", examId)
-	                .queryFirst();
+				GenericValue inProgress = EntityQuery.use(delegator).from("InProgressParty")
+						.where("partyId", partyId, "examId", examId).queryFirst();
 
-	            long noOfAttempts = assigned.getLong("noOfAttempts") != null
-	                                ? assigned.getLong("noOfAttempts") : 0L;
-	            long allowedAttempts = assigned.getLong("allowedAttempts") != null
-	                                   ? assigned.getLong("allowedAttempts") : 1L;
-	            Timestamp today = UtilDateTime.nowTimestamp();
-	            Timestamp thruDate = assigned.getTimestamp("thruDate");
+				long noOfAttempts = assigned.getLong("noOfAttempts") != null ? assigned.getLong("noOfAttempts") : 0L;
+				long allowedAttempts = assigned.getLong("allowedAttempts") != null ? assigned.getLong("allowedAttempts")
+						: 1L;
+				Timestamp today = UtilDateTime.nowTimestamp();
+				Timestamp thruDate = assigned.getTimestamp("thruDate");
 
-	            String examStatus;
-	            if (inProgress != null && Long.valueOf(1L).equals(inProgress.getLong("isExamActive"))) {
-	                examStatus = "IN_PROGRESS";
-	            } else if (thruDate != null && today.after(thruDate)) {
-	                examStatus = "EXPIRED";
-	            } else if (noOfAttempts >= allowedAttempts) {
-	                examStatus = "ATTEMPTS_EXHAUSTED";
-	            } else {
-	                examStatus = "AVAILABLE";
-	            }
+				String examStatus;
+				if (inProgress != null && Long.valueOf(1L).equals(inProgress.getLong("isExamActive"))) {
+					examStatus = "IN_PROGRESS";
+				} else if (thruDate != null && today.after(thruDate)) {
+					examStatus = "EXPIRED";
+				} else if (noOfAttempts >= allowedAttempts) {
+					examStatus = "ATTEMPTS_EXHAUSTED";
+				} else {
+					examStatus = "AVAILABLE";
+				}
 
-	            examMap.put("examStatus", examStatus);
-	            examList.add(examMap);
-	        }
+				examMap.put("examStatus", examStatus);
+				examList.add(examMap);
+			}
 
-	        result.put("examList", examList);
-	        return result;
+			result.put("examList", examList);
+			return result;
 
-	    } catch (Exception e) {
-	        return ServiceUtil.returnError("Something went wrong, please try later.");
-	    }
+		} catch (Exception e) {
+			return ServiceUtil.returnError("Something went wrong, please try later.");
+		}
 	}
+	
 
 
-	// public static Map<String, ? extends Object> updateExam(DispatchContext dctx,
-	// Map<String, ? extends Object> context) {
-	// try {
-	// Delegator delegator = dctx.getDelegator();
-	// GenericValue examMaster = delegator.findOne("ExamMaster", false,
-	// UtilMisc.toMap("examId", context.get("examId")));
-	// examMaster.setNonPKFields(context);
-	// delegator.store(examMaster);
-	// return ApiResponse.response(true, 200, "Exam updated sucessfully", null);
-	//
-	// } catch (Exception e) {
-	// return ApiResponse.response(false, 500, "Something went wrong try later .",
-	// null);
-	// }
-	// }
-	//
-	// public static Map<String, ? extends Object> deleteExam(DispatchContext dctx,
-	// Map<String, ? extends Object> context) {
-	// try {
-	// Delegator delegator = dctx.getDelegator();
-	// GenericValue examMaster = delegator.findOne("ExamMasterf", false,
-	// UtilMisc.toMap("examId", context.get("examId")));
-	// delegator.removeValue(examMaster);
-	//
-	// return ApiResponse.response(true, 200, "Exam deleted sucessfully", null);
-	// } catch (Exception e) {
-	// return ApiResponse.response(false, 500, "Something went wrong try later",
-	// null);
-	// }
-	// }
 }

@@ -122,7 +122,7 @@ public class ExamResource {
 			return Response.status(400).entity(ServiceUtil.returnError(error)).build();
 		}
 		try {
-			Map<String, Object> result = getDispatcher().runSync("createExam", map);
+			Map<String, Object> result = getDispatcher().runSync("createExamWrapper", map);
 			request.getAttribute("");
 			return Response.status(201).entity(result).build();
 

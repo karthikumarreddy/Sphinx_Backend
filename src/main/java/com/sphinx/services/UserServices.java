@@ -59,6 +59,7 @@ public class UserServices {
 	public static Map<String, ? extends Object> loginUser(DispatchContext dctx, Map<String, ? extends Object> context) {
 		Delegator delegator = dctx.getDelegator();
 		try {
+			Map<String,Object> result= ServiceUtil.returnSuccess();
 			GenericValue user = delegator.findOne("UserLogin", false, Map.of("userLoginId", context.get("userName")));
 			if (user == null)
 				return ServiceUtil.returnError("No account found with the provided credentials.");
@@ -83,7 +84,9 @@ public class UserServices {
 
 
 			if (user.get("currentPassword").equals(context.get("password"))) {
-				return ServiceUtil.returnSuccess("Login successful. Welcome back!");
+				result.put("successMessage","login sucessfull");
+				result.put("partyId", user.getString("partyId"));
+				
 			}
 
 		} catch (GenericEntityException e) {

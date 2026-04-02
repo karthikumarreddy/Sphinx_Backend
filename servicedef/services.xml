@@ -22,6 +22,7 @@
     <service name="loginUser" engine="java" location="com.sphinx.services.UserServices" invoke="loginUser">
         <attribute name="userName" mode="IN" type="String" />
         <attribute name="password" mode="IN" type="String" />
+        <attribute name="partyId" mode="OUT" type="String"></attribute>
     </service>
     
     <service name="createParty" engine="entity-auto" default-entity-name="Party" invoke="create" auth="false">
@@ -170,7 +171,7 @@
     <!-- ====================================================================== -->
     
     <!-- Exam services -->
-    <service name="createExam" engine="java" location="com.sphinx.services.ExamServices" invoke="createExam">
+   <!--  <service name="createExam" engine="java" location="com.sphinx.services.ExamServices" invoke="createExam">
     <attribute name="examName" mode="IN" type="String" optional="false"/>
     <attribute name="description" mode="IN" type="String" optional="true"/>
     <attribute name="noOfQuestions" mode="IN" type="String" optional="false"/>
@@ -181,7 +182,7 @@
     <attribute name="allowNegativeMarks" mode="IN" type="String" optional="true"/>
     <attribute name="negativeMarkValue" mode="IN" type="String" optional="true"/>
     <attribute name="examId" mode="OUT" type="String" optional="true"/>
-</service>
+</service> -->
 
  <service name="createExamWrapper" engine="java" location="com.sphinx.services.ExamServices" invoke="createExam">
     <attribute name="examName" mode="IN" type="String" optional="false"/>
@@ -193,7 +194,7 @@
     <attribute name="answersMust" mode="IN" type="String" optional="true"/>
     <attribute name="allowNegativeMarks" mode="IN" type="String" optional="true"/>
     <attribute name="negativeMarkValue" mode="IN" type="String" optional="true"/>
-    <attribute name="partyId" mode="IN" type="String" optional="false"></attribute>
+    <attribute name="partyId" mode="IN" type="String" optional="true"></attribute>
     <attribute name="examId" mode="OUT" type="String" optional="true"/>
 </service>
 
@@ -204,8 +205,8 @@
     </service>
     
      <service name="AdminPartyRel" engine="entity-auto" invoke="create" default-entity-name="AdminPartyExamRel">
-        <auto-attributes include="pk" mode="INOUT" optional="true" />
-        <auto-attributes include="nonpk" mode="INOUT" optional="true" />
+        <auto-attributes include="pk" mode="IN" optional="true" />
+        <auto-attributes include="nonpk" mode="IN" optional="true" />
     </service>
     
     
