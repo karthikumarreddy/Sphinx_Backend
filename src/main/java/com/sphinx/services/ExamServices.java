@@ -21,6 +21,8 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import clojure.pprint.utilities__init;
+
 public class ExamServices {
 	private static final String MODULE = ExamServices.class.getName();
 	private static final String UNEXPECTED_ERROR_MSG = "Unexpected Error Occured! Try Again After Sometime!";
@@ -253,29 +255,9 @@ public class ExamServices {
 		}
 	}
 
-<<<<<<< HEAD
-	public static Map<String, Object> getAllAssignedUsersForExam(DispatchContext dctx,
-			Map<String, ? extends Object> context) {
-=======
-	/**
-	 * Get All users (parties) for the given exam Id.
-	 *
-	 * </ul>
-	 *
-	 * @param ctx
-	 *            the OFBiz DispatchContext containing delegator and dispatcher
-	 * @param context
-	 *            a map of input parameters including:
-	 *            <ul>
-	 *            <li><b>examId</b> - the id of the exam</li>
-	 *            </ul>
-	 * @return a Map containing the OFBiz service result. Returns {@link ServiceUtil#returnSuccess()} if users are found or
-	 *         {@link ServiceUtil#returnError(String)} if any error occurs.
-	 *
-	 * @throws None
-	 */
+
 	public static Map<String, Object> getAllAssignedUsersForExam(DispatchContext dctx, Map<String, ? extends Object> context) {
->>>>>>> 6c6269d4ede60257b2185e4390631f082b36ee56
+
 
 		try {
 			String examId = (String) context.get("examId");
@@ -457,6 +439,27 @@ public class ExamServices {
 		}
 	}
 	
+	public static Map<String,? extends Object> adminExamList(DispatchContext dctx,Map<String,? extends Object> context){
+		try {
+			Delegator delegator=dctx.getDelegator();
+			String partyId=(String)context.get("partyId");
+			
+			List<GenericValue> adminExams=EntityQuery.use(delegator).from("AdminPartyExamRel").where("partyId",partyId).queryList();
+			Map<String,Object> result=ServiceUtil.returnSuccess();
+			
+			List<Object> exams=new ArrayList<Object>();
+			for(GenericValue list:adminExams) {
+				GenericValue data=delegator.findOne("ExamMaster", false, UtilMisc.toMap("examId",list.get("examId")));
+				exams.add(data);
+			}
+			result.put("data", exams);
+			return result;
+			
+			
+		}catch (Exception e) {
+			return ServiceUtil.returnError("Something went wrong try later");
+		}
+	}
 
 
 }

@@ -277,6 +277,10 @@
     	<attribute name="data" mode="OUT" type="List"></attribute>
     </service>
     
+    <service engine="java" name="getAllExamsByAdmin" location="com.sphinx.services.ExamServices" invoke="getAllExamsByAdmin">
+    	<attribute name="partyId" mode="IN" type="String"/>
+    	<attribute name="data" mode="OUT" type="Map"/>
+    </service>
 
     <!-- Exam service ended  -->
     

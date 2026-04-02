@@ -1,5 +1,6 @@
 package com.sphinx.resources;
 
+import java.lang.module.ModuleDescriptor.Builder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -486,6 +487,26 @@ public class ExamResource {
 		}
 
 	}
+	
+	@POST
+	@Path("/getAllExamsByAdmin")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response getAllExamsByAdmin(@Context HttpServletRequest request) {
+		try {
+			String partyId=(String)request.getAttribute("partyId");
+			if(partyId == null || partyId.isEmpty()) {
+				return Response.status(400).entity(ServiceUtil.returnError("Login to proceed")).build();
+			}
+			Map<String,Object> data=getDispatcher().runSync("getAllExamsByAdmin", UtilMisc.toMap("partyId",partyId));
+			return Response.status(201).entity(data).build();
+			
+			
+		}catch (Exception e) {
+			return Response.status(500).entity(ServiceUtil.returnError("Something went wrong try later")).build();
+		}
+	}
+	
 
 
 }
