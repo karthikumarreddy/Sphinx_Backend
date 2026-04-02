@@ -1,7 +1,5 @@
 package com.sphinx.services;
 
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -10,7 +8,11 @@ import org.apache.ofbiz.base.util.UtilDateTime;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
+import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
+import org.apache.ofbiz.entity.transaction.GenericTransactionException;
+import org.apache.ofbiz.entity.transaction.TransactionUtil;
+import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
@@ -128,65 +130,207 @@ public class ExamServices {
 		}
 	}
 
-	public static Map<String, Object> assignUserToExam(DispatchContext dctx, Map<String, ? extends Object> context) {
+	public static Map<String, Object> assignUsersToExam(DispatchContext dctx, Map<String, ? extends Object> context) {
 
 		try {
-			String partyId = (String) context.get("partyId");
-			String examId = (String) context.get("examId");
-			long allowedAttempts = (long) context.get("allowedAttempts");
-			long noOfAttempts = (long) context.get("noOfAttempts");
-			long timeoutDays = (long) context.get("timeoutDays");
-			Timestamp fromDate = (Timestamp) context.get("fromDate");
-			Timestamp thruDate = (Timestamp) context.get("thruDate");
-
-			if (UtilValidate.isEmpty(examId)) {
-				return ServiceUtil.returnError("Give Exam Details is Invalid!");
-			}
-
-			if (UtilValidate.isEmpty(partyId)) {
-				return ServiceUtil.returnError("Give User Details is Invalid!");
-			}
-
-			if (allowedAttempts <= 0 && allowedAttempts > 5) {
-				return ServiceUtil.returnError("Invalid Allowed Attempts! Should in between 0 and 5");
-			}
-
-			if (noOfAttempts < 0 && noOfAttempts > allowedAttempts) {
-				return ServiceUtil.returnError("Invalid Number of Attempts!");
-			}
-
-			if (timeoutDays < 0 && timeoutDays > 5) {
-				return ServiceUtil.returnError("Invalid Timeout Days! Should in between 0 and 5");
-			}
-
-			if (fromDate.before(Timestamp.valueOf(LocalDateTime.now()))) {
-				return ServiceUtil.returnError("Invalid From Date!");
-			}
-
-			if (thruDate.before(Timestamp.valueOf(LocalDateTime.now()))) {
-				return ServiceUtil.returnError("Invalid Thru Date!");
-			}
-
 
 			LocalDispatcher dispatcher = dctx.getDispatcher();
 
 			if (dispatcher == null) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
-			
-			return dispatcher.runSync("createPartyExamRelationship", context);
 
+			List<Map<String, Object>> users = (List<Map<String, Object>>) context.get("users");
+
+			// ================ BEGIN TRANSACTION ==================================
+			TransactionUtil.begin();
+
+			boolean firstTime = true;
+
+			for (Map<String, Object> user : users) {
+
+				String partyId = (String) user.get("partyId");
+				String examId = (String) user.get("examId");
+				long allowedAttempts = (long) user.get("allowedAttempts");
+				long timeoutDays = (long) user.get("timeoutDays");
+				
+				GenericValue party = EntityQuery.use(null).from("Party").where("partyId", partyId).queryFirst();
+				
+				if (UtilValidate.isEmpty(examId)) {
+					return ServiceUtil.returnError("Give Exam Details is Invalid!");
+				}
+
+				if (UtilValidate.isEmpty(partyId)) {
+					return ServiceUtil.returnError("Give User Details is Invalid!");
+				}
+
+				if (party == null) {
+					return ServiceUtil.returnError("Invalid User Details! Record Not Found!");
+				}
+
+				if (firstTime) {
+					GenericValue exam = EntityQuery.use(null).from("ExamMaster").where("examId", examId).queryFirst();
+
+					if (exam == null) {
+						return ServiceUtil.returnError("Invalid Exam Details! Record Not Found!");
+					}
+				}
+
+
+				if (allowedAttempts <= 0 && allowedAttempts > 5) {
+					return ServiceUtil.returnError("Invalid Allowed Attempts! Should in between 0 and 5");
+				}
+
+				if (timeoutDays < 0 && timeoutDays > 5) {
+					return ServiceUtil.returnError("Invalid Timeout Days! Should in between 0 and 5");
+				}
+
+				Map<String, Object> result = dispatcher.runSync("createPartyExamRelationship",
+								UtilMisc.toMap("partyId", partyId, "examId", examId, "allowedAttempts", allowedAttempts, "timeoutDays",
+												timeoutDays, "noOfAttempts", 0));
+
+				if (ServiceUtil.isError(result)) {
+					result.put("errorMessage", UNEXPECTED_ERROR_MSG);
+					// ================ ROLLBACK TRANSACTION ==================================
+					TransactionUtil.rollback();
+					return result;
+				}
+
+			}
+			// ================ COMMIT TRANSACTION ==================================
+			TransactionUtil.commit();
+
+			return ServiceUtil.returnSuccess("Users Assigned Successfully!");
+
+
+		} catch (ClassCastException e) {
+			try {
+				TransactionUtil.rollback();
+			} catch (GenericTransactionException e1) {
+				Debug.logError(e, MODULE);
+			}
+
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError("Invalid Input values!");
+		} catch (GenericServiceException | GenericEntityException e) {
+			try {
+				TransactionUtil.rollback();
+			} catch (GenericTransactionException e1) {
+				Debug.logError(e, MODULE);
+			}
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+		}
+	}
+
+	public static Map<String, Object> getAllAssignedUsersForExam(DispatchContext dctx, Map<String, ? extends Object> context) {
+
+		try {
+			String examId = (String) context.get("examId");
+
+			if (UtilValidate.isEmpty(examId)) {
+				return ServiceUtil.returnError("Invalid Exam Id!");
+			}
+
+			Delegator delegator = dctx.getDelegator();
+
+			if (delegator == null) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
+
+			List<GenericValue> assignedUsers = EntityQuery.use(delegator).from("PartyExamRelationship").where("examId", examId).queryList();
+
+			Map<String, Object> result = ServiceUtil.returnSuccess("User Details!");
+			result.put("data", assignedUsers);
+			return result;
 
 		} catch (ClassCastException e) {
 			Debug.logError(e, MODULE);
 			return ServiceUtil.returnError("Invalid Input values!");
-		} catch (GenericServiceException e) {
+		} catch (GenericEntityException e) {
 			Debug.logError(e, MODULE);
 			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 		}
 
+	}
+
+	public static Map<String, Object> getAllExamAssignedForUser(DispatchContext dctx, Map<String, ? extends Object> context) {
+
+		try {
+			String partyId = (String) context.get("partyId");
+
+			if (UtilValidate.isEmpty(partyId)) {
+				return ServiceUtil.returnError("Invalid User!");
+			}
+
+			Delegator delegator = dctx.getDelegator();
+
+			if (delegator == null) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
+
+			List<GenericValue> assignedExams = EntityQuery.use(delegator).from("PartyExamRelationship").where("partyId", partyId)
+							.queryList();
+
+			Map<String, Object> result = ServiceUtil.returnSuccess("Exam Details!");
+			result.put("data", assignedExams);
+			return result;
+
+		} catch (ClassCastException e) {
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError("Invalid Input values!");
+		} catch (GenericEntityException e) {
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+		}
 
 	}
+
+	public static Map<String, Object> removeAssignedUserFromExam(DispatchContext dctx, Map<String, ? extends Object> context) {
+
+		try {
+
+			Delegator delegator = dctx.getDelegator();
+			LocalDispatcher dispatcher = dctx.getDispatcher();
+
+			if (delegator == null || dispatcher == null) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
+
+			String partyId = (String) context.get("partyId");
+			String examId = (String) context.get("examId");
+
+			if (UtilValidate.isEmpty(partyId)) {
+				return ServiceUtil.returnError("Invalid User!");
+			}
+
+			if (UtilValidate.isEmpty(examId)) {
+				return ServiceUtil.returnError("Invalid User!");
+			}
+
+
+			GenericValue assignedUserRecord = EntityQuery.use(delegator).from("PartyExamRelationship")
+							.where("partyId", partyId, "examId", examId).queryFirst();
+
+			if (assignedUserRecord == null) {
+				return ServiceUtil.returnSuccess("User already Removed!");
+			}
+
+			Map<String, Object> result = dispatcher.runSync("removeAssignedUserFromExam",
+							UtilMisc.toMap("partyId", partyId, "examId", examId));
+
+			return result;
+
+		} catch (ClassCastException e) {
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError("Invalid Input values!");
+		} catch (GenericEntityException | GenericServiceException e) {
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+		}
+
+	}
+
 
 	// public static Map<String, ? extends Object> updateExam(DispatchContext dctx,
 	// Map<String, ? extends Object> context) {

@@ -150,6 +150,17 @@
     <service name="launchExam" engine="java" location="com.sphinx.services.ExamTopicServices" invoke="launchExam" auth="false">
         <attribute name="examId" type="String" mode="IN"/>
     </service>
+        
+    <service name="getAllAssignedUsersForExam" engine="java" location="com.sphinx.services.ExamServices"  invoke="getAllAssignedUsersForExam" auth="false">
+    	<attribute name="examId" mode="IN" type="String"></attribute>
+    	<attribute name="data" mode="OUT" type="List"></attribute>
+    </service>
+    
+    <service name="getAllExamAssignedForUser" engine="java" location="com.sphinx.services.ExamServices"  invoke="getAllExamAssignedForUser" auth="false">
+    	<attribute name="partyId" mode="IN" type="String"></attribute>
+    	<attribute name="data" mode="OUT" type="List"></attribute>
+    </service>
+    
     <!-- Exam topic services end -->
 
 
@@ -201,12 +212,10 @@
     	<attribute name="allowedAttempts" mode="IN" type="Long" optional="false" />
     	<attribute name="noOfAttempts" mode="IN" type="Long" optional="false" />
     	<attribute name="timeoutDays" mode="IN" type="Long" optional="false" />
-    	<attribute name="fromDate" mode="IN" type="Timestamp" optional="true" />
-    	<attribute name="thruDate" mode="IN" type="Timestamp" optional="true" />
     </service>
    
-   <service name="createPartyExamRelationshipWrapper" engine="java" location="com.sphinx.services.ExamServices" invoke="assignUserToExam" auth="false">
-    	<implements service="createPartyExamRelationshipInterface"/>
+   <service name="createPartyExamRelationshipWrapper" engine="java" location="com.sphinx.services.ExamServices" invoke="assignUsersToExam" auth="false">
+    	<attribute name="users" mode="IN" type="List"></attribute>
     </service>
     
     <service name="createPartyExamRelationship" engine="entity-auto" default-entity-name="PartyExamRelationship" invoke="create" auth="false">
@@ -216,6 +225,17 @@
     <service name="getAllUsers" engine="java" location="com.sphinx.services.UserServices"  invoke="getAllUsers" auth="false">
     	<attribute name="users" mode="OUT" type="List"></attribute>
     </service>
+     
+    <service name="removeAssignedUserFromExamWrapper" engine="java" location="com.sphinx.services.ExamServices" invoke="removeAssignedUserFromExam" auth="false">
+    	<attribute name="partyId" mode="IN" type="String" />
+    	<attribute name="examId" mode="IN" type="String" />
+    </service>
+    
+    <service name="removeAssignedUserFromExam" engine="entity-auto" invoke="delete" default-entity-name="PartyExamRelationship" auth="false">
+    	<attribute name="partyId" mode="IN" type="String" />
+    	<attribute name="examId" mode="IN" type="String" />
+    </service>
+
     
     <!-- Exam service ended  -->
     
