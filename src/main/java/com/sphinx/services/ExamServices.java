@@ -1,8 +1,6 @@
 package com.sphinx.services;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +22,8 @@ import org.apache.ofbiz.service.ServiceUtil;
 public class ExamServices {
 	private static final String MODULE = ExamServices.class.getName();
 	private static final String UNEXPECTED_ERROR_MSG = "Unexpected Error Occured! Try Again After Sometime!";
+	
+	
 
 	public static Map<String, ? extends Object> getExam(DispatchContext dctx, Map<String, ? extends Object> context) {
 		try {
@@ -354,8 +354,7 @@ public class ExamServices {
 				return ServiceUtil.returnSuccess("User already Removed!");
 			}
 
-			Map<String, Object> result = dispatcher.runSync("removeAssignedUserFromExam",
-					UtilMisc.toMap("partyId", partyId, "examId", examId));
+			Map<String, Object> result = dispatcher.runSync("removeAssignedUserFromExam", UtilMisc.toMap("partyId", partyId, "examId", examId));
 
 			return result;
 
@@ -369,77 +368,6 @@ public class ExamServices {
 
 	}
 
-	public static Map<String, ? extends Object> getUserAssignedExams(DispatchContext dctx,
-			Map<String, ? extends Object> context) {
-		try {
-			Delegator delegator = dctx.getDelegator();
-			String partyId = (String) context.get("partyId");
-			Map<String, Object> result = ServiceUtil.returnSuccess();
-
-			List<GenericValue> assignedExams = delegator.findByAnd("PartyExamRelationship",
-					UtilMisc.toMap("partyId", partyId), null, false);
-
-			List<Map<String, Object>> examList = new ArrayList<>();
-
-			for (GenericValue assigned : assignedExams) {
-				String examId = assigned.getString("examId");
-
-				// Problem 1 fix — queryFirst() returns one GenericValue, not a List
-				GenericValue exam = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId).queryFirst();
-
-				// Problem 2 fix — skip instead of error
-				if (exam == null)
-					continue;
-
-				// Problem 3 fix — merge both entities into one flat map
-				Map<String, Object> examMap = new HashMap<>();
-
-				examMap.put("examId", examId);
-				examMap.put("examName", exam.getString("examName"));
-				examMap.put("description", exam.getString("description"));
-				examMap.put("duration", exam.getLong("duration"));
-				examMap.put("noOfQuestions", exam.getLong("noOfQuestions"));
-				examMap.put("passPercentage", exam.getBigDecimal("passPercentage"));
-
-				examMap.put("allowedAttempts", assigned.getLong("allowedAttempts"));
-				examMap.put("noOfAttempts", assigned.getLong("noOfAttempts"));
-				examMap.put("fromDate", assigned.getTimestamp("fromDate"));
-				examMap.put("thruDate", assigned.getTimestamp("thruDate"));
-				examMap.put("canSplitExams", assigned.getLong("canSplitExams"));
-				examMap.put("canSeeDetailedResults", assigned.getLong("canSeeDetailedResults"));
-				examMap.put("lastPerformanceDate", assigned.getTimestamp("lastPerformanceDate"));
-
-				GenericValue inProgress = EntityQuery.use(delegator).from("InProgressParty")
-						.where("partyId", partyId, "examId", examId).queryFirst();
-
-				long noOfAttempts = assigned.getLong("noOfAttempts") != null ? assigned.getLong("noOfAttempts") : 0L;
-				long allowedAttempts = assigned.getLong("allowedAttempts") != null ? assigned.getLong("allowedAttempts")
-						: 1L;
-				Timestamp today = UtilDateTime.nowTimestamp();
-				Timestamp thruDate = assigned.getTimestamp("thruDate");
-
-				String examStatus;
-				if (inProgress != null && Long.valueOf(1L).equals(inProgress.getLong("isExamActive"))) {
-					examStatus = "IN_PROGRESS";
-				} else if (thruDate != null && today.after(thruDate)) {
-					examStatus = "EXPIRED";
-				} else if (noOfAttempts >= allowedAttempts) {
-					examStatus = "ATTEMPTS_EXHAUSTED";
-				} else {
-					examStatus = "AVAILABLE";
-				}
-
-				examMap.put("examStatus", examStatus);
-				examList.add(examMap);
-			}
-
-			result.put("examList", examList);
-			return result;
-
-		} catch (Exception e) {
-			return ServiceUtil.returnError("Something went wrong, please try later.");
-		}
-	}
 	
 	public static Map<String,? extends Object> adminExamList(DispatchContext dctx,Map<String,? extends Object> context){
 		try {

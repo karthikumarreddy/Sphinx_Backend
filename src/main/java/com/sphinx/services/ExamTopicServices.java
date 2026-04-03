@@ -76,19 +76,16 @@ public class ExamTopicServices {
 				return ServiceUtil.returnError("examId is required");
 			}
 
-			// 1. Fetch exam
 			GenericValue exam = delegator.findOne("ExamMaster", false, UtilMisc.toMap("examId", examId));
 			if (exam == null) {
 				return ServiceUtil.returnError("Exam not found");
 			}
 
-			// 2. Check if already launched
 			Long setupProper = exam.getLong("examSetupProper");
 			if (setupProper != null && setupProper == 1) {
 				return ServiceUtil.returnError("Exam already launched. Cannot regenerate questions");
 			}
 
-			// 3. Validate question count
 			if (exam.get("noOfQuestions") == null) {
 				return ServiceUtil.returnError("Exam has no question count set");
 			}
@@ -97,14 +94,12 @@ public class ExamTopicServices {
 				return ServiceUtil.returnError("Exam question count must be greater than 0");
 			}
 
-			// 4. Fetch topics for this exam
 			List<GenericValue> topics = delegator.findByAnd("ExamTopicDetails", UtilMisc.toMap("examId", examId), null,
 					false);
 			if (topics == null || topics.isEmpty()) {
 				return ServiceUtil.returnError("No topics found. Add topics before generating questions");
 			}
 
-			// 5. Validate percentages sum to 100
 			int totalPercentage = 0;
 			for (GenericValue topic : topics) {
 				if (topic.get("percentage") == null) {
@@ -116,10 +111,8 @@ public class ExamTopicServices {
 				return ServiceUtil.returnError("Topic percentages must add up to 100. Current total: " + totalPercentage);
 			}
 
-			// 6. Clear existing generated questions for this exam
 			delegator.removeByCondition("QuestionBankMasterB", EntityCondition.makeCondition("examId", examId));
 
-			// 7. Resolve shuffle flag once, outside the loop
 			Long questionsRandomized = exam.getLong("questionsRandomized");
 			boolean shouldShuffle = questionsRandomized != null && questionsRandomized == 1;
 
@@ -138,7 +131,6 @@ public class ExamTopicServices {
 				List<GenericValue> questions = EntityQuery.use(delegator).from("QuestionMaster").where(condition)
 						.limit(questionCount).queryList();
 
-				// 9. Validate before shuffle
 				if (questions == null || questions.isEmpty()) {
 					return ServiceUtil.returnError("No questions found for topic: " );
 				}
@@ -147,12 +139,10 @@ public class ExamTopicServices {
 							+ " questions but only " + questions.size() + " available");
 				}
 
-				// 10. Shuffle after validation if flag is set
 				if (shouldShuffle) {
 					Collections.shuffle(questions);
 				}
 
-				// 11. Copy each question into QuestionBankMasterB
 				for (GenericValue q : questions) {
 					String newQid = delegator.getNextSeqId("QuestionBankMasterB");
 					GenericValue draft = delegator.makeValue("QuestionBankMasterB");
