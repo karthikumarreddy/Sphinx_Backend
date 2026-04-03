@@ -270,8 +270,12 @@ public class ExamServices {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 
-			List<GenericValue> assignedUsers = EntityQuery.use(delegator).from("PartyExamRelationship")
-					.where("examId", examId).queryList();
+			// List<GenericValue> assignedUsers = EntityQuery.use(delegator).from("PartyExamRelationship")
+			// .where("examId", examId).queryList();
+
+			List<GenericValue> assignedUsers = EntityQuery.use(delegator).from("PersonWithExam")
+							.where("partyTypeId", "PERSON", "statusId", "PARTY_ENABLED", "roleTypeId", "SphinxUser", "examId", examId)
+							.queryList();
 
 			Map<String, Object> result = ServiceUtil.returnSuccess("User Details!");
 			result.put("data", assignedUsers);
@@ -303,7 +307,7 @@ public class ExamServices {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 
-			List<GenericValue> assignedExams = EntityQuery.use(delegator).from("PartyExamRelationship")
+			List<GenericValue> assignedExams = EntityQuery.use(delegator).from("AssignedExamDetails")
 					.where("partyId", partyId).queryList();
 
 			Map<String, Object> result = ServiceUtil.returnSuccess("Exam Details!");
@@ -439,23 +443,30 @@ public class ExamServices {
 	
 	public static Map<String,? extends Object> adminExamList(DispatchContext dctx,Map<String,? extends Object> context){
 		try {
-			Delegator delegator=dctx.getDelegator();
-			String partyId=(String)context.get("partyId");
+			Delegator delegator = dctx.getDelegator();
+			String partyId = (String) context.get("partyId");
 			
-			List<GenericValue> adminExams=EntityQuery.use(delegator).from("AdminPartyExamRel").where("partyId",partyId).queryList();
-			Map<String,Object> result=ServiceUtil.returnSuccess();
+			List<GenericValue> adminExams = EntityQuery.use(delegator).from("AdminPartyExamRel").where("partyId", partyId).queryList();
 			
-			List<Object> exams=new ArrayList<Object>();
-			for(GenericValue list:adminExams) {
-				GenericValue data=delegator.findOne("ExamMaster", false, UtilMisc.toMap("examId",list.get("examId")));
-				exams.add(data);
+			List<GenericValue> listOfExams = new ArrayList<GenericValue>();
+			
+			for (GenericValue exam : adminExams) {
+				GenericValue examRecord = delegator.findOne("ExamMaster", false, UtilMisc.toMap("examId", exam.get("examId")));
+				if (examRecord != null) {
+					listOfExams.add(examRecord);
+				}
+
 			}
-			result.put("data", exams);
-			return result;
 			
+			Map<String, Object> serviceResult = ServiceUtil.returnSuccess("Admin Exam List!");
+
+			serviceResult.put("data", listOfExams);
+
+			return serviceResult;
 			
 		}catch (Exception e) {
-			return ServiceUtil.returnError("Something went wrong try later");
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 		}
 	}
 

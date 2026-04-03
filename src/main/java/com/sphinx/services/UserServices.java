@@ -328,10 +328,13 @@ public class UserServices {
 		if (isAdmin) {
 			currentPassword = (String) context.get("currentPassword");
 			username = (String) context.get("userName");
+			username = username.strip();
 			requirePasswordChange = "N";
 
 		} else {
 			// if role is user we generate username and password
+			String firstName = (String) context.get("firstName");
+			firstName = firstName.strip();
 			username = (String) context.get("firstName") + "-" + partyId;
 			currentPassword = "" + RandomPasswordGenerator.generatePassword(USER_PASSWORD_LEN); // Random generation
 			requirePasswordChange = "Y"; // password valid for only one session. hence this flag.

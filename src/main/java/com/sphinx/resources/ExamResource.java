@@ -498,14 +498,15 @@ public class ExamResource {
 		try {
 			String partyId=(String)request.getAttribute("partyId");
 			if(partyId == null || partyId.isEmpty()) {
-				return Response.status(400).entity(ServiceUtil.returnError("Login to proceed")).build();
+				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError("Login to proceed")).build();
 			}
-			Map<String,Object> data=getDispatcher().runSync("getAllExamsByAdmin", UtilMisc.toMap("partyId",partyId));
-			return Response.status(201).entity(data).build();
-			
+			Map<String, Object> result = getDispatcher().runSync("getAllExamsByAdmin", UtilMisc.toMap("partyId", partyId));
+
+			return Response.status(Response.Status.OK).entity(result).build();
 			
 		}catch (Exception e) {
-			return Response.status(500).entity(ServiceUtil.returnError("Something went wrong try later")).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ServiceUtil.returnError("Something went wrong try later"))
+							.build();
 		}
 	}
 	

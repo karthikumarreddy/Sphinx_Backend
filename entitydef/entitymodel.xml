@@ -226,6 +226,50 @@
         </view-link>
        
     </view-entity>
+    
+    <view-entity entity-name="PersonWithExam" package-name="com.sphinx">
+        
+        <member-entity entity-alias="PY" entity-name="Party"/>
+        <member-entity entity-alias="PN" entity-name="Person"/>
+        <member-entity entity-alias="PR" entity-name="PartyRole"/>
+        <member-entity entity-alias="PXR" entity-name="PartyExamRelationship"/>
+        <member-entity entity-alias="EM" entity-name="ExamMaster"/>
+        
+        <alias entity-alias="PR" name="roleTypeId"/>
+        <alias entity-alias="PY" name="partyId"/>
+        <alias entity-alias="PY" name="partyTypeId"/>
+        <alias entity-alias="PY" name="statusId"/>
+        <alias entity-alias="PN" name="firstName"/>
+        <alias entity-alias="PN" name="lastName"/>  
+        
+        <alias entity-alias="PXR" name="examId" />
+        <alias entity-alias="PXR" name="allowedAttempts" />
+        <alias entity-alias="PXR" name="noOfAttempts" />
+        <alias entity-alias="PXR" name="timeoutDays" />
+        
+        <alias entity-alias="EM" name="examName" />
+        <alias entity-alias="EM" name="description" />
+        <alias entity-alias="EM" name="noOfQuestions" />
+        <alias entity-alias="EM" name="duration" />
+        <alias entity-alias="EM" name="passPercentage" />
+        
+        <view-link entity-alias="PY" rel-entity-alias="PXR">
+            <key-map field-name="partyId"/>
+        </view-link>
+        
+        <view-link entity-alias="PXR" rel-entity-alias="EM">
+            <key-map field-name="examId"/>
+        </view-link>
+        
+        <view-link entity-alias="PY" rel-entity-alias="PN">
+            <key-map field-name="partyId"/>
+        </view-link>
+        
+        <view-link entity-alias="PY" rel-entity-alias="PR">
+            <key-map field-name="partyId"/>
+        </view-link>
+       
+    </view-entity>
   
    
     <view-entity entity-name="UserDetailsForEmail" package-name="com.sphinx">
@@ -268,6 +312,33 @@
     	<!-- PartyContactMech & ContactMech Join with contactMechId  -->
     	<view-link rel-entity-alias="PCM" entity-alias="CM">
     		<key-map field-name="contactMechId"/>
+    	</view-link>
+    </view-entity>
+    
+    
+    <view-entity entity-name="AssignedExamDetails" package-name="com.sphinx">
+    
+    	<member-entity entity-alias="PXR" entity-name="PartyExamRelationship"/>
+    	<member-entity entity-alias="EM" entity-name="ExamMaster"/>
+    	
+    	<alias entity-alias="EM" name="examName"/>
+    	<alias entity-alias="EM" name="description"/>
+    	<alias entity-alias="EM" name="noOfQuestions"/>
+    	<alias entity-alias="EM" name="duration"/>
+    	<alias entity-alias="EM" name="passPercentage"/>
+    	<alias entity-alias="EM" name="allowNegativeMarks"/>
+    	<alias entity-alias="EM" name="fromDate"/>
+    	<alias entity-alias="EM" name="thruDate"/>
+    	
+    
+    	<alias entity-alias="PXR" name="examId"/>
+    	<alias entity-alias="PXR" name="partyId"/>
+    	<alias entity-alias="PXR" name="allowedAttempts"/>
+    	<alias entity-alias="PXR" name="noOfAttempts"/>
+    	<alias entity-alias="PXR" name="timeoutDays"/>
+    	
+    	<view-link rel-entity-alias="PXR" entity-alias="EM">
+    		<key-map field-name="examId"/>
     	</view-link>
     	
     </view-entity>
