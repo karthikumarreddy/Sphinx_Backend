@@ -79,7 +79,7 @@ public class UserServices {
 			if (!partyRole.get("roleTypeId").equals("SphinxUser") && !partyRole.get("roleTypeId").equals("SphinxAdmin"))
 				return ServiceUtil.returnError("Access denied. Your account does not have a recognized role.");
 
-			if (!user.get("enabled").equals("Y"))
+			if (user.get("enabled").equals("N"))
 				return ServiceUtil.returnError("Your account has been suspended. Please contact the administrator for further assistance.");
 
 

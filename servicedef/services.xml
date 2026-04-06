@@ -147,6 +147,15 @@
     <service name="generateExamQuestions" engine="java" location="com.sphinx.services.ExamTopicServices" invoke="generateExamQuestions" auth="false">
         <attribute name="examId" type="String" mode="IN"/>
     </service>
+    
+    <service name="deleteExamQuestions"  engine="entity-auto" invoke="deleteAll" default-entity-name="QuestionBankMasterB">
+    <auto-attributes include="pk" mode="IN" optional="true"/>
+    <auto-attributes include="nonpk" mode="IN" optional="true"/>
+</service>
+
+<service name="deleteExamWrapper" engine="java"  location="com.sphinx.services.ExamServices"  invoke="deleteExamWrapper" auth="false">
+    <attribute name="examId" type="String" mode="IN" optional="false"/>
+</service>
 
     <service name="launchExam" engine="java" location="com.sphinx.services.ExamTopicServices" invoke="launchExam" auth="false">
         <attribute name="examId" type="String" mode="IN"/>
@@ -267,7 +276,7 @@
     	<attribute name="examId" mode="IN" type="String" />
     </service>
 
-	<service name="getAllAssignedUsersForExam" engine="java" location="com.sphinx.services.ExamServices"  invoke="getAllAssignedUsersForExam" auth="false">
+<service name="getAllAssignedUsersForExam" engine="java" location="com.sphinx.services.ExamServices"  invoke="getAllAssignedUsersForExam" auth="false">
     	<attribute name="examId" mode="IN" type="String"></attribute>
     	<attribute name="data" mode="OUT" type="List"></attribute>
     </service>
@@ -277,9 +286,9 @@
     	<attribute name="data" mode="OUT" type="List"></attribute>
     </service>
     
-    <service engine="java" name="getAllExamsByAdmin" location="com.sphinx.services.ExamServices" invoke="adminExamList">
+    <service engine="java" name="getAllExamsByAdmin" location="com.sphinx.services.ExamServices" invoke="getAllExamsByAdmin">
     	<attribute name="partyId" mode="IN" type="String"/>
-    	<attribute name="data" mode="OUT" type="List"/>
+    	<attribute name="data" mode="OUT" type="Map"/>
     </service>
 
     <!-- Exam service ended  -->
@@ -335,7 +344,7 @@
     </service>
     
     
-    <service name="getUserAssignedExams" engine="java" location="in.vastpro.sphinx.ExamServices" invoke="getUserAssignedExams" auth="true">
+    <service name="getUserAssignedExams" engine="java" location="in.vastpro.sphinx.ExamServices" invoke="getUserAssignedExams" auth="false">
     <attribute name="partyId"   type="String" mode="IN"  optional="false"/>
     <attribute name="examList"  type="List"   mode="OUT" optional="false"/>
 </service>
