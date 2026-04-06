@@ -34,15 +34,10 @@ public class ExamResource {
 	@Context
 	private HttpServletRequest request;
 
-	private Delegator getDelegator() {
-		Delegator delegator = (Delegator) request.getAttribute("delegator");
-		return delegator;
-	}
-
 	private LocalDispatcher getDispatcher() {
 		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 		return dispatcher;
-		
+
 	}
 
 	private String validateExam(Map<String, String> map) {
@@ -79,11 +74,12 @@ public class ExamResource {
 	}
 
 	@GET
-	@Path("/{examId}")
+	@Path("/*")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getExamById(@PathParam("examId") String examId) {
+	public Response getExamById(@Context HttpServletRequest rquest) {
 
 		try {
+			String examId=request.getParameter("examId");
 			if (examId == null || examId.isEmpty()) {
 				return Response.status(400).entity(ServiceUtil.returnError("Input is empty")).build();
 			}
@@ -281,33 +277,28 @@ public class ExamResource {
 			return Response.status(5000).entity(ServiceUtil.returnError("Something went wrong try later")).build();
 		}
 	}
-	
+
 	@GET
 	@Path("/topics/{examId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getExamTopicsByExamId(@PathParam("examId") String examId) {
 
-	    try {
-	        if (examId == null || examId.isEmpty()) {
-	            return Response.status(400)
-	                    .entity(ServiceUtil.returnError("ExamId is required"))
-	                    .build();
-	        }
+		try {
+			if (examId == null || examId.isEmpty()) {
+				return Response.status(400).entity(ServiceUtil.returnError("ExamId is required")).build();
+			}
 
-	        Map<String, Object> input = new HashMap<>();
-	        input.put("examId", examId);
+			Map<String, Object> input = new HashMap<>();
+			input.put("examId", examId);
 
-	        Map<String, Object> result =
-	                getDispatcher().runSync("getExamTopicsByExamId", input);
+			Map<String, Object> result = getDispatcher().runSync("getExamTopicsByExamId", input);
 
-	        return Response.status(200).entity(result).build();
+			return Response.status(200).entity(result).build();
 
-	    } catch (Exception e) {
-	        return Response.status(500)
-	                .entity(ServiceUtil.returnError("Something went wrong"))
-	                .build();
-	    }
-	}	
+		} catch (Exception e) {
+			return Response.status(500).entity(ServiceUtil.returnError("Something went wrong")).build();
+		}
+	}
 
 	// generate questions to the topic
 	@POST
@@ -362,20 +353,24 @@ public class ExamResource {
 
 			if (dispatcher == null) {
 				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-								.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
 			}
 
-			// Map<String, Object> result = dispatcher.runSync("createPartyExamRelationshipWrapper", UtilMisc.toMap("partyId",
+			// Map<String, Object> result =
+			// dispatcher.runSync("createPartyExamRelationshipWrapper",
+			// UtilMisc.toMap("partyId",
 			// request.getAttribute("partyId"),
 			// "examId", request.getAttribute("examId"), "allowedAttempts",
-			// request.getAttribute("allowedAttempts"), "noOfAttempts", request.getAttribute("noOfAttempts"), "timeoutDays",
-			// request.getAttribute("timeoutDays"), "fromDate", request.getAttribute("fromDate"), "thruDate",
+			// request.getAttribute("allowedAttempts"), "noOfAttempts",
+			// request.getAttribute("noOfAttempts"), "timeoutDays",
+			// request.getAttribute("timeoutDays"), "fromDate",
+			// request.getAttribute("fromDate"), "thruDate",
 			// request.getAttribute("thruDate")));
 
 			List<Map<String, Object>> listOfUsers = (List<Map<String, Object>>) request.getAttribute("users");
 
 			Map<String, Object> result = dispatcher.runSync("createPartyExamRelationshipWrapper",
-							UtilMisc.toMap("users", listOfUsers));
+					UtilMisc.toMap("users", listOfUsers));
 
 			if (result.containsKey("responseMessage") && result.get("responseMessage").equals("success")) {
 				result.put("successMessage", "User Assigned to the Exam!");
@@ -391,33 +386,27 @@ public class ExamResource {
 		}
 	}
 
-	
 	@GET
 	@Path("/assignedExams/{partyId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getUserAssignedExams(@PathParam("partyId") String partyId) {
-	    try {
-	        if (partyId == null || partyId.isEmpty()) {
-	            return Response.status(400)
-	                    .entity(ServiceUtil.returnError("PartyId is required"))
-	                    .build();
-	        }
+		try {
+			if (partyId == null || partyId.isEmpty()) {
+				return Response.status(400).entity(ServiceUtil.returnError("PartyId is required")).build();
+			}
 
-	        Map<String, Object> input = new HashMap<>();
-	        input.put("partyId", partyId);
+			Map<String, Object> input = new HashMap<>();
+			input.put("partyId", partyId);
 
-	        Map<String, Object> result = getDispatcher().runSync("getUserAssignedExams", input);
+			Map<String, Object> result = getDispatcher().runSync("getUserAssignedExams", input);
 
-	        return Response.status(200).entity(result).build();
+			return Response.status(200).entity(result).build();
 
-	    } catch (Exception e) {
-	        Debug.logError(e, MODULE);
-	        return Response.status(500)
-	                .entity(ServiceUtil.returnError("Something went wrong"))
-	                .build();
-	    }
+		} catch (Exception e) {
+			Debug.logError(e, MODULE);
+			return Response.status(500).entity(ServiceUtil.returnError("Something went wrong")).build();
+		}
 	}
-
 
 	@POST
 	@Path("/removeAssignedUserFromExam")
@@ -428,17 +417,18 @@ public class ExamResource {
 
 			if (dispatcher == null) {
 				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-								.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
 			}
-			
-			Map<String, Object> result = dispatcher.runSync("removeAssignedUserFromExamWrapper",
-							UtilMisc.toMap("partyId", request.getAttribute("partyId"), "examId", request.getAttribute("examId")));
+
+			Map<String, Object> result = dispatcher.runSync("removeAssignedUserFromExamWrapper", UtilMisc
+					.toMap("partyId", request.getAttribute("partyId"), "examId", request.getAttribute("examId")));
 
 			return Response.ok().entity(result).build();
 
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ServiceUtil.returnError(e.getMessage())).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 
@@ -451,17 +441,17 @@ public class ExamResource {
 
 		if (dispatcher == null) {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-							.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+					.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
 		}
 
 		try {
 			Map<String, Object> result = dispatcher.runSync("getAllAssignedUsersForExam",
-							UtilMisc.toMap("examId", request.getAttribute("examId")));
+					UtilMisc.toMap("examId", request.getAttribute("examId")));
 
 			return Response.status(Response.Status.OK).entity(result).build();
 		} catch (GenericServiceException e) {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-							.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+					.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
 		}
 
 	}
@@ -475,41 +465,68 @@ public class ExamResource {
 
 		if (dispatcher == null) {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-							.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+					.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
 		}
 
 		try {
 			Map<String, Object> result = dispatcher.runSync("getAllExamAssignedForUser",
-							UtilMisc.toMap("partyId", request.getAttribute("partyId")));
+					UtilMisc.toMap("partyId", request.getAttribute("partyId")));
 
 			return Response.status(Response.Status.OK).entity(result).build();
 		} catch (GenericServiceException e) {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-							.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+					.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
 		}
 
 	}
-	
+
 	@POST
 	@Path("/getAllExamsByAdmin")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response getAllExamsByAdmin(@Context HttpServletRequest request) {
 		try {
-			String partyId=(String)request.getAttribute("partyId");
-			if(partyId == null || partyId.isEmpty()) {
-				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError("Login to proceed")).build();
+			String partyId = (String) request.getParameter("partyId");
+			if (partyId == null || partyId.isEmpty()) {
+				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError("Login to proceed"))
+						.build();
 			}
-			Map<String, Object> result = getDispatcher().runSync("getAllExamsByAdmin", UtilMisc.toMap("partyId", partyId));
+			Map<String, Object> result = getDispatcher().runSync("getAllExamsByAdmin",
+					UtilMisc.toMap("partyId", partyId));
 
 			return Response.status(Response.Status.OK).entity(result).build();
-			
-		}catch (Exception e) {
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ServiceUtil.returnError("Something went wrong try later"))
-							.build();
+
+		} catch (Exception e) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(ServiceUtil.returnError("Something went wrong try later")).build();
 		}
 	}
-	
 
+	@GET
+	@Path("/getAllExamQuestions")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response getAllExamQuestions(@Context HttpServletRequest request) {
+		try {
+			String examId=request.getParameter("examId");
+			if (examId == null || examId.isEmpty()) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("examId is required")).build();
+			}
+
+			Map<String, Object> result = getDispatcher().runSync("getAllExamQuestions",
+					UtilMisc.toMap("examId", examId));
+
+			if (result == null || result.isEmpty()) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Exam id is undefined ")).build();
+			}
+			return Response.status(Response.Status.OK).entity(result).build();
+
+		} catch (Exception e) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(ServiceUtil.returnError("Something went wrong try again later")).build();
+		}
+	}
 
 }

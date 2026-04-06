@@ -32,7 +32,8 @@ public class TopicServices {
 			return result;
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
-			return ServiceUtil.returnError(e.getMessage());		}
+			return ServiceUtil.returnError(e.getMessage());
+		}
 	}
 
 	public static Map<String, Object> getTopicById(DispatchContext dctx, Map<String, Object> context) {
@@ -47,24 +48,24 @@ public class TopicServices {
 			return result;
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
-			return ServiceUtil.returnError(e.getMessage());		}
+			return ServiceUtil.returnError(e.getMessage());
+		}
 	}
-
 
 	public static Map<String, Object> createTopic(DispatchContext dctx, Map<String, Object> context) {
 
 		Delegator delegator = dctx.getDelegator();
 		try {
 
-			String topicName = (String) context.get("topicName");
+			String topicName = context.get("topicName").toString().toUpperCase();
 			GenericValue isPresent = EntityQuery.use(delegator).from("TopicMaster")
-							.where(EntityCondition.makeCondition(EntityFunction.upperField("topicName"), EntityOperator.LIKE,
-											EntityFunction.upper("%" + topicName + "%")))
-							.queryFirst();
-			
+					.where(EntityCondition.makeCondition(EntityFunction.upperField("topicName"), EntityOperator.LIKE,
+							EntityFunction.upper("%" + topicName + "%")))
+					.queryFirst();
 
 			if (isPresent == null) {
-				return dctx.getDispatcher().runSync("createTopic", UtilMisc.toMap("topicName", (String) context.get("topicName")));
+				return dctx.getDispatcher().runSync("createTopic",
+						UtilMisc.toMap("topicId", topicName, "topicName", topicName));
 			} else {
 				return ServiceUtil.returnError("Given Topic is Already Present!");
 			}
