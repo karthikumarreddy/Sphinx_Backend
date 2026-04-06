@@ -89,12 +89,12 @@ public class UserResorce {
 
 			if (!Pattern.matches("^[a-zA-Z0-9]{4,20}$", userName))
 				return Response.status(400).entity(Map.of("error",
-						"Invalid username. It must be 4–20 characters long \n and contain only letters and numbers."))
+						"Invalid username. It must be 4–20 characters long and contain only letters and numbers."))
 						.build();
 
 			if (!Pattern.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$", password))
 				return Response.status(400).entity(Map.of("error",
-						"Invalid password format. \n Password must be at least 8 characters \n and include uppercase, lowercase, a number, and a special character."))
+						"Invalid password format. Password must be at least 8 characters  and include uppercase, lowercase, a number, and a special character."))
 						.build();
 
 			Delegator delegator = getDelegator();
@@ -104,7 +104,7 @@ public class UserResorce {
 				return Response.status(404).entity(Map.of("error", "No account found with the provided username."))
 						.build();
 
-			if (!user.get("enabled").equals("Y"))
+			if (user.get("enabled").equals("N"))
 				return Response.status(403)
 						.entity(Map.of("error",
 								"Your account has been suspended. Please contact the administrator for assistance."))
@@ -113,7 +113,7 @@ public class UserResorce {
 			LocalDispatcher dispatcher = getDispatcher();
 			if (dispatcher == null)
 				return Response.status(500)
-						.entity(Map.of("error", "An internal server error occurred. \n Please try again later."))
+						.entity(Map.of("error", "An internal server error occurred. Please try again later."))
 						.build();
 
 			Map<String, Object> result = dispatcher.runSync("loginUser", input);

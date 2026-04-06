@@ -1,5 +1,6 @@
 package com.sphinx.services;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -10,6 +11,8 @@ import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
+import org.apache.ofbiz.entity.condition.EntityCondition;
+import org.apache.ofbiz.entity.condition.EntityOperator;
 import org.apache.ofbiz.entity.transaction.GenericTransactionException;
 import org.apache.ofbiz.entity.transaction.TransactionUtil;
 import org.apache.ofbiz.entity.util.EntityQuery;
@@ -458,4 +461,85 @@ public class ExamServices {
 	}
 
 
+	public static Map<String, ? extends Object> deleteExamWrapper(DispatchContext dctx,
+	        Map<String, ? extends Object> context) {
+
+	    Delegator delegator = dctx.getDelegator();
+	    LocalDispatcher dispatcher = dctx.getDispatcher();
+	    String examId = (String) context.get("examId");
+
+	    if (UtilValidate.isEmpty(examId)) {
+	        return ServiceUtil.returnError("examId is required to delete an exam.");
+	    }
+
+	    try {
+	        // delete Questions from QuestionBankMasterB
+	        Map<String, Object> deleteQBCtx = new HashMap<>();
+	        deleteQBCtx.put("examId", examId);
+	        Map<String, Object> deleteQBResult = dispatcher.runSync("deleteExamQuestions", deleteQBCtx);
+
+	        if (ServiceUtil.isError(deleteQBResult)) {
+	            Debug.logError("Failed to delete questions from QuestionBankMasterB for examId: " + examId, MODULE);
+	            return ServiceUtil.returnError("Failed to delete exam questions: " 
+	                + ServiceUtil.getErrorMessage(deleteQBResult));
+	        }
+
+	        // delete  QuestionBankMaster
+	        EntityCondition qbCondition = EntityCondition.makeCondition("examId", EntityOperator.EQUALS, examId);
+	        delegator.removeByCondition("QuestionBankMaster", qbCondition);
+	        Debug.logInfo("Deleted all QuestionBankMaster records for examId: " + examId, MODULE);
+
+	        // delete ExamTopicDetails it has a composite PK examId , topicId
+	        // so we fetch all topics for this exam first then delete each.
+	        
+	        List<GenericValue> examTopics = delegator.findByAnd(
+	            "ExamTopicDetails",
+	            UtilMisc.toMap("examId", examId),
+	            null,
+	            false
+	        );
+
+	        if (UtilValidate.isNotEmpty(examTopics)) {
+	            for (GenericValue examTopic : examTopics) {
+	                Map<String, Object> deleteTopicCtx = new HashMap<>();
+	                deleteTopicCtx.put("examId", examId);
+	                deleteTopicCtx.put("topicId", examTopic.getString("topicId"));
+
+	                Map<String, Object> deleteTopicResult = dispatcher.runSync("deleteExamTopics", deleteTopicCtx);
+
+	                if (ServiceUtil.isError(deleteTopicResult)) {
+	                    Debug.logError("Failed to delete ExamTopicDetails for examId: " + examId 
+	                        + ", topicId: " + examTopic.getString("topicId"), MODULE);
+	                    return ServiceUtil.returnError("Failed to delete exam topic: " 
+	                        + ServiceUtil.getErrorMessage(deleteTopicResult));
+	                }
+	            }
+	            Debug.logInfo("exam topics deleted", MODULE);
+	        } else {
+	            Debug.logInfo("No ExamTopicDetails found for examId: " + examId, MODULE);
+	        }
+
+	       
+	        //  delete the ExamMaster record
+	        Map<String, Object> deleteExamCtx = new HashMap<>();
+	        deleteExamCtx.put("examId", examId);
+	        Map<String, Object> deleteExamResult = dispatcher.runSync("deleteExam", deleteExamCtx);
+
+	        if (ServiceUtil.isError(deleteExamResult)) {
+	            Debug.logError("Failed to delete ExamMaster for examId: " + examId, MODULE);
+	            return ServiceUtil.returnError("Failed to delete exam: " 
+	                + ServiceUtil.getErrorMessage(deleteExamResult));
+	        }
+
+	        Debug.logInfo("Exam deleted successfully for examId: " + examId, MODULE);
+	        return ServiceUtil.returnSuccess("Exam and all related data deleted successfully.");
+
+	    } catch (GenericServiceException e) {
+	        Debug.logError(e, "Service error while deleting exam: " + examId, MODULE);
+	        return ServiceUtil.returnError("Service error: " + e.getMessage());
+	    } catch (GenericEntityException e) {
+	        Debug.logError(e, "Entity error while deleting exam: " + examId, MODULE);
+	        return ServiceUtil.returnError("Database error: " + e.getMessage());
+	    }
+	}
 }
