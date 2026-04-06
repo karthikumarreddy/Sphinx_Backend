@@ -276,6 +276,20 @@
     	<attribute name="partyId" mode="IN" type="String" />
     	<attribute name="examId" mode="IN" type="String" />
     </service>
+    
+    <service engine="java" name="updateAssignedUserWrapper" location="com.sphinx.resources.ExamResource" invoke="updateAssignedUserWrapper">
+    	<attribute name="partyId" mode="IN" type="String"/>
+    	<attribute name="examId" mode="IN" type="String"/>
+    	<attribute name="allowedAttemtps" mode="IN" type="String"/>
+    	<attribute name="timeoutDays" mode="IN" type="String"/>
+    </service>
+    
+    <service name="updateAssignedUser" engine="entity-auto"  invoke="store">
+    	<attribute name="partyId" mode="IN" type="String"/>
+    	<attribute name="examId" mode="IN" type="String"/>
+    	<attribute name="allowedAttemtps" mode="IN" type="Integer"/>
+    	<attribute name="timeoutDays" mode="IN" type="Integer"/>
+    </service>
 
 <service name="getAllAssignedUsersForExam" engine="java" location="com.sphinx.services.ExamServices"  invoke="getAllAssignedUsersForExam" auth="false">
     	<attribute name="examId" mode="IN" type="String"></attribute>

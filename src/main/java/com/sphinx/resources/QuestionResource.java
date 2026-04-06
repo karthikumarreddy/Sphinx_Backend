@@ -1,8 +1,10 @@
 package com.sphinx.resources;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.ServletContext;
@@ -30,6 +32,18 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceContainer;
 import org.apache.ofbiz.service.ServiceUtil;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import com.sphinx.util.QuestionColumnConfigUtil;
+import com.sphinx.util.QuestionColumnConfigUtil.ColumnConfig;
 
 @Path("/questions")
 public class QuestionResource {
@@ -273,17 +287,42 @@ public class QuestionResource {
 		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
 		Map<String, ? extends Object> result;
-		try {
-			result = dispatcher.runSync("downloadTemplateDocument", UtilMisc.toMap());
-			if (result.get("responseMessage") != null && result.get("responseMessage").equals("success")) {
-				return Response.ok((Byte[]) result.get("bytes"))
-								.header("Content-Disposition", "attachment; filename=questions_template.xlsx")
-								.type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet").build();
-			} else {
-				return null;
+		try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream();) {
+
+			result = ServiceUtil.returnSuccess();
+
+			Sheet sheet = workbook.createSheet("Questions");
+
+			Row header = sheet.createRow(0);
+
+			List<ColumnConfig> columns = QuestionColumnConfigUtil.getColumnConfigs();
+
+			for (ColumnConfig col : columns) {
+				Cell cell = header.createCell(col.index);
+				String imp = col.required ? "*" : "";
+				cell.setCellValue(col.label + " " + imp);
 			}
 
-		} catch (GenericServiceException e) {
+			// Style the header
+			CellStyle headerStyle = workbook.createCellStyle();
+			Font font = workbook.createFont();
+			font.setBold(true);
+			headerStyle.setFont(font);
+			headerStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+			headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+			for (Cell cell : header)
+				cell.setCellStyle(headerStyle);
+
+			workbook.write(out);
+
+			byte[] bytes = out.toByteArray();
+
+			return Response.ok(bytes)
+								.header("Content-Disposition", "attachment; filename=questions_template.xlsx")
+								.type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet").build();
+
+			} catch (IOException e) {
+			Debug.logError(e, MODULE);
 			return null;
 		}
 

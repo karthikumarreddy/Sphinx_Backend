@@ -395,6 +395,74 @@ public class ExamServices {
 		}
 	}
 
+	public static Map<String, ? extends Object> updateAssignedUserWrapper(DispatchContext dctx, Map<String, ? extends Object> context) {
+
+		Delegator delegator = dctx.getDelegator();
+
+		String partyId = (String) context.get("partyId");
+		String examId = (String) context.get("examId");
+		Object allowedAttemptsStr = (String) context.get("allowedAttempts");
+		Object timeoutDaysStr = (String) context.get("timeoutDays");
+		Integer allowedAttempts;
+		Integer timeoutDays;
+
+		Map<String, Object> result;
+		Map<String, Object> serviceInput = UtilMisc.toMap();
+
+		if (UtilValidate.isEmpty(partyId)) {
+			return ServiceUtil.returnError("Invalid User Info!");
+		}
+
+		if (UtilValidate.isEmpty(examId)) {
+			return ServiceUtil.returnError("Invalid Exam Info!");
+		}
+
+		if (UtilValidate.isEmpty(allowedAttemptsStr)) {
+			return ServiceUtil.returnError("Invalid Allowed Attempts!");
+		}
+		else {
+			try {
+				allowedAttempts = (Integer) allowedAttemptsStr;
+			} catch (ClassCastException e) {
+				return ServiceUtil.returnError("Invalid Allowed Attempts!");
+			}
+		}
+
+		if (UtilValidate.isEmpty(timeoutDaysStr)) {
+			return ServiceUtil.returnError("Invalid Exam Timeout Period!");
+		}
+		else {
+			try {
+				timeoutDays = (Integer) timeoutDaysStr;
+			} catch (NumberFormatException e) {
+				return ServiceUtil.returnError("Invalid Exam Timeout Period!");
+			}
+		}
+
+		GenericValue assignUser;
+		try {
+			assignUser = EntityQuery.use(delegator).from("PartyExamRelationship").where("partyId", partyId, "examId", examId).queryOne();
+		} catch (GenericEntityException e) {
+			return ServiceUtil.returnError("Something Went Wrong! Try again later!");
+		}
+
+		if (assignUser == null) {
+			return ServiceUtil.returnError("Given User not Assigned to this Exam!");
+		}
+
+		try {
+			dctx.getDispatcher().runSync("updateAssignedUser",
+							UtilMisc.toMap("partyId", partyId, "examId", examId, "allowedAttemps", allowedAttempts, "timeoutDays",
+											timeoutDays));
+		} catch (GenericServiceException e) {
+			return ServiceUtil.returnError("Something Went Wrong! Try again later!");
+		}
+
+		return context;
+
+	}
+
+
 	public static Map<String, ? extends Object> deleteExamWrapper(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 
