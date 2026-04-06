@@ -26,6 +26,7 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 @Path("/exam")
 public class ExamResource {
 
@@ -433,6 +434,31 @@ public class ExamResource {
 			
 			Map<String, Object> result = dispatcher.runSync("removeAssignedUserFromExamWrapper",
 							UtilMisc.toMap("partyId", request.getAttribute("partyId"), "examId", request.getAttribute("examId")));
+
+			return Response.ok().entity(result).build();
+
+		} catch (Exception e) {
+			Debug.logError(e, MODULE);
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ServiceUtil.returnError(e.getMessage())).build();
+		}
+	}
+
+	@POST
+	@Path("/updateAssignedUser")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response updateAssignedUser(@Context HttpServletRequest request) {
+		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (dispatcher == null) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+								.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
+
+			Map<String, Object> result = dispatcher.runSync("updateAssignedUserWrapper",
+							UtilMisc.toMap("partyId", request.getAttribute("partyId"), "examId", request.getAttribute("examId"),
+											"allowedAttemps", request.getAttribute("allowedAttempts"), "timeoutDays",
+											request.getAttribute("timeoutDays")));
 
 			return Response.ok().entity(result).build();
 
