@@ -1,6 +1,5 @@
 package com.sphinx.services;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -270,8 +269,6 @@ public class ExamServices {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 
-			// List<GenericValue> assignedUsers = EntityQuery.use(delegator).from("PartyExamRelationship")
-			// .where("examId", examId).queryList();
 
 			List<GenericValue> assignedUsers = EntityQuery.use(delegator).from("PersonWithExam")
 							.where("partyTypeId", "PERSON", "statusId", "PARTY_ENABLED", "roleTypeId", "SphinxUser", "examId", examId)
@@ -356,6 +353,9 @@ public class ExamServices {
 
 			Map<String, Object> result = dispatcher.runSync("removeAssignedUserFromExam", UtilMisc.toMap("partyId", partyId, "examId", examId));
 
+			if (result.containsKey("responseMessage") && result.get("responseMessage").equals("success")) {
+				result.put("successMessage", "User removed from Exam Successfully!");
+			}
 			return result;
 
 		} catch (ClassCastException e) {
@@ -374,17 +374,9 @@ public class ExamServices {
 			Delegator delegator = dctx.getDelegator();
 			String partyId = (String) context.get("partyId");
 			
-			List<GenericValue> adminExams = EntityQuery.use(delegator).from("AdminPartyExamRel").where("partyId", partyId).queryList();
-			
-			List<GenericValue> listOfExams = new ArrayList<GenericValue>();
-			
-			for (GenericValue exam : adminExams) {
-				GenericValue examRecord = delegator.findOne("ExamMaster", false, UtilMisc.toMap("examId", exam.get("examId")));
-				if (examRecord != null) {
-					listOfExams.add(examRecord);
-				}
+			// List<GenericValue> adminExams = EntityQuery.use(delegator).from("AdminPartyExamRel").where("partyId", partyId).queryList();
 
-			}
+			List<GenericValue> listOfExams = EntityQuery.use(delegator).from("ExamByAdminDetails").where("partyId", partyId).queryList();
 			
 			Map<String, Object> serviceResult = ServiceUtil.returnSuccess("Admin Exam List!");
 

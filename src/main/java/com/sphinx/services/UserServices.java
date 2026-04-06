@@ -84,7 +84,7 @@ public class UserServices {
 
 
 			if (user.get("currentPassword").equals(context.get("password"))) {
-				result.put("successMessage", "Login sucessfull!");
+				result.put("successMessage", "Signed In Sucessfully!");
 				result.put("partyId", user.getString("partyId"));
 				return result;
 			} else {

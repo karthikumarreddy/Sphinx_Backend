@@ -342,5 +342,28 @@
     	</view-link>
     	
     </view-entity>
+    
+    
+    <view-entity entity-name="ExamByAdminDetails" package-name="com.sphinx"> 
+    	<member-entity entity-alias="APE" entity-name="AdminPartyExamRel"/>
+    	<member-entity entity-alias="EM" entity-name="ExamMaster"/>
+    	
+    	<alias entity-alias="EM" name="examId"/>
+    	<alias entity-alias="EM" name="examName"/>
+    	<alias entity-alias="EM" name="description"/>
+    	<alias entity-alias="EM" name="noOfQuestions"/>
+    	<alias entity-alias="EM" name="duration"/>
+    	<alias entity-alias="EM" name="passPercentage"/>
+    	
+    	
+    	<alias entity-alias="APE" name="examId"/>
+    	<alias entity-alias="APE" name="partyId"/>
+    	
+    	<view-link rel-entity-alias="APE" entity-alias="EM">
+    		<key-map field-name="examId"/>
+    	</view-link>
+    	
+    </view-entity>
+    
 
 </entitymodel>

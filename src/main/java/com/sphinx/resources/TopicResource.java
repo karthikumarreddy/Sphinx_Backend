@@ -1,8 +1,8 @@
 package com.sphinx.resources;
 
+import java.util.HashMap;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -18,7 +18,6 @@ import javax.ws.rs.core.Response;
 
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
-import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
@@ -28,19 +27,9 @@ public class TopicResource {
 	@Context
 	private HttpServletRequest request;
 
-	@Context
-	private ServletContext servletContext;
-	
-
 	private LocalDispatcher getDispatcher() {
 		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 		return dispatcher;
-	}
-
-	private String validateTopicId(String topicId) {
-		if (UtilValidate.isEmpty(topicId))
-			return "TopicId is required";
-		return null;
 	}
 
 	@GET
@@ -63,9 +52,8 @@ public class TopicResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response getTopicById(@PathParam("topicId") String topicId) {
 
-		String error = validateTopicId(topicId);
-		if (error != null) {
-			return Response.status(400).entity(ServiceUtil.returnError(error)).build();
+		if (topicId == null) {
+			return Response.status(400).entity(ServiceUtil.returnError("Smething went wrong while selecting the topic ")).build();
 		}
 
 		try {
@@ -80,11 +68,21 @@ public class TopicResource {
 	@PUT
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response updateTopic(Map<String, Object> input) {
+	public Response updateTopic(@Context HttpServletRequest request) {
 		try {
-			if (input.get("topicName") == null || input.get("topicName").toString().isEmpty()) {
+			String topicId = (String) request.getAttribute("topicId");
+			String topicName = (String) request.getAttribute("topicName");
+			if (topicId == null || topicId.isEmpty()) {
+				return Response.status(400).entity(ServiceUtil.returnError("Something went wrong wile fetching the topics try later "))
+								.build();
+			}
+			if (topicName == null || topicName.isEmpty()) {
 				return Response.status(400).entity(ServiceUtil.returnError("topicname cannot be empty ")).build();
 			}
+			Map<String, Object> input = new HashMap<String, Object>();
+			input.put("topicId", topicId);
+			input.put("topicName", topicName);
+
 			Map<String, Object> result = getDispatcher().runSync("updateTopic", input);
 			return Response.status(200).entity(result).build();
 		} catch (Exception e) {
@@ -96,16 +94,20 @@ public class TopicResource {
 	@DELETE
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response deleteTopic(Map<String, Object> input) {
+	public Response deleteTopic(@Context HttpServletRequest request) {
 		try {
-			if (input.get("topicId") == null || input.get("topicId").toString().isEmpty()) {
+			String topicId = (String) request.getAttribute("topicId");
+			if (topicId == null || topicId.isEmpty()) {
 				return Response.status(400).entity(ServiceUtil.returnError("topicId in empty ")).build();
 			}
+			Map<String, Object> input = new HashMap<String, Object>();
+			input.put("topicId", topicId);
 			Map<String, Object> result = getDispatcher().runSync("deleteTopic", input);
 			return Response.status(200).entity(ServiceUtil.returnSuccess("Topic deleted sucessfully")).build();
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
-			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();			// TODO: handle exception
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build(); // TODO: handle
+																									// exception
 		}
 	}
 
@@ -114,24 +116,24 @@ public class TopicResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createTopic(@Context HttpServletRequest request) {
 		try {
-			if (request.getAttribute("topicName") == null || request.getAttribute("topicName").toString().isEmpty()) {
+			String topicName = (String) request.getAttribute("topicName");
+			if (topicName == null || topicName.isEmpty()) {
 				return Response.status(400).entity(ServiceUtil.returnError("Topic name is empty ")).build();
 			}
 
-			String topicName = (String) request.getAttribute("topicName");
 			Map<String, Object> result = getDispatcher().runSync("createTopicValidator", UtilMisc.toMap("topicName", topicName));
 
 			if (result.get("responseMessage") != null && result.get("responseMessage").equals("success")) {
 				result.put("successMessage", "Topic created successfully!");
 				return Response.status(201).entity(result).build();
-			}
-			else {
+			} else {
 				return Response.status(400).entity(result).build();
 			}
 
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
-			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();		}
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
+		}
 	}
 
 }
