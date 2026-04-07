@@ -79,8 +79,8 @@
 		<field name="numAnswers" type="numeric" not-null="true"/>
 		<field name="questiontype" type="name" not-null="true"></field>
 		<field name="difficultyLevel" type="numeric"></field>
-		<field name="answerValue" type="currency-amount"/>
-		<field name="negativeMarkValue" type="currency-amount"></field>			
+		<field name="answerValue" type="name"/>
+		<field name="negativeMarkValue" type="numeric"></field>			
 		<prim-key field="examId" />
 		<prim-key field="qId" />
 		<relation rel-entity-name="ExamMaster" fk-name="QUESTION_BANK_B_FK" type="many">
@@ -102,8 +102,8 @@
 		<field name="numAnswers" type="numeric" not-null="true"/>
 		<field name="questionType" type="name" not-null="true"></field>
 		<field name="difficultyLevel" type="numeric"></field>
-		<field name="answerValue" type="currency-amount"/>
-		<field name="negativeMarkValue" type="currency-amount"></field>		
+		<field name="answerValue" type="name"/>
+		<field name="negativeMarkValue" type="numeric"></field>		
 		<prim-key field="examId" />
 		<prim-key field="qId" />
 		<relation rel-entity-name="ExamMaster" fk-name="QUESTION_BANK_FK" type="many">
