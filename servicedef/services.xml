@@ -149,7 +149,8 @@
     </service>
     
     <service name="deleteExamQuestions"  engine="entity-auto" invoke="delete" default-entity-name="QuestionBankMasterB">
-    <auto-attributes include="pk" mode="IN" optional="true"/>
+    <attribute name="examId" mode="IN" type="Sring" optional="false"/>
+    <attribute name="qId" mode="IN" type="String" optional="true"/>
     <auto-attributes include="nonpk" mode="IN" optional="true"/>
 </service>
 

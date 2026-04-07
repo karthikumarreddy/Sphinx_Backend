@@ -492,7 +492,7 @@ public class ExamResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response getAllExamsByAdmin(@Context HttpServletRequest request) {
 		try {
-			String partyId = (String) request.getParameter("partyId");
+			String partyId = (String) request.getAttribute("partyId");
 			if (partyId == null || partyId.isEmpty()) {
 				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError("Login to proceed"))
 						.build();

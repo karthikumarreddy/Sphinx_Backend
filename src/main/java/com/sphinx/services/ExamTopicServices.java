@@ -157,9 +157,9 @@ public class ExamTopicServices {
 					draft.set("optionD", q.get("optionD"));
 					draft.set("optionE", q.get("optionE"));
 					draft.set("answer", q.get("answer"));
-					draft.set("numAnswers", q.get("numAnswers"));
-					draft.set("questionType", q.get("questionType")); // fixed casing
-					draft.set("difficultyLevel", q.get("difficultyLevel"));
+					draft.set("numAnswers", (Long)q.get("numAnswers"));
+					draft.set("questiontype", q.get("questionType"));
+					draft.set("difficultyLevel",(Long) q.get("difficultyLevel"));
 					draft.set("answerValue", q.get("answerValue"));
 					draft.set("negativeMarkValue", exam.get("negativeMarkValue"));
 
