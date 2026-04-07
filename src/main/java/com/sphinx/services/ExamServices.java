@@ -21,6 +21,8 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import com.sphinx.util.ServiceHelper;
+
 public class ExamServices {
 	private static final String MODULE = ExamServices.class.getName();
 	private static final String UNEXPECTED_ERROR_MSG = "Unexpected Error Occured! Try Again After Sometime!";
@@ -404,9 +406,6 @@ public class ExamServices {
 		Integer allowedAttempts;
 		Integer timeoutDays;
 
-		Map<String, Object> result;
-		Map<String, Object> serviceInput = UtilMisc.toMap();
-
 		if (UtilValidate.isEmpty(partyId)) {
 			return ServiceUtil.returnError("Invalid User Info!");
 		}
@@ -449,14 +448,18 @@ public class ExamServices {
 		}
 
 		try {
-			dctx.getDispatcher().runSync("updateAssignedUser",
+			Map<String, Object> result = dctx.getDispatcher().runSync("updateAssignedUser",
 							UtilMisc.toMap("partyId", partyId, "examId", examId, "allowedAttemps", allowedAttempts, "timeoutDays",
 											timeoutDays));
+
+			if (!ServiceHelper.isError(result)) {
+				result.put("successMessage", "Assigned User Info Updated Successfully!");
+			}
+
+			return result;
 		} catch (GenericServiceException e) {
 			return ServiceUtil.returnError("Something Went Wrong! Try again later!");
 		}
-
-		return context;
 
 	}
 
