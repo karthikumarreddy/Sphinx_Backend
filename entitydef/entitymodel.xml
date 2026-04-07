@@ -49,7 +49,7 @@
 		<field name="numAnswers" type="numeric" />
 		<field name="questionType" type="name" />
 		<field name="difficultyLevel" type="name" />
-		<field name="answerValue" type="name" />
+		<field name="answerValue" type="very-long" />
 		<field name="topicId" type="id" />
 
 		<prim-key field="questionId" />
@@ -70,16 +70,16 @@
 		<field name="qId" type="id"></field>
 		<field name="topicId" type="id" not-null="true"/>
 		<field name="questionDetail" type="very-long" not-null="true"></field>
-		<field name="optionA" type="very-long" not-null="true"></field>
-		<field name="optionB" type="very-long" not-null="true"/>
-		<field name="optionC" type="very-long" not-null="true"></field>
-		<field name="optionD" type="very-long" not-null="true"></field>
-		<field name="optionE" type="very-long" not-null="true"></field>
-		<field name="answer" type="id" not-null="true"></field>
+		<field name="optionA" type="very-long"/>
+		<field name="optionB" type="very-long"/>
+		<field name="optionC" type="very-long"/>
+		<field name="optionD" type="very-long"/>
+		<field name="optionE" type="very-long"/>
+		<field name="answer" type="very-long" not-null="true"></field>
 		<field name="numAnswers" type="numeric" not-null="true"/>
 		<field name="questiontype" type="name" not-null="true"></field>
-		<field name="difficultyLevel" type="numeric"></field>
-		<field name="answerValue" type="name"/>
+		<field name="difficultyLevel" type="name"></field>
+		<field name="answerValue" type="very-long"/>
 		<field name="negativeMarkValue" type="numeric"></field>			
 		<prim-key field="examId" />
 		<prim-key field="qId" />
@@ -90,19 +90,19 @@
     
     <entity entity-name="QuestionBankMaster" package-name="">
 		<field name="examId" type="id"/>
-		<field name="qId" type="id"></field>
+		<field name="qId" type="id"/>
 		<field name="topicId" type="id" not-null="true"/>
 		<field name="questionDetail" type="very-long" not-null="true"></field>
-		<field name="optionA" type="very-long" not-null="true"></field>
-		<field name="optionB" type="very-long" not-null="true"/>
-		<field name="optionC" type="very-long" not-null="true"></field>
-		<field name="optionD" type="very-long" not-null="true"></field>
-		<field name="optionE" type="very-long" not-null="true"></field>
-		<field name="answer" type="id" not-null="true"></field>
+		<field name="optionA" type="very-long"/>
+		<field name="optionB" type="very-long"/>
+		<field name="optionC" type="very-long"/>
+		<field name="optionD" type="very-long"/>
+		<field name="optionE" type="very-long"/>
+		<field name="answer" type="very-long" not-null="true"></field>
 		<field name="numAnswers" type="numeric" not-null="true"/>
 		<field name="questionType" type="name" not-null="true"></field>
-		<field name="difficultyLevel" type="numeric"></field>
-		<field name="answerValue" type="name"/>
+		<field name="difficultyLevel" type="name"></field>
+		<field name="answerValue" type="very-long"/>
 		<field name="negativeMarkValue" type="numeric"></field>		
 		<prim-key field="examId" />
 		<prim-key field="qId" />
