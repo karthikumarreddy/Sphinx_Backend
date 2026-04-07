@@ -148,7 +148,7 @@
         <attribute name="examId" type="String" mode="IN"/>
     </service>
     
-    <service name="deleteExamQuestions"  engine="entity-auto" invoke="deleteAll" default-entity-name="QuestionBankMasterB">
+    <service name="deleteExamQuestions"  engine="entity-auto" invoke="delete" default-entity-name="QuestionBankMasterB">
     <auto-attributes include="pk" mode="IN" optional="true"/>
     <auto-attributes include="nonpk" mode="IN" optional="true"/>
 </service>
@@ -194,8 +194,9 @@
     <attribute name="answersMust" mode="IN" type="String" optional="true"/>
     <attribute name="allowNegativeMarks" mode="IN" type="String" optional="true"/>
     <attribute name="negativeMarkValue" mode="IN" type="String" optional="true"/>
-    <attribute name="partyId" mode="IN" type="String" optional="true"></attribute>
+    <attribute name="partyId" mode="IN" type="String" optional="true"/>
     <attribute name="examId" mode="OUT" type="String" optional="true"/>
+    <attribute name="partyId" mode="OUT" type="String"/>
 </service>
 
 
@@ -212,6 +213,7 @@
     
     <service name="updateExam" engine="java" location="com.sphinx.services.ExamServices" invoke="updateExam" >
     <attribute name="examId" mode="IN" type="String" optional="false"/>
+    <attribute name="partyId" mode="IN" type="String"/>
     <attribute name="examName" mode="IN" type="String" optional="false"/>
     <attribute name="description" mode="IN" type="String" optional="true"/>
     <attribute name="noOfQuestions" mode="IN" type="String" optional="false"/>
@@ -234,10 +236,9 @@
     </service>
     
 
-    <service name="getExamById" engine="java"  location="com.sphinx.services.ExamTopicServices"  invoke="getExamById" >
+ <service name="getExamById" engine="java"  location="com.sphinx.services.ExamTopicServices"  invoke="getExamById" >
     <attribute name="examId" type="String" mode="IN" optional="false"/>
     <attribute name="exam" type="Map" mode="OUT"/>
-
 </service>
 
 <service name="getExamTopicsByExamId"  engine="java"   location="com.sphinx.services.ExamTopicServices"   invoke="getExamTopicsByExamId" auth="false">
@@ -305,6 +306,10 @@
     	<attribute name="data" mode="OUT" type="List"/>
     </service>
 
+<service engine="java" name="getAllExamQuestions" location="com.sphinx.services.ExamServices" invoke="getAllExamQuestions">
+	<attribute name="examId" mode="IN" type="String"/>
+	<attribute name="data" mode="OUT" type="List"/>
+</service>
     <!-- Exam service ended  -->
     
     

@@ -249,6 +249,7 @@ public class ExamTopicServices {
 			Delegator delegator = dctx.getDelegator();
 
 			String examId = (String) context.get("examId");
+			String partyId=(String)context.get("partyId");
 
 			if (examId == null || examId.isEmpty()) {
 				return ServiceUtil.returnError("ExamId is required");
@@ -262,6 +263,7 @@ public class ExamTopicServices {
 
 			Map<String, Object> result = ServiceUtil.returnSuccess();
 			result.put("exam", exam.getAllFields());
+			result.put("partyId", partyId);
 
 			return result;
 
