@@ -14,6 +14,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -26,7 +27,6 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
-
 @Path("/exam")
 public class ExamResource {
 
@@ -34,6 +34,11 @@ public class ExamResource {
 
 	@Context
 	private HttpServletRequest request;
+
+	private Delegator getDelegator() {
+		Delegator delegator = (Delegator) request.getAttribute("delegator");
+		return delegator;
+	}
 
 	private LocalDispatcher getDispatcher() {
 		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
@@ -75,12 +80,11 @@ public class ExamResource {
 	}
 
 	@GET
-	@Path("/*")
+	@Path("/{examId}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getExamById(@Context HttpServletRequest rquest) {
+	public Response getExamById(@PathParam("examId") String examId) {
 
 		try {
-			String examId=request.getParameter("examId");
 			if (examId == null || examId.isEmpty()) {
 				return Response.status(400).entity(ServiceUtil.returnError("Input is empty")).build();
 			}
@@ -139,6 +143,7 @@ public class ExamResource {
 
 		Map<String, String> map = new HashMap<>();
 
+		map.put("partyId", (String) request.getAttribute("partyId"));
 		map.put("examId", (String) request.getAttribute("examId"));
 		map.put("examName", (String) request.getAttribute("examName"));
 		map.put("description", (String) request.getAttribute("description"));
@@ -179,7 +184,7 @@ public class ExamResource {
 		}
 
 		try {
-			Map<String, Object> result = getDispatcher().runSync("deleteExam", examMap);
+			Map<String, Object> result = getDispatcher().runSync("deleteExamWrapper", examMap);
 			return Response.status(201).entity(result).build();
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
@@ -434,31 +439,6 @@ public class ExamResource {
 	}
 
 	@POST
-	@Path("/updateAssignedUser")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response updateAssignedUser(@Context HttpServletRequest request) {
-		try {
-			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
-
-			if (dispatcher == null) {
-				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-								.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
-			}
-
-			Map<String, Object> result = dispatcher.runSync("updateAssignedUserWrapper",
-							UtilMisc.toMap("partyId", request.getAttribute("partyId"), "examId", request.getAttribute("examId"),
-											"allowedAttemps", request.getAttribute("allowedAttempts"), "timeoutDays",
-											request.getAttribute("timeoutDays")));
-
-			return Response.ok().entity(result).build();
-
-		} catch (Exception e) {
-			Debug.logError(e, MODULE);
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ServiceUtil.returnError(e.getMessage())).build();
-		}
-	}
-
-	@POST
 	@Path("/getAssignedUsers")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getAssignedUsers(@Context HttpServletRequest request) {
@@ -534,7 +514,7 @@ public class ExamResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response getAllExamQuestions(@Context HttpServletRequest request) {
 		try {
-			String examId=request.getParameter("examId");
+			String examId = request.getParameter("examId");
 			if (examId == null || examId.isEmpty()) {
 				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
 						.entity(ServiceUtil.returnError("examId is required")).build();
