@@ -156,7 +156,6 @@ public class ExamServices {
 			}
 
 			delegator.store(examMaster);
-			
 
 			return ServiceUtil.returnSuccess("Updated successfully");
 
@@ -398,7 +397,8 @@ public class ExamServices {
 		}
 	}
 
-	public static Map<String, ? extends Object> updateAssignedUserWrapper(DispatchContext dctx, Map<String, ? extends Object> context) {
+	public static Map<String, ? extends Object> updateAssignedUserWrapper(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
 
 		Delegator delegator = dctx.getDelegator();
 
@@ -419,8 +419,7 @@ public class ExamServices {
 
 		if (UtilValidate.isEmpty(allowedAttemptsStr)) {
 			return ServiceUtil.returnError("Invalid Allowed Attempts!");
-		}
-		else {
+		} else {
 			try {
 				allowedAttempts = Integer.valueOf((String) allowedAttemptsStr);
 			} catch (ClassCastException | NumberFormatException e) {
@@ -430,8 +429,7 @@ public class ExamServices {
 
 		if (UtilValidate.isEmpty(timeoutDaysStr)) {
 			return ServiceUtil.returnError("Invalid Exam Timeout Period!");
-		}
-		else {
+		} else {
 			try {
 				timeoutDays = Integer.valueOf((String) timeoutDaysStr);
 			} catch (NumberFormatException | ClassCastException e) {
@@ -441,7 +439,8 @@ public class ExamServices {
 
 		GenericValue assignUser;
 		try {
-			assignUser = EntityQuery.use(delegator).from("PartyExamRelationship").where("partyId", partyId, "examId", examId).queryOne();
+			assignUser = EntityQuery.use(delegator).from("PartyExamRelationship")
+					.where("partyId", partyId, "examId", examId).queryOne();
 		} catch (GenericEntityException e) {
 			return ServiceUtil.returnError("Something Went Wrong! Try again later!");
 		}
@@ -451,9 +450,8 @@ public class ExamServices {
 		}
 
 		try {
-			Map<String, Object> result = dctx.getDispatcher().runSync("updateAssignedUser",
-							UtilMisc.toMap("partyId", partyId, "examId", examId, "allowedAttempts", allowedAttempts, "timeoutDays",
-											timeoutDays));
+			Map<String, Object> result = dctx.getDispatcher().runSync("updateAssignedUser", UtilMisc.toMap("partyId",
+					partyId, "examId", examId, "allowedAttempts", allowedAttempts, "timeoutDays", timeoutDays));
 
 			if (!ServiceHelper.isError(result)) {
 				result.put("successMessage", "Assigned User Info Updated Successfully!");
@@ -465,7 +463,6 @@ public class ExamServices {
 		}
 
 	}
-
 
 	public static Map<String, ? extends Object> deleteExamWrapper(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
@@ -479,16 +476,9 @@ public class ExamServices {
 		}
 
 		try {
-			// delete Questions from QuestionBankMasterB
-			Map<String, Object> deleteQBCtx = new HashMap<>();
-			deleteQBCtx.put("examId", examId);
-			Map<String, Object> deleteQBResult = dispatcher.runSync("deleteExamQuestions", deleteQBCtx);
-
-			if (ServiceUtil.isError(deleteQBResult)) {
-				Debug.logError("Failed to delete questions from QuestionBankMasterB for examId: " + examId, MODULE);
-				return ServiceUtil
-						.returnError("Failed to delete exam questions: " + ServiceUtil.getErrorMessage(deleteQBResult));
-			}
+			
+			EntityCondition questionBCondition = EntityCondition.makeCondition("examId", EntityOperator.EQUALS, examId);
+			int dataRemoved =delegator.removeByCondition("QuestionBankMasterB",questionBCondition);
 
 			// delete QuestionBankMaster
 			EntityCondition qbCondition = EntityCondition.makeCondition("examId", EntityOperator.EQUALS, examId);

@@ -148,11 +148,9 @@
         <attribute name="examId" type="String" mode="IN"/>
     </service>
     
-    <service name="deleteExamQuestions"  engine="entity-auto" invoke="delete" default-entity-name="QuestionBankMasterB">
-    <attribute name="examId" mode="IN" type="Sring" optional="false"/>
-    <attribute name="qId" mode="IN" type="String" optional="true"/>
-    <auto-attributes include="nonpk" mode="IN" optional="true"/>
-</service>
+  <!--  <service name="deleteExamQuestions"  engine="entity-auto" invoke="delete" default-entity-name="QuestionBankMasterB">
+    <attribute name="examId" mode="IN" type="String" optional="false"/>
+</service> -->
 
 <service name="deleteExamWrapper" engine="java"  location="com.sphinx.services.ExamServices"  invoke="deleteExamWrapper" auth="false">
     <attribute name="examId" type="String" mode="IN" optional="false"/>
