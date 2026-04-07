@@ -422,8 +422,8 @@ public class ExamServices {
 		}
 		else {
 			try {
-				allowedAttempts = (Integer) allowedAttemptsStr;
-			} catch (ClassCastException e) {
+				allowedAttempts = Integer.valueOf((String) allowedAttemptsStr);
+			} catch (ClassCastException | NumberFormatException e) {
 				return ServiceUtil.returnError("Invalid Allowed Attempts!");
 			}
 		}
@@ -433,8 +433,8 @@ public class ExamServices {
 		}
 		else {
 			try {
-				timeoutDays = (Integer) timeoutDaysStr;
-			} catch (NumberFormatException e) {
+				timeoutDays = Integer.valueOf((String) timeoutDaysStr);
+			} catch (NumberFormatException | ClassCastException e) {
 				return ServiceUtil.returnError("Invalid Exam Timeout Period!");
 			}
 		}
@@ -452,7 +452,7 @@ public class ExamServices {
 
 		try {
 			Map<String, Object> result = dctx.getDispatcher().runSync("updateAssignedUser",
-							UtilMisc.toMap("partyId", partyId, "examId", examId, "allowedAttemps", allowedAttempts, "timeoutDays",
+							UtilMisc.toMap("partyId", partyId, "examId", examId, "allowedAttempts", allowedAttempts, "timeoutDays",
 											timeoutDays));
 
 			if (!ServiceHelper.isError(result)) {

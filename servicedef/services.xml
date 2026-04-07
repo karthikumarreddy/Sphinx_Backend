@@ -278,14 +278,14 @@
     	<attribute name="examId" mode="IN" type="String" />
     </service>
     
-    <service engine="java" name="updateAssignedUserWrapper" location="com.sphinx.resources.ExamResource" invoke="updateAssignedUserWrapper">
+    <service engine="java" name="updateAssignedUserWrapper" location="com.sphinx.services.ExamServices" invoke="updateAssignedUserWrapper">
     	<attribute name="partyId" mode="IN" type="String"/>
     	<attribute name="examId" mode="IN" type="String"/>
     	<attribute name="allowedAttempts" mode="IN" type="String"/>
     	<attribute name="timeoutDays" mode="IN" type="String"/>
     </service>
     
-    <service name="updateAssignedUser" engine="entity-auto"  invoke="store">
+    <service name="updateAssignedUser" engine="entity-auto" default-entity-name="PartyExamRelationship"  invoke="update">
     	<attribute name="partyId" mode="IN" type="String"/>
     	<attribute name="examId" mode="IN" type="String"/>
     	<attribute name="allowedAttempts" mode="IN" type="Integer"/>

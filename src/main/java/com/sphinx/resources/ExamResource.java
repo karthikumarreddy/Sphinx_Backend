@@ -14,7 +14,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -435,6 +434,31 @@ public class ExamResource {
 			Debug.logError(e, MODULE);
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
 					.entity(ServiceUtil.returnError(e.getMessage())).build();
+		}
+	}
+
+	@POST
+	@Path("/updateAssignedUser")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response updateAssignedUser(@Context HttpServletRequest request) {
+		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (dispatcher == null) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+								.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
+
+			Map<String, Object> result = dispatcher.runSync("updateAssignedUserWrapper",
+							UtilMisc.toMap("partyId", request.getAttribute("partyId"), "examId", request.getAttribute("examId"),
+											"allowedAttempts", request.getAttribute("allowedAttempts"), "timeoutDays",
+											request.getAttribute("timeoutDays")));
+
+			return Response.ok().entity(result).build();
+
+		} catch (Exception e) {
+			Debug.logError(e, MODULE);
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 
