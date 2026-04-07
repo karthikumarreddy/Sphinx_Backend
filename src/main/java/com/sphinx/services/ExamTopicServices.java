@@ -161,7 +161,7 @@ public class ExamTopicServices {
 					draft.set("questiontype", q.get("questionType"));
 					draft.set("difficultyLevel",(Long) q.get("difficultyLevel"));
 					draft.set("answerValue", q.get("answerValue"));
-					draft.set("negativeMarkValue", exam.get("negativeMarkValue"));
+					draft.set("negativeMarkValue", (Long)exam.get("negativeMarkValue"));
 
 					delegator.create(draft);
 					totalSaved++;
