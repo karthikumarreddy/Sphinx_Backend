@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.ws.rs.core.Response;
-
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilDateTime;
 import org.apache.ofbiz.base.util.UtilMisc;
@@ -83,7 +81,7 @@ public class ExamServices {
 			examMaster.set("examSetupProper", 0L);
 
 			GenericValue userLogin = (GenericValue) context.get("userLogin");
-			if (UtilValidate.isEmpty(userLogin)) {
+			if (!UtilValidate.isEmpty(userLogin)) {
 				examMaster.set("createdByUserLogin", userLogin.getString("userLoginId"));
 				examMaster.set("lastModifiedByUserLogin", userLogin.getString("userLoginId"));
 			}

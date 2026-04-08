@@ -21,7 +21,6 @@ import javax.ws.rs.core.Response;
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
-import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
@@ -35,8 +34,6 @@ public class ExamResource {
 	private String validateExam(Map<String, String> map) {
 		if (UtilValidate.isEmpty(map.get("partyId")))
 			return "Admin details are invalid";
-		if (UtilValidate.isEmpty(map.get("userLoginId")))
-			return "User login details are invalid";
 		if (UtilValidate.isEmpty(map.get("examName")))
 			return "Exam name is required";
 		if (UtilValidate.isEmpty(map.get("description")))
