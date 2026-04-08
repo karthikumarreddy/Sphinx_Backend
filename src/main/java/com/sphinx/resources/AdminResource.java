@@ -28,19 +28,10 @@ public class AdminResource {
 	@Context
 	private ServletContext servletContext;
 
-	private Delegator getDelegator() {
-		Delegator delegator = (Delegator) request.getAttribute("delegator");
-		if (delegator == null) {
-			delegator = DelegatorFactory.getDelegator("default");
-		}
-		return delegator;
-	}
+	
 
 	private LocalDispatcher getDispatcher() {
 		LocalDispatcher dispatcher = (LocalDispatcher) servletContext.getAttribute("dispatcher");
-		if (dispatcher == null) {
-			dispatcher = ServiceContainer.getLocalDispatcher("Sphinx", getDelegator());
-		}
 		return dispatcher;
 	}
 

@@ -119,7 +119,6 @@
     
     
     <service name="addExamTopics" default-entity-name="ExamTopicDetails" engine="entity-auto" invoke="create" auth="false">
-
         <auto-attributes include="pk" mode="IN" optional="false"/>
         <auto-attributes include="nonpk" mode="IN" optional="true"/>
     </service>

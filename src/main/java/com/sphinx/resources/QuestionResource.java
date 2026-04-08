@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -50,29 +51,8 @@ public class QuestionResource {
 
 	private static final String MODULE = QuestionResource.class.getName();
 
-	@Context
-	HttpServletRequest request;
-
-	@Context
-	private ServletContext servletContext;
-
-	private Delegator getDelegator() {
-		Delegator delegator = (Delegator) servletContext.getAttribute("delegator");
-		if (delegator == null) {
-			delegator = DelegatorFactory.getDelegator("default");
-		}
-		return delegator;
-	}
-
-	private LocalDispatcher getDispatcher() {
-		LocalDispatcher dispatcher = (LocalDispatcher) servletContext.getAttribute("dispatcher");
-		if (dispatcher == null) {
-			dispatcher = ServiceContainer.getLocalDispatcher("Sphinx", getDelegator());
-		}
-		return dispatcher;
-	}
-
 	private String validateQuestionData(Map<String, Object> input) {
+
 		String questionDetail = (String) input.get("questionDetail");
 		String optionA = (String) input.get("optionA");
 		String optionB = (String) input.get("optionB");
@@ -100,11 +80,11 @@ public class QuestionResource {
 			return "Invalid Topic, Choose a Valid one.";
 		}
 
-
 		// here we give the question types is based on the enum type (hard coded).
 
 		// Fill Ups or True/False question type
-		if (questionType.equals("FILL_UP") || questionType.equals("TRUE_FALSE") || questionType.equals("DETAILED_ANSWER")) {
+		if (questionType.equals("FILL_UP") || questionType.equals("TRUE_FALSE")
+				|| questionType.equals("DETAILED_ANSWER")) {
 			if (UtilValidate.isEmpty(answerValue)) {
 				return "Answer value is mandatory for Fill Ups type questions.";
 			}
@@ -143,78 +123,112 @@ public class QuestionResource {
 				return "Invalid Number of Answers";
 			}
 
-
 			if (questionType.equals("MULTIPLE_CHOICE") && numOfAnswers <= 0) {
 				return "Invalid Number of answers.";
 			}
 
-			if (questionType.equals("MULTIPLE_CHOICE") && (answer == null || answer.split(",").length != numOfAnswers)) {
+			if (questionType.equals("MULTIPLE_CHOICE")
+					&& (answer == null || answer.split(",").length != numOfAnswers)) {
 				return "Number of answers marked is invalid.";
 			}
 
 		}
-
 
 		return null;
 	}
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getAllQuestionByTopic() {
+	public Response getAllQuestionByTopic(@Context HttpServletRequest request) {
 		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
 
 			String topicIdStr = request.getQueryString();
 			String topicId = topicIdStr.split("=")[1];
 
 			if (topicId == null) {
-				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError("Invalid topic Id")).build();
+				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError("Invalid topic Id"))
+						.build();
 			}
 
-			Map<String, Object> result = getDispatcher().runSync("getAllQuestionByTopic", UtilMisc.toMap("topicId", topicId));
+			Map<String, Object> result = dispatcher.runSync("getAllQuestionByTopic",
+					UtilMisc.toMap("topicId", topicId));
 			return Response.status(Response.Status.OK).entity(result).build();
 
 		} catch (GenericServiceException e) {
 			Debug.logError(e, MODULE);
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ServiceUtil.returnError(e.getMessage())).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 
 	@GET
 	@Path("/questionTypes")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getAllQuestionTypes() {
+	public Response getAllQuestionTypes(@Context HttpServletRequest request) {
+		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+		if (UtilValidate.isEmpty(dispatcher)) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+		}
 		try {
-			Map<String, Object> result = getDispatcher().runSync("getAllQuestionTypes", UtilMisc.toMap());
+			Map<String, Object> result = dispatcher.runSync("getAllQuestionTypes", UtilMisc.toMap());
 			return Response.status(Response.Status.OK).entity(result).build();
 
 		} catch (GenericServiceException e) {
 			Debug.logError(e, MODULE);
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ServiceUtil.returnError(e.getMessage())).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 
 	@PUT
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response updateQuestion(Map<String, Object> input) {
-
-
-		String errorMsg = validateQuestionData(input);
-
-		if (errorMsg != null) {
-			return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError(errorMsg)).build();
-		}
-
-		Map<String, Object> result;
+	public Response updateQuestion(@Context HttpServletRequest request) {
 		try {
-			result = getDispatcher().runSync("updateQuestion", input);
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
+
+			Map<String, Object> input = new HashMap();
+			input.put("questionDetail", request.getAttribute("questionDetail"));
+			input.put("optionA", request.getAttribute("optionA"));
+			input.put("optionB", request.getAttribute("optionB"));
+			input.put("optionC", request.getAttribute("optionD"));
+			input.put("optionD", request.getAttribute("optionD"));
+			input.put("answer", request.getAttribute("answer"));
+			input.put("questionType", request.getAttribute("questionType"));
+			input.put("difficultyLevel", request.getAttribute("difficultyLevel"));
+			input.put("answerValue", request.getAttribute("answerValue"));
+			input.put("topicId", request.getAttribute("topicId"));
+			input.put("questionId", request.getAttribute("questionId"));
+
+			String errorMsg = validateQuestionData(input);
+
+			if (UtilValidate.isEmpty(errorMsg)) {
+				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError(errorMsg)).build();
+			}
+
+			Map<String, Object> result;
+			result = dispatcher.runSync("updateQuestion", input);
 			if (result.get("responseMessage") != null && result.get("responseMessage").equals("error")) {
 				return Response.status(Response.Status.BAD_REQUEST).entity(result).build();
 			}
 			return Response.status(Response.Status.CREATED).entity(result).build();
 		} catch (GenericServiceException e) {
 			Debug.logError(e, MODULE);
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ServiceUtil.returnError(e.getMessage())).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 
 	}
@@ -222,24 +236,33 @@ public class QuestionResource {
 	@DELETE
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response deleteQuestion(Map<String, Object> input) {
+	public Response deleteQuestion(@Context HttpServletRequest request) {
 
-		String qId = (String) input.get("questionId");
+		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
-		if (UtilValidate.isEmpty(qId)) {
-			return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError("Question Id is required")).build();
+		if (UtilValidate.isEmpty(dispatcher)) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
 		}
 
+		String qId = (String) request.getAttribute("questionId");
+
+		if (UtilValidate.isEmpty(qId)) {
+			return Response.status(Response.Status.BAD_REQUEST)
+					.entity(ServiceUtil.returnError("Question Id is required")).build();
+		}
+		Map<String, Object> input = UtilMisc.toMap("qId", qId);
 		Map<String, Object> result;
 		try {
-			result = getDispatcher().runSync("deleteQuestion", input);
+			result = dispatcher.runSync("deleteQuestion", input);
 			if (result.get("responseMessage") != null && result.get("responseMessage").equals("error")) {
 				return Response.status(Response.Status.BAD_REQUEST).entity(result).build();
 			}
 			return Response.status(Response.Status.OK).entity(result).build();
 		} catch (GenericServiceException e) {
 			Debug.logError(e, MODULE);
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ServiceUtil.returnError(e.getMessage())).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 
 	}
@@ -249,42 +272,44 @@ public class QuestionResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response addQuestions(@Context HttpServletRequest request) {
 		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
 			Map<String, Object> input = UtilMisc.toMap("questionDetail", request.getAttribute("questionDetail"),
-			"questionType", request.getAttribute("questionType"),
-			"topicId", request.getAttribute("topicId"),
-			"optionA", request.getAttribute("optionA"),
-			"optionB", request.getAttribute("optionB"),
-			"optionC", request.getAttribute("optionC"),
-			"optionD", request.getAttribute("optionD"),
-							"answer", request.getAttribute("answer"), "numAnswers", request.getAttribute("numAnswers"), "difficultyLevel",
-							request.getAttribute("difficultyLevel"), "answerValue", request.getAttribute("answerValue"));
-			
+					"questionType", request.getAttribute("questionType"), "topicId", request.getAttribute("topicId"),
+					"optionA", request.getAttribute("optionA"), "optionB", request.getAttribute("optionB"), "optionC",
+					request.getAttribute("optionC"), "optionD", request.getAttribute("optionD"), "answer",
+					request.getAttribute("answer"), "numAnswers", request.getAttribute("numAnswers"), "difficultyLevel",
+					request.getAttribute("difficultyLevel"), "answerValue", request.getAttribute("answerValue"));
+
 			String errorMsg = validateQuestionData(input);
 
-			if (errorMsg != null) {
+			if (UtilValidate.isEmpty(errorMsg)) {
 				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError(errorMsg)).build();
 			}
 
-			Map<String, Object> result = getDispatcher().runSync("createQuestion", input);
+			Map<String, Object> result = dispatcher.runSync("createQuestion", input);
 			if (result.get("responseMessage") != null && result.get("responseMessage").equals("error")) {
 				return Response.status(Response.Status.BAD_REQUEST).entity(result).build();
-			}
-			else {
+			} else {
 				result.put("successMessage", "Question added successfully!");
 			}
 			return Response.status(Response.Status.CREATED).entity(result).build();
 
 		} catch (GenericServiceException e) {
 			Debug.logError(e, MODULE);
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ServiceUtil.returnError(e.getMessage())).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 
 	@GET
 	@Path("/downloadTemplate")
 	@Produces("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	public Response downloadTemplate() {
-		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+	public Response downloadTemplate(@Context HttpServletRequest request) {
 
 		Map<String, ? extends Object> result;
 		try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream();) {
@@ -317,28 +342,28 @@ public class QuestionResource {
 
 			byte[] bytes = out.toByteArray();
 
-			return Response.ok(bytes)
-								.header("Content-Disposition", "attachment; filename=questions_template.xlsx")
-								.type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet").build();
+			return Response.ok(bytes).header("Content-Disposition", "attachment; filename=questions_template.xlsx")
+					.type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet").build();
 
-			} catch (IOException e) {
+		} catch (IOException e) {
 			Debug.logError(e, MODULE);
 			return null;
 		}
 
 	}
 
-
 	@POST
 	@Path("/upload")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
-	// public Response uploadQuestions(@FormDataParam("file") InputStream file, @FormDataParam("file") FormDataContentDisposition
+	// public Response uploadQuestions(@FormDataParam("file") InputStream file,
+	// @FormDataParam("file") FormDataContentDisposition
 	// fileDetail) {
 	public Response uploadQuestions(@Context HttpServletRequest request, @Context HttpServletResponse response) {
 
 		// if (file == null || fileDetail == null) {
-		// return Response.status(400).entity(ServiceUtil.returnError("File not received by server")).build();
+		// return Response.status(400).entity(ServiceUtil.returnError("File not received
+		// by server")).build();
 		// }
 		//
 		// String fileName = fileDetail.getFileName();
@@ -346,7 +371,8 @@ public class QuestionResource {
 		// // file type check
 		// if (!fileName.endsWith(".xlsx")) {
 		// Debug.logWarning("Invalid file upload by user.", MODULE);
-		// return Response.status(400).entity(ServiceUtil.returnError("Only files with .xlsx are allowed")).build();
+		// return Response.status(400).entity(ServiceUtil.returnError("Only files with
+		// .xlsx are allowed")).build();
 		// }
 
 		InputStream file;
@@ -355,15 +381,16 @@ public class QuestionResource {
 		try {
 			filePart = request.getPart("file");
 
-			if (filePart == null) {
-				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError("File was not found on Request!"))
-								.build();
+			if (UtilValidate.isEmpty(filePart)) {
+				return Response.status(Response.Status.BAD_REQUEST)
+						.entity(ServiceUtil.returnError("File was not found on Request!")).build();
 			}
 
 			String fileName = filePart.getSubmittedFileName();
 
 			if (!fileName.endsWith(".xlsx")) {
-				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError("Only Excel file are allowed!")).build();
+				return Response.status(Response.Status.BAD_REQUEST)
+						.entity(ServiceUtil.returnError("Only Excel file are allowed!")).build();
 			}
 
 			byte[] bytes = filePart.getInputStream().readAllBytes();
@@ -374,19 +401,20 @@ public class QuestionResource {
 
 		} catch (IOException | ServletException e) {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-							.entity(ServiceUtil.returnError("Unexpected error occured, try again after sometime!")).build();
+					.entity(ServiceUtil.returnError("Unexpected error occured, try again after sometime!")).build();
 		}
 
-
-
 		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
-		
+		if (UtilValidate.isEmpty(dispatcher)) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+		}
+
 		try {
 			Map<String, Object> result = dispatcher.runSync("uploadBulkQuestion", UtilMisc.toMap("file", buffer));
 			if (result.get("responseMessage") != null && result.get("responseMessage").equals("error")) {
 				return Response.status(Response.Status.BAD_REQUEST).entity(result).build();
-			}
-			else {
+			} else {
 				result.put("successMessage", "Questions uploaded successfully!");
 			}
 
@@ -395,7 +423,7 @@ public class QuestionResource {
 		} catch (GenericServiceException e) {
 			Debug.logError(e, MODULE);
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-							.entity(ServiceUtil.returnError("Unexpected error occured, try again after sometime!")).build();
+					.entity(ServiceUtil.returnError("Unexpected error occured, try again after sometime!")).build();
 		}
 
 	}

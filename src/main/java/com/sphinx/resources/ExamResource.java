@@ -31,46 +31,46 @@ public class ExamResource {
 
 	private static final String MODULE = ExamResource.class.getName();
 
-	@Context
-	private HttpServletRequest request;
-
-	private Delegator getDelegator() {
-		Delegator delegator = (Delegator) request.getAttribute("delegator");
-		return delegator;
-	}
-
-	private LocalDispatcher getDispatcher() {
-		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
-		return dispatcher;
-
-	}
 
 	private String validateExam(Map<String, String> map) {
 		if (UtilValidate.isEmpty(map.get("partyId")))
-			return "Admin Details are Invalid";
+			return "Admin details are invalid";
+		if (UtilValidate.isEmpty(map.get("userLoginId")))
+			return "User login details are invalid";
 		if (UtilValidate.isEmpty(map.get("examName")))
 			return "Exam name is required";
+		if (UtilValidate.isEmpty(map.get("description")))
+			return "Exam description is required";
 		if (UtilValidate.isEmpty(map.get("noOfQuestions")))
-			return "Number of questions required";
+			return "Number of questions is required";
 		if (UtilValidate.isEmpty(map.get("duration")))
-			return "Duration required";
+			return "Duration is required";
 		if (UtilValidate.isEmpty(map.get("passPercentage")))
-			return "Pass percentage required";
-		return null;
-	}
-
-	private String validateExamId(String examId) {
-		if (UtilValidate.isEmpty(examId))
-			return "ExamId is required";
+			return "Pass percentage is required";
+		if (UtilValidate.isEmpty(map.get("questionsRandomized")))
+			return "Questions randomized preference is required";
+		if (UtilValidate.isEmpty(map.get("answersMust")))
+			return "Answers must preference is required";
+		if (UtilValidate.isEmpty(map.get("allowNegativeMarks")))
+			return "Allow negative marks preference is required";
+		if ("Y".equalsIgnoreCase(map.get("allowNegativeMarks")) && UtilValidate.isEmpty(map.get("negativeMarkValue")))
+			return "Negative mark value is required when negative marks are allowed";
 		return null;
 	}
 
 	// exam crud
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getExam() {
+	public Response getExam(@Context HttpServletRequest request) {
 		try {
-			Map<String, Object> result = getDispatcher().runSync("getExam", UtilMisc.toMap());
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
+
+			Map<String, Object> result = dispatcher.runSync("getExam", UtilMisc.toMap());
 			return Response.status(201).entity(result).build();
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
@@ -81,9 +81,15 @@ public class ExamResource {
 	@GET
 	@Path("/{examId}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getExamById(@PathParam("examId") String examId) {
+	public Response getExamById(@PathParam("examId") String examId,@Context HttpServletRequest request) {
 
 		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
 			if (examId == null || examId.isEmpty()) {
 				return Response.status(400).entity(ServiceUtil.returnError("Input is empty")).build();
 			}
@@ -91,7 +97,7 @@ public class ExamResource {
 			Map<String, Object> input = new HashMap<>();
 			input.put("examId", examId);
 
-			Map<String, Object> result = getDispatcher().runSync("getExamById", input);
+			Map<String, Object> result = dispatcher.runSync("getExamById", input);
 
 			return Response.status(200).entity(result).build();
 
@@ -103,29 +109,36 @@ public class ExamResource {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response createExam(@Context HttpServletRequest request, @Context HttpServletResponse response) {
+	public Response createExam(@Context HttpServletRequest request) {
 
-		Map<String, String> map = new HashMap<>();
-
-		map.put("partyId", (String) request.getAttribute("partyId"));
-		map.put("examName", (String) request.getAttribute("examName"));
-		map.put("description", (String) request.getAttribute("description"));
-		map.put("noOfQuestions", (String) request.getAttribute("noOfQuestions"));
-		map.put("duration", (String) request.getAttribute("duration"));
-		map.put("passPercentage", (String) request.getAttribute("passPercentage"));
-		map.put("questionsRandomized", (String) request.getAttribute("questionsRandomized"));
-		map.put("answersMust", (String) request.getAttribute("answersMust"));
-		map.put("allowNegativeMarks", (String) request.getAttribute("allowNegativeMarks"));
-		map.put("negativeMarkValue", (String) request.getAttribute("negativeMarkValue"));
-		map.put("userLoginId", (String) request.getAttribute("userLoginId"));
-
-		String error = validateExam(map);
-
-		if (error != null) {
-			return Response.status(400).entity(ServiceUtil.returnError(error)).build();
-		}
 		try {
-			Map<String, Object> result = getDispatcher().runSync("createExamWrapper", map);
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
+			Map<String, String> map = new HashMap<>();
+
+			map.put("partyId", (String) request.getAttribute("partyId"));
+			map.put("examName", (String) request.getAttribute("examName"));
+			map.put("description", (String) request.getAttribute("description"));
+			map.put("noOfQuestions", (String) request.getAttribute("noOfQuestions"));
+			map.put("duration", (String) request.getAttribute("duration"));
+			map.put("passPercentage", (String) request.getAttribute("passPercentage"));
+			map.put("questionsRandomized", (String) request.getAttribute("questionsRandomized"));
+			map.put("answersMust", (String) request.getAttribute("answersMust"));
+			map.put("allowNegativeMarks", (String) request.getAttribute("allowNegativeMarks"));
+			map.put("negativeMarkValue", (String) request.getAttribute("negativeMarkValue"));
+			map.put("userLoginId", (String) request.getAttribute("userLoginId"));
+
+			String error = validateExam(map);
+
+			if (error != null) {
+				return Response.status(400).entity(ServiceUtil.returnError(error)).build();
+			}
+
+			Map<String, Object> result = dispatcher.runSync("createExamWrapper", map);
 			request.getAttribute("");
 			return Response.status(201).entity(result).build();
 
@@ -140,28 +153,34 @@ public class ExamResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response updateExam(@Context HttpServletRequest request, @Context HttpServletResponse response) {
 
-		Map<String, String> map = new HashMap<>();
-
-		map.put("partyId", (String) request.getAttribute("partyId"));
-		map.put("examId", (String) request.getAttribute("examId"));
-		map.put("examName", (String) request.getAttribute("examName"));
-		map.put("description", (String) request.getAttribute("description"));
-		map.put("noOfQuestions", (String) request.getAttribute("noOfQuestions"));
-		map.put("duration", (String) request.getAttribute("duration"));
-		map.put("passPercentage", (String) request.getAttribute("passPercentage"));
-		map.put("questionsRandomized", (String) request.getAttribute("questionsRandomized"));
-		map.put("answersMust", (String) request.getAttribute("answersMust"));
-		map.put("allowNegativeMarks", (String) request.getAttribute("allowNegativeMarks"));
-		map.put("negativeMarkValue", (String) request.getAttribute("negativeMarkValue"));
-		map.put("userLoginId", (String) request.getAttribute("userLoginId"));
-
-		String error = validateExam(map);
-		if (error != null) {
-			return Response.status(400).entity(ServiceUtil.returnError(error)).build();
-		}
-
 		try {
-			Map<String, Object> result = getDispatcher().runSync("updateExam", map);
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
+			Map<String, String> map = new HashMap<>();
+
+			map.put("partyId", (String) request.getAttribute("partyId"));
+			map.put("examId", (String) request.getAttribute("examId"));
+			map.put("examName", (String) request.getAttribute("examName"));
+			map.put("description", (String) request.getAttribute("description"));
+			map.put("noOfQuestions", (String) request.getAttribute("noOfQuestions"));
+			map.put("duration", (String) request.getAttribute("duration"));
+			map.put("passPercentage", (String) request.getAttribute("passPercentage"));
+			map.put("questionsRandomized", (String) request.getAttribute("questionsRandomized"));
+			map.put("answersMust", (String) request.getAttribute("answersMust"));
+			map.put("allowNegativeMarks", (String) request.getAttribute("allowNegativeMarks"));
+			map.put("negativeMarkValue", (String) request.getAttribute("negativeMarkValue"));
+			map.put("userLoginId", (String) request.getAttribute("userLoginId"));
+
+			String error = validateExam(map);
+			if (error != null) {
+				return Response.status(400).entity(ServiceUtil.returnError(error)).build();
+			}
+
+			Map<String, Object> result = dispatcher.runSync("updateExam", map);
 			return Response.status(201).entity(result).build();
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
@@ -173,17 +192,25 @@ public class ExamResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response deleteExam(@Context HttpServletRequest request, @Context HttpServletResponse response) {
-
-		String error = validateExamId((String) request.getAttribute("examId"));
-		Map<String, Object> examMap = new HashMap<String, Object>();
-		examMap.put("examId", (String) request.getAttribute("examId"));
-
-		if (error != null) {
-			return Response.status(400).entity(ServiceUtil.returnError(error)).build();
-		}
-
 		try {
-			Map<String, Object> result = getDispatcher().runSync("deleteExamWrapper", examMap);
+
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
+
+			String examId = (String) request.getAttribute("examId");
+			if (UtilValidate.isEmpty(examId)) {
+				return Response.status(400).entity("ExamId is required").build();
+			}
+
+			Map<String, Object> examMap = new HashMap<String, Object>();
+
+			examMap.put("examId", examId);
+
+			Map<String, Object> result = dispatcher.runSync("deleteExamWrapper", examMap);
 			return Response.status(201).entity(result).build();
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
@@ -199,18 +226,43 @@ public class ExamResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response addExamTopics(@Context HttpServletRequest request) {
 
-		if (request.getAttribute("examId").toString().isEmpty()
-				|| request.getAttribute("topicId").toString().isEmpty()) {
-			return Response.status(400).entity(ServiceUtil.returnError("ExamId and TopicId required")).build();
-		}
-		Map<String, Object> input = new HashMap<String, Object>();
-		input.put("examId", request.getAttribute("examId"));
-		input.put("topicId", request.getAttribute("topicId"));
-		input.put("topicName", (String) request.getAttribute("topicName"));
-		input.put("percentage", request.getAttribute("percentage"));
-
 		try {
-			Map<String, Object> result = getDispatcher().runSync("addExamTopics", input);
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
+
+			String examId = (String) request.getAttribute("examId");
+			String topicId = (String) request.getAttribute("topicId");
+			String topicName = (String) request.getAttribute("topicName");
+			String percentage = (String) request.getAttribute("percentage");
+			String topicPassPercentage = (String) request.getAttribute("topicPassPercentage");
+
+			if (UtilValidate.isEmail(examId)) {
+				return Response.status(400).entity("Exam id is empty ").build();
+			}
+			if (UtilValidate.isEmpty(topicId)) {
+				return Response.status(400).entity("TopicId is Required").build();
+			}
+			if (UtilValidate.isEmpty(topicName)) {
+				return Response.status(400).entity("Topic name is required ").build();
+			}
+			if (UtilValidate.isEmpty(percentage)) {
+				return Response.status(400).entity("Question percentage is required ").build();
+			}
+			if (UtilValidate.isEmpty(topicPassPercentage)) {
+				return Response.status(400).entity("Topic passpercentage is required ").build();
+			}
+
+			Map<String, Object> input = new HashMap<String, Object>();
+			input.put("examId", examId);
+			input.put("topicId", topicId);
+			input.put("topicName", topicName);
+			input.put("percentage", percentage);
+			input.put("topicPassPercentage", topicPassPercentage);
+			Map<String, Object> result = dispatcher.runSync("addExamTopics", input);
 			return Response.status(201).entity(result).build();
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
@@ -223,11 +275,17 @@ public class ExamResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getExamTopics(@Context HttpServletRequest request) {
 		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
 			String examId = request.getParameter("examId");
-			if (examId == null)
+			if (UtilValidate.isEmpty(examId))
 				return Response.status(400).entity(ServiceUtil.returnError("Exam is null ")).build();
 
-			Map<String, Object> result = getDispatcher().runSync("getAllExamTopics", UtilMisc.toMap("examId", examId));
+			Map<String, Object> result = dispatcher.runSync("getAllExamTopics", UtilMisc.toMap("examId", examId));
 
 			return Response.status(200).entity(result).build();
 		} catch (Exception e) {
@@ -241,19 +299,41 @@ public class ExamResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response updateExamTopic(@Context HttpServletRequest request) {
 		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
 			String examId = (String) request.getAttribute("examId");
 			String percentage = (String) request.getAttribute("percentage");
-			String questionsPerExam = (String) request.getAttribute("questionsPerExam");
 			String topicId = (String) request.getAttribute("topicId");
 			String topicName = (String) request.getAttribute("topicName");
+			String topicPassPercentage = (String) request.getAttribute("topicPassPercentage");
+
+			if (UtilValidate.isEmail(examId)) {
+				return Response.status(400).entity("Exam id is empty ").build();
+			}
+			if (UtilValidate.isEmpty(topicId)) {
+				return Response.status(400).entity("TopicId is Required").build();
+			}
+			if (UtilValidate.isEmpty(topicName)) {
+				return Response.status(400).entity("Topic name is required ").build();
+			}
+			if (UtilValidate.isEmpty(percentage)) {
+				return Response.status(400).entity("Question percentage is required ").build();
+			}
+			if (UtilValidate.isEmpty(topicPassPercentage)) {
+				return Response.status(400).entity("Topic passpercentage is required ").build();
+			}
 
 			Map<String, Object> input = new HashMap<String, Object>();
 			input.put("examId", examId);
 			input.put("percentage", percentage);
 			input.put("topicId", topicId);
 			input.put("topicName", topicName);
+			input.put("topicPassPercentage", topicPassPercentage);
 
-			LocalDispatcher dispatcher = getDispatcher();
 			Map<String, Object> result = dispatcher.runSync("updateExamTopics", input);
 			return Response.status(201).entity(result).build();
 
@@ -268,9 +348,23 @@ public class ExamResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response DeleteEamTopic(@Context HttpServletRequest request) {
 		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
 			String examId = (String) request.getAttribute("examId");
 			String topicId = (String) request.getAttribute("topicId");
-			LocalDispatcher dispatcher = getDispatcher();
+
+			if (UtilValidate.isEmpty(examId)) {
+				return Response.status(400).entity("Exam Id is required ").build();
+			}
+
+			if (UtilValidate.isEmpty(topicId)) {
+				return Response.status(400).entity("Topic Id is required ").build();
+			}
+
 			Map<String, Object> input = new HashMap<String, Object>();
 			input.put("examId", examId);
 			input.put("topicId", topicId);
@@ -286,17 +380,24 @@ public class ExamResource {
 	@GET
 	@Path("/topics/{examId}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getExamTopicsByExamId(@PathParam("examId") String examId) {
+	public Response getExamTopicsByExamId(@PathParam("examId") String examId,@Context HttpServletRequest request) {
 
 		try {
-			if (examId == null || examId.isEmpty()) {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
+
+			if (UtilValidate.isEmpty(examId)) {
 				return Response.status(400).entity(ServiceUtil.returnError("ExamId is required")).build();
 			}
 
 			Map<String, Object> input = new HashMap<>();
 			input.put("examId", examId);
 
-			Map<String, Object> result = getDispatcher().runSync("getExamTopicsByExamId", input);
+			Map<String, Object> result = dispatcher.runSync("getExamTopicsByExamId", input);
 
 			return Response.status(200).entity(result).build();
 
@@ -312,13 +413,20 @@ public class ExamResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response generateQuestions(@Context HttpServletRequest request) {
 		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
+
 			String examId = (String) request.getAttribute("examId");
-			if (examId == null) {
+			if (UtilValidate.isEmpty(examId)) {
 				return Response.status(400).entity(ServiceUtil.returnError("exami id is null")).build();
 			}
 			Map<String, Object> input = new HashMap<String, Object>();
 			input.put("examId", examId);
-			Map<String, Object> result = getDispatcher().runSync("generateExamQuestions", input);
+			Map<String, Object> result = dispatcher.runSync("generateExamQuestions", input);
 			return Response.status(201).entity(result).build();
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
@@ -333,13 +441,19 @@ public class ExamResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response launchExam(@Context HttpServletRequest request) {
 		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
 			String examId = (String) request.getAttribute("examId");
-			if (examId == null) {
+			if (UtilValidate.isEmail(examId)) {
 				return Response.status(400).entity(ServiceUtil.returnError("exam id is null")).build();
 			}
 			Map<String, Object> input = new HashMap<String, Object>();
 			input.put("examId", examId);
-			Map<String, Object> result = getDispatcher().runSync("launchExam", input);
+			Map<String, Object> result = dispatcher.runSync("launchExam", input);
 			return Response.status(201).entity(result).build();
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
@@ -356,22 +470,10 @@ public class ExamResource {
 
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
-			if (dispatcher == null) {
+			if (UtilValidate.isEmpty(dispatcher)) {
 				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
 						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
 			}
-
-			// Map<String, Object> result =
-			// dispatcher.runSync("createPartyExamRelationshipWrapper",
-			// UtilMisc.toMap("partyId",
-			// request.getAttribute("partyId"),
-			// "examId", request.getAttribute("examId"), "allowedAttempts",
-			// request.getAttribute("allowedAttempts"), "noOfAttempts",
-			// request.getAttribute("noOfAttempts"), "timeoutDays",
-			// request.getAttribute("timeoutDays"), "fromDate",
-			// request.getAttribute("fromDate"), "thruDate",
-			// request.getAttribute("thruDate")));
-
 			List<Map<String, Object>> listOfUsers = (List<Map<String, Object>>) request.getAttribute("users");
 
 			Map<String, Object> result = dispatcher.runSync("createPartyExamRelationshipWrapper",
@@ -394,16 +496,22 @@ public class ExamResource {
 	@GET
 	@Path("/assignedExams/{partyId}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getUserAssignedExams(@PathParam("partyId") String partyId) {
+	public Response getUserAssignedExams(@PathParam("partyId") String partyId,@Context HttpServletRequest request) {
 		try {
-			if (partyId == null || partyId.isEmpty()) {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
+			if (UtilValidate.isEmpty(partyId)) {
 				return Response.status(400).entity(ServiceUtil.returnError("PartyId is required")).build();
 			}
 
 			Map<String, Object> input = new HashMap<>();
 			input.put("partyId", partyId);
 
-			Map<String, Object> result = getDispatcher().runSync("getUserAssignedExams", input);
+			Map<String, Object> result = dispatcher.runSync("getUserAssignedExams", input);
 
 			return Response.status(200).entity(result).build();
 
@@ -420,7 +528,7 @@ public class ExamResource {
 		try {
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
-			if (dispatcher == null) {
+			if (UtilValidate.isEmpty(dispatcher)) {
 				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
 						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
 			}
@@ -444,21 +552,22 @@ public class ExamResource {
 		try {
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
-			if (dispatcher == null) {
+			if (UtilValidate.isEmpty(dispatcher)) {
 				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-								.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
 			}
 
 			Map<String, Object> result = dispatcher.runSync("updateAssignedUserWrapper",
-							UtilMisc.toMap("partyId", request.getAttribute("partyId"), "examId", request.getAttribute("examId"),
-											"allowedAttempts", request.getAttribute("allowedAttempts"), "timeoutDays",
-											request.getAttribute("timeoutDays")));
+					UtilMisc.toMap("partyId", request.getAttribute("partyId"), "examId", request.getAttribute("examId"),
+							"allowedAttempts", request.getAttribute("allowedAttempts"), "timeoutDays",
+							request.getAttribute("timeoutDays")));
 
 			return Response.ok().entity(result).build();
 
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ServiceUtil.returnError(e.getMessage())).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 
@@ -467,14 +576,14 @@ public class ExamResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getAssignedUsers(@Context HttpServletRequest request) {
 
-		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
-
-		if (dispatcher == null) {
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-					.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
-		}
-
 		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
+
 			Map<String, Object> result = dispatcher.runSync("getAllAssignedUsersForExam",
 					UtilMisc.toMap("examId", request.getAttribute("examId")));
 
@@ -491,14 +600,14 @@ public class ExamResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getAllExamAssignedForUser(@Context HttpServletRequest request) {
 
-		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
-
-		if (dispatcher == null) {
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-					.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
-		}
-
 		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
+
 			Map<String, Object> result = dispatcher.runSync("getAllExamAssignedForUser",
 					UtilMisc.toMap("partyId", request.getAttribute("partyId")));
 
@@ -516,13 +625,18 @@ public class ExamResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response getAllExamsByAdmin(@Context HttpServletRequest request) {
 		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
 			String partyId = (String) request.getAttribute("partyId");
 			if (partyId == null || partyId.isEmpty()) {
 				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError("Login to proceed"))
 						.build();
 			}
-			Map<String, Object> result = getDispatcher().runSync("getAllExamsByAdmin",
-					UtilMisc.toMap("partyId", partyId));
+			Map<String, Object> result = dispatcher.runSync("getAllExamsByAdmin", UtilMisc.toMap("partyId", partyId));
 
 			return Response.status(Response.Status.OK).entity(result).build();
 
@@ -538,16 +652,21 @@ public class ExamResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response getAllExamQuestions(@Context HttpServletRequest request) {
 		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
 			String examId = request.getParameter("examId");
-			if (examId == null || examId.isEmpty()) {
+			if (UtilValidate.isEmpty(examId)) {
 				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
 						.entity(ServiceUtil.returnError("examId is required")).build();
 			}
 
-			Map<String, Object> result = getDispatcher().runSync("getAllExamQuestions",
-					UtilMisc.toMap("examId", examId));
+			Map<String, Object> result = dispatcher.runSync("getAllExamQuestions", UtilMisc.toMap("examId", examId));
 
-			if (result == null || result.isEmpty()) {
+			if (UtilValidate.isEmpty(result)) {
 				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
 						.entity(ServiceUtil.returnError("Exam id is undefined ")).build();
 			}

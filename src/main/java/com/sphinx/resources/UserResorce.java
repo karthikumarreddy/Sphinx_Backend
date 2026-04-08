@@ -17,6 +17,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.apache.ofbiz.base.util.UtilMisc;
+import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.DelegatorFactory;
 import org.apache.ofbiz.entity.GenericValue;
@@ -30,45 +31,22 @@ import org.apache.ofbiz.service.ServiceUtil;
 @Consumes(MediaType.APPLICATION_JSON)
 public class UserResorce {
 
-	@Context
-	private HttpServletRequest request;
-
-	@Context
-	private ServletContext servletContext;
-
-	private Delegator getDelegator() {
-		Delegator delegator = (Delegator) servletContext.getAttribute("delegator");
-		if (delegator == null) {
-			delegator = DelegatorFactory.getDelegator("default");
-		}
-		return delegator;
-	}
-
-	private LocalDispatcher getDispatcher() {
-		LocalDispatcher dispatcher = (LocalDispatcher) servletContext.getAttribute("dispatcher");
-		if (dispatcher == null) {
-			dispatcher = ServiceContainer.getLocalDispatcher("Sphinx", getDelegator());
-		}
-		return dispatcher;
-	}
-
 	@GET
 	@Path("/getAllUsers")
 	public Response getAllUsers(@Context HttpServletRequest request) {
-
 		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
-		if (dispatcher == null)
+		if (UtilValidate.isEmpty(dispatcher)) {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-							.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after sometime!")).build();
-		else
+					.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+		} else
 			try {
 
 				Map<String, Object> result = dispatcher.runSync("getAllUsers", Collections.emptyMap());
 				return Response.status(Response.Status.OK).entity(result).build();
 			} catch (GenericServiceException e) {
 				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-								.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after sometime!")).build();
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after sometime!")).build();
 			}
 	}
 
@@ -76,16 +54,23 @@ public class UserResorce {
 	@Path("/login")
 	public Response loginUser(@Context HttpServletRequest request) {
 		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
 			String userName = (String) request.getAttribute("userName");
 			String password = (String) request.getAttribute("password");
-			
-			Map<String,Object> input=new HashMap<String, Object>();
+			if (UtilValidate.isEmpty(userName)) {
+				return Response.status(400).entity("UserName is required ").build();
+			}
+			if (UtilValidate.isEmpty(password)) {
+				return Response.status(400).entity("Password is required ").build();
+			}
+			Map<String, Object> input = new HashMap<String, Object>();
 			input.put("userName", userName);
 			input.put("password", password);
-					
-
-			if (userName == null || password == null)
-				return Response.status(400).entity(Map.of("error", "Username and password are required.")).build();
 
 			if (!Pattern.matches("^[a-zA-Z0-9]{4,20}$", userName))
 				return Response.status(400).entity(Map.of("error",
@@ -97,37 +82,25 @@ public class UserResorce {
 						"Invalid password format. Password must be at least 8 characters  and include uppercase, lowercase, a number, and a special character."))
 						.build();
 
-			Delegator delegator = getDelegator();
-			GenericValue user = delegator.findOne("UserLogin", true, UtilMisc.toMap("userLoginId", userName));
-
-			if (user == null)
-				return Response.status(404).entity(Map.of("error", "No account found with the provided username."))
-						.build();
-
-			if (user.get("enabled").equals("N"))
-				return Response.status(403)
-						.entity(Map.of("error",
-								"Your account has been suspended. Please contact the administrator for assistance."))
-						.build();
-
-			LocalDispatcher dispatcher = getDispatcher();
-			if (dispatcher == null)
-				return Response.status(500)
-						.entity(Map.of("error", "An internal server error occurred. Please try again later."))
-						.build();
-
 			Map<String, Object> result = dispatcher.runSync("loginUser", input);
 			return Response.status(200).entity(result).build();
 
 		} catch (Exception e) {
-			
-			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();		}
+
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
+		}
 	}
 
 	@POST
 	@Path("/signup")
 	public Response signupUser(@Context HttpServletRequest request) {
 		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
 
 			String userName = (String) request.getAttribute("userName");
 			String firstName = (String) request.getAttribute("firstName");
@@ -136,17 +109,36 @@ public class UserResorce {
 			String password = (String) request.getAttribute("password");
 			String role = (String) request.getAttribute("role");
 
+			if (UtilValidate.isEmpty(userName)) {
+				return Response.status(400).entity("UserName is required").build();
+			}
+			if (UtilValidate.isEmpty(firstName)) {
+				return Response.status(400).entity("FirstName is required").build();
+			}
+			if (UtilValidate.isEmpty(lastName)) {
+				return Response.status(400).entity("LastName is required").build();
+			}
+			if (UtilValidate.isEmpty(email)) {
+				return Response.status(400).entity("Email is required").build();
+			}
+			if (UtilValidate.isEmpty(password)) {
+				return Response.status(400).entity("Password is required").build();
+			}
+			if (UtilValidate.isEmpty(role)) {
+				return Response.status(400).entity("Role is required").build();
+			}
 
-			LocalDispatcher dispatcher = getDispatcher();
-			Map<String, Object> result = dispatcher.runSync("signupUser", UtilMisc.toMap("userName", userName, "firstName", firstName,
-							"lastName", lastName, "email", email, "password", password, "role", role));
-			if (result.containsKey("responseMessage") && "error".equalsIgnoreCase((String) result.get("responseMessage"))) {
+			Map<String, Object> result = dispatcher.runSync("signupUser", UtilMisc.toMap("userName", userName,
+					"firstName", firstName, "lastName", lastName, "email", email, "password", password, "role", role));
+			if (result.containsKey("responseMessage")
+					&& "error".equalsIgnoreCase((String) result.get("responseMessage"))) {
 				return Response.status(Response.Status.BAD_REQUEST).entity(result).build();
 			}
 			return Response.status(Response.Status.CREATED).entity(result).build();
 
 		} catch (Exception e) {
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ServiceUtil.returnError(e.getMessage())).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 }

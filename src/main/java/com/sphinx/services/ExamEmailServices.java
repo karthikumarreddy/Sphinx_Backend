@@ -26,7 +26,7 @@ public class ExamEmailServices {
 			LocalDispatcher dispatcher = ctx.getDispatcher();
 			Locale locale = (Locale) context.get("locale");
 
-			// Input params
+		
 			String examName = (String) context.get("examId");
 
 			GenericValue exam = EntityQuery.use(delegator).from("ExamMaster").queryFirst();

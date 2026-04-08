@@ -12,6 +12,7 @@ import java.util.Map;
 
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
+import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
@@ -22,6 +23,7 @@ import org.apache.ofbiz.entity.transaction.TransactionUtil;
 import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
+import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.ss.usermodel.Cell;
@@ -42,6 +44,8 @@ import com.sphinx.util.QuestionColumnConfigUtil.ColumnConfig;
 public class QuestionService {
 
 	private static final String MODULE = QuestionService.class.getName();
+	private static final String UNEXPECTED_ERROR_MSG = "Unexpected Error Occured! Try Again After Sometime!";
+
 
 	// QUESTION SERVICE
 
@@ -184,13 +188,19 @@ public class QuestionService {
 	public Map<String, ? extends Object> getAllQuestionByTopic(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 
+		
+
 		Delegator delegator = dctx.getDelegator();
+
+		if (UtilValidate.isEmpty(delegator)) {
+			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+		}
 
 		Map<String, Object> result = ServiceUtil.returnSuccess();
 		try {
 
 			String topicId = (String) context.get("topicId");
-			if (topicId == null) {
+			if (UtilValidate.isEmpty(topicId)) {
 				return ServiceUtil.returnError("Invalid topic id.");
 			}
 
@@ -209,8 +219,12 @@ public class QuestionService {
 	public Map<String, ? extends Object> createQuestion(DispatchContext dctx, Map<String, ? extends Object> context) {
 
 		try {
+
 			Delegator delegator = dctx.getDelegator();
 
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
 			GenericValue questionRecord = delegator.makeValue("QuestionMaster");
 
 			questionRecord.setNextSeqId();
@@ -219,7 +233,7 @@ public class QuestionService {
 
 			GenericValue topic = delegator.findOne("TopicMaster", true, UtilMisc.toMap("topicId", topicId));
 
-			if (topic == null) {
+			if (UtilValidate.isEmpty(topic)) {
 				return ServiceUtil.returnError("Question Topic was not a valid one!");
 			}
 
@@ -238,7 +252,13 @@ public class QuestionService {
 			Map<String, ? extends Object> context) {
 
 		try {
+			
+
 			Delegator delegator = dctx.getDelegator();
+
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
 
 			GenericValue questionRecord = delegator.makeValue("QuestionMaster");
 
@@ -248,7 +268,7 @@ public class QuestionService {
 
 			GenericValue topic = delegator.findOne("TopicMaster", true, UtilMisc.toMap("topicId", topicId));
 
-			if (topic == null) {
+			if (UtilValidate.isEmpty(topic)) {
 				return ServiceUtil.returnError("Question Topic was not a valid one!");
 			}
 
@@ -266,8 +286,15 @@ public class QuestionService {
 	public Map<String, ? extends Object> getAllQuestionTypes(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 
-		Delegator delegator = dctx.getDelegator();
+		
 		try {
+			
+
+			Delegator delegator = dctx.getDelegator();
+
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
 			Map<String, Object> result = ServiceUtil.returnSuccess();
 			List<GenericValue> questionTypes = EntityQuery.use(delegator).from("Enumeration")
 					.where(EntityCondition.makeCondition("enumTypeId", EntityOperator.LIKE, "%SPHINX_Q_TYPE%"))

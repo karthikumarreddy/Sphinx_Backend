@@ -36,7 +36,7 @@ public class UserServices {
 
 		Delegator delegator = dctx.getDelegator();
 
-		if (delegator == null) {
+		if (UtilValidate.isEmpty(delegator)) {
 			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 		}
 
@@ -57,11 +57,15 @@ public class UserServices {
 	}
 
 	public static Map<String, ? extends Object> loginUser(DispatchContext dctx, Map<String, ? extends Object> context) {
-		Delegator delegator = dctx.getDelegator();
 		try {
+			Delegator delegator = dctx.getDelegator();
+
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
 			Map<String,Object> result= ServiceUtil.returnSuccess();
 			GenericValue user = delegator.findOne("UserLogin", false, Map.of("userLoginId", context.get("userName")));
-			if (user == null)
+			if (UtilValidate.isEmpty(user))
 				return ServiceUtil.returnError("No account found with the provided credentials.");
 
 			GenericValue party = delegator.findOne("Party", false,
@@ -70,7 +74,7 @@ public class UserServices {
 			List<GenericValue> partyRoles = delegator.findByAnd("PartyRole",
 					UtilMisc.toMap("partyId", user.getString("partyId")), null, false);
 
-			if (partyRoles == null || partyRoles.isEmpty())
+			if (UtilValidate.isEmpty(partyRoles))
 				return ServiceUtil.returnError("No role assigned to this account.\n Please contact the administrator.");
 
 			GenericValue partyRole = partyRoles.get(0);
@@ -105,9 +109,9 @@ public class UserServices {
 
 		try {
 
-			LocalDispatcher dispatcher = dctx.getDispatcher();
+			Delegator delegator = dctx.getDelegator();
 
-			if (dispatcher == null) {
+			if (UtilValidate.isEmpty(delegator)) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 
@@ -141,7 +145,7 @@ public class UserServices {
 			}
 
 			if (isAdmin) {
-				Delegator delegator = dctx.getDelegator();
+			
 				GenericValue user = delegator.findOne("UserLogin", true, UtilMisc.toMap("userLoginId", userName));
 
 				if (user != null) {
@@ -181,7 +185,6 @@ public class UserServices {
 			}
 
 			Map<String, Object> serviceResult = null;
-			Delegator delegator = dctx.getDelegator();
 
 			/*
 			 * ================== ================== BEGIN TRANSACTION ==================
@@ -193,7 +196,7 @@ public class UserServices {
 			// Party Record Creation
 			// =====================
 
-			String partyId = PARTY_PREFIX + dctx.getDelegator().getNextSeqId("Party");
+			String partyId = PARTY_PREFIX + delegator.getNextSeqId("Party");
 
 			serviceResult = createParty(dctx,
 					UtilMisc.toMap("partyId", partyId, "partyTypeId", "PERSON", "statusId", PARTY_STATUS_ENABLED));
