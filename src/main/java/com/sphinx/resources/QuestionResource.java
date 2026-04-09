@@ -29,6 +29,8 @@ import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.GenericValue;
+import org.apache.ofbiz.entity.transaction.GenericTransactionException;
+import org.apache.ofbiz.entity.transaction.TransactionUtil;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
@@ -41,6 +43,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.eclipse.jdt.internal.compiler.env.IModule.IPackageExport;
 
 import com.sphinx.util.QuestionColumnConfigUtil;
 import com.sphinx.util.QuestionColumnConfigUtil.ColumnConfig;
@@ -289,16 +292,14 @@ public class QuestionResource {
 				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError(errorMsg)).build();
 			}
 
-
 			HttpSession session = request.getSession(false);
 			if (UtilValidate.isEmpty(session)) {
-				return Response.status(HttpStatus.SC_UNAUTHORIZED).entity(ServiceUtil.returnError("Sign In Before Adding Question"))
-								.build();
+				return Response.status(HttpStatus.SC_UNAUTHORIZED)
+						.entity(ServiceUtil.returnError("Sign In Before Adding Question")).build();
 			}
 			GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
 
 			input.put("userLogin", userLogin);
-
 
 			Map<String, Object> result = dispatcher.runSync("createQuestion", input);
 
@@ -436,9 +437,135 @@ public class QuestionResource {
 
 		} catch (GenericServiceException e) {
 			Debug.logError(e, MODULE);
-			return Response.serverError().entity(ServiceUtil.returnError("Something went Wrong! Try Again Later!")).build();
+			return Response.serverError().entity(ServiceUtil.returnError("Something went Wrong! Try Again Later!"))
+					.build();
 		}
 
 	}
 
+	@PUT
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public static Response updateQuestions(@Context HttpServletRequest request) {
+		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
+
+			Map<String, Object> input = new HashMap();
+			String questionId = (String) request.getAttribute("questionId");
+			String questionType = (String) request.getAttribute("questionType");
+			String questionDetail = (String) request.getAttribute("questionDetail");
+			String answer = (String) request.getAttribute("answer");
+			String difficultyLevel = (String) request.getAttribute("difficultyLevel");
+			String answerValue = (String) request.getAttribute("answerValue");
+
+			if (UtilValidate.isEmpty(questionId)) {
+				return Response.status(400).entity(ServiceUtil.returnError("questionId is required")).build();
+			}
+			if (UtilValidate.isEmpty(questionType)) {
+				return Response.status(400).entity(ServiceUtil.returnError("Question type is required")).build();
+			}
+			if (UtilValidate.isEmpty(questionDetail)) {
+				return Response.status(400).entity(ServiceUtil.returnError(" Question  is required")).build();
+			}
+			if (UtilValidate.isEmpty(answer)) {
+				return Response.status(400).entity(ServiceUtil.returnError(" answer  is required")).build();
+
+			}
+			if (UtilValidate.isEmpty(difficultyLevel)) {
+				return Response.status(400).entity(ServiceUtil.returnError(" Difficulty level  is required")).build();
+
+			}
+			if (UtilValidate.isEmpty(answerValue)) {
+				return Response.status(400).entity(ServiceUtil.returnError(" Answer value  is required")).build();
+
+			}
+			input.put("questionId", questionId);
+			input.put("questionType", questionType);
+			input.put("questionDetail", questionDetail);
+			input.put("answer", answer);
+			input.put("difficultyLevel", difficultyLevel);
+			input.put("answerValue", answerValue);
+
+			if (questionType.equals("MULTIPLE_CHOICE") || questionType.equals("SINGLE_CHOICE")) {
+				String optionA = (String) request.getAttribute("optionA");
+				String optionB = (String) request.getAttribute("optionB");
+				String optionC = (String) request.getAttribute("optionC");
+				String optionD = (String) request.getAttribute("optionD");
+				String numAnswers = (String) request.getAttribute("numAnswers");
+
+				if (UtilValidate.isEmpty(optionA)) {
+					return Response.status(400).entity(ServiceUtil.returnError("Option A is required ")).build();
+				}
+				if (UtilValidate.isEmpty(optionB)) {
+					return Response.status(400).entity(ServiceUtil.returnError("Option A is required ")).build();
+				}
+				if (UtilValidate.isEmpty(optionC)) {
+					return Response.status(400).entity(ServiceUtil.returnError("Option A is required ")).build();
+				}
+				if (UtilValidate.isEmpty(optionD)) {
+					return Response.status(400).entity(ServiceUtil.returnError("Option A is required ")).build();
+				}
+				if (UtilValidate.isEmpty(numAnswers)) {
+					return Response.status(400).entity(ServiceUtil.returnError("Number of answers A is required "))
+							.build();
+				}
+				input.put("optionA", optionA);
+				input.put("optionB", optionB);
+				input.put("optionC", optionC);
+				input.put("optionD", optionD);
+				input.put("numAnswers", numAnswers);
+
+				Map<String, Object> result = dispatcher.runSync("updateQuestion", input);
+				if(ServiceUtil.isError(result)) {
+					return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
+				}
+				return Response.status(200).entity(result).build();
+			}
+
+			Map<String, Object> result = dispatcher.runSync("updateQuestion", input);
+			if(ServiceUtil.isError(result)) {
+				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
+			}
+			return Response.status(200).entity(result).build();
+
+		} catch (Exception e) {
+			Debug.logError(e, MODULE);
+			return Response.serverError().entity(ServiceUtil.returnError("Something went Wrong! Try Again Later!"))
+					.build();
+		}
+	}
+
+	@DELETE
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public static Response deleteQuestions(@Context HttpServletRequest request) {
+		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
+			List<String> questionIds = (List<String>) request.getAttribute("questionIds");
+			if (UtilValidate.isEmpty(questionIds)) {
+				return Response.status(400).entity(ServiceUtil.returnError("Question Id is required")).build();
+			}
+
+			Map<String, Object> result = dispatcher.runSync("deleteQuestionsWrapper", UtilMisc.toMap("questionIds", questionIds));
+			if(ServiceUtil.isError(result)) {
+				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
+			}
+			return Response.status(200).entity(result).build();
+
+		} catch (Exception e) {
+			
+			Debug.logError(e, MODULE);
+			return Response.serverError().entity(ServiceUtil.returnError("Something went Wrong! Try Again Later!"))
+					.build();
+		}
+
+	}
 }
