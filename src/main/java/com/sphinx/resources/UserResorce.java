@@ -39,7 +39,7 @@ public class UserResorce {
 		if (UtilValidate.isEmpty(dispatcher)) {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
 					.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
-		} else
+		} 
 			try {
 
 				Map<String, Object> result = dispatcher.runSync("getAllUsers", Collections.emptyMap());
@@ -195,5 +195,7 @@ public class UserResorce {
 					.entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
+	
+	
 
 }
