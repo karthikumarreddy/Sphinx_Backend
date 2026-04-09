@@ -16,7 +16,6 @@ import org.apache.ofbiz.entity.transaction.TransactionUtil;
 import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
-import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
 import com.sphinx.util.RandomPasswordGenerator;
@@ -36,7 +35,7 @@ public class UserServices {
 
 		Delegator delegator = dctx.getDelegator();
 
-		if (delegator == null) {
+		if (UtilValidate.isEmpty(delegator)) {
 			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 		}
 
@@ -57,11 +56,15 @@ public class UserServices {
 	}
 
 	public static Map<String, ? extends Object> loginUser(DispatchContext dctx, Map<String, ? extends Object> context) {
-		Delegator delegator = dctx.getDelegator();
 		try {
+			Delegator delegator = dctx.getDelegator();
+
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
 			Map<String,Object> result= ServiceUtil.returnSuccess();
 			GenericValue user = delegator.findOne("UserLogin", false, Map.of("userLoginId", context.get("userName")));
-			if (user == null)
+			if (UtilValidate.isEmpty(user))
 				return ServiceUtil.returnError("No account found with the provided credentials.");
 
 			GenericValue party = delegator.findOne("Party", false,
@@ -70,7 +73,7 @@ public class UserServices {
 			List<GenericValue> partyRoles = delegator.findByAnd("PartyRole",
 					UtilMisc.toMap("partyId", user.getString("partyId")), null, false);
 
-			if (partyRoles == null || partyRoles.isEmpty())
+			if (UtilValidate.isEmpty(partyRoles))
 				return ServiceUtil.returnError("No role assigned to this account.\n Please contact the administrator.");
 
 			GenericValue partyRole = partyRoles.get(0);
@@ -101,13 +104,13 @@ public class UserServices {
 	}
 
 	public static Map<String, ? extends Object> signupUser(DispatchContext dctx,
-			Map<String, ? extends Object> context) {
+					Map<String, ? extends Object> context) {
 
 		try {
 
-			LocalDispatcher dispatcher = dctx.getDispatcher();
+			Delegator delegator = dctx.getDelegator();
 
-			if (dispatcher == null) {
+			if (UtilValidate.isEmpty(delegator)) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 
@@ -141,12 +144,11 @@ public class UserServices {
 			}
 
 			if (isAdmin) {
-				Delegator delegator = dctx.getDelegator();
+
 				GenericValue user = delegator.findOne("UserLogin", true, UtilMisc.toMap("userLoginId", userName));
 
 				if (user != null) {
-					return ServiceUtil
-							.returnError("This username is already taken.  Please choose a different username.");
+					return ServiceUtil.returnError("This username is already taken.  Please choose a different username.");
 				}
 			}
 
@@ -155,11 +157,11 @@ public class UserServices {
 			}
 			if (!Pattern.matches("^[A-Za-z ]{2,20}$", firstName))
 				return ServiceUtil
-						.returnError("Invalid first name. It must be 2–20 characters and contain only letters.");
+								.returnError("Invalid first name. It must be 2–20 characters and contain only letters.");
 
 			if (!Pattern.matches("^[A-Za-z ]{1,20}$", lastName))
 				return ServiceUtil
-						.returnError("Invalid last name. It must be 2–20 characters and contain only letters.");
+								.returnError("Invalid last name. It must be 2–20 characters and contain only letters.");
 
 			if (UtilValidate.isEmpty(lastName)) {
 				return ServiceUtil.returnError("Lastname is required!");
@@ -174,18 +176,15 @@ public class UserServices {
 				return ServiceUtil.returnError("Password is required!");
 			}
 
-			if (isAdmin
-					&& !password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$")) {
+			if (isAdmin && !password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$")) {
 				return ServiceUtil.returnError(
-						"Password should at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character");
+								"Password should at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character");
 			}
 
 			Map<String, Object> serviceResult = null;
-			Delegator delegator = dctx.getDelegator();
 
 			/*
-			 * ================== ================== BEGIN TRANSACTION ==================
-			 * ==================
+			 * ================== ================== BEGIN TRANSACTION ================== ==================
 			 */
 			TransactionUtil.begin();
 
@@ -193,10 +192,10 @@ public class UserServices {
 			// Party Record Creation
 			// =====================
 
-			String partyId = PARTY_PREFIX + dctx.getDelegator().getNextSeqId("Party");
+			String partyId = PARTY_PREFIX + delegator.getNextSeqId("Party");
 
 			serviceResult = createParty(dctx,
-					UtilMisc.toMap("partyId", partyId, "partyTypeId", "PERSON", "statusId", PARTY_STATUS_ENABLED));
+							UtilMisc.toMap("partyId", partyId, "partyTypeId", "PERSON", "statusId", PARTY_STATUS_ENABLED));
 
 			if (isError(serviceResult)) {
 				return handleError(serviceResult);
@@ -206,8 +205,7 @@ public class UserServices {
 			// PartyRole Record Creation
 			// =========================
 
-			serviceResult = createPartyRole(dctx,
-					UtilMisc.toMap("partyId", partyId, "roleTypeId", role, "statusId", PARTY_STATUS_ENABLED));
+			serviceResult = createPartyRole(dctx, UtilMisc.toMap("partyId", partyId, "roleTypeId", role, "statusId", PARTY_STATUS_ENABLED));
 
 			if (isError(serviceResult)) {
 				return handleError(serviceResult);
@@ -217,8 +215,7 @@ public class UserServices {
 			// Person Record Creation
 			// ======================
 
-			serviceResult = createPerson(dctx,
-					UtilMisc.toMap("partyId", partyId, "firstName", firstName, "lastName", lastName));
+			serviceResult = createPerson(dctx, UtilMisc.toMap("partyId", partyId, "firstName", firstName, "lastName", lastName));
 
 			if (isError(serviceResult)) {
 				return handleError(serviceResult);
@@ -228,8 +225,9 @@ public class UserServices {
 			// UserLogin Record Creation
 			// =========================
 
-			serviceResult = createUserLogin(dctx, UtilMisc.toMap("userName", userName, "partyId", partyId,
-					"currentPassword", password, "firstName", firstName), isAdmin);
+			serviceResult = createUserLogin(dctx,
+							UtilMisc.toMap("userName", userName, "partyId", partyId, "currentPassword", password, "firstName", firstName),
+							isAdmin);
 			if (isError(serviceResult)) {
 				return handleError(serviceResult);
 			}
@@ -240,8 +238,8 @@ public class UserServices {
 
 			String emailContactMechId = delegator.getNextSeqId("ContactMech");
 
-			serviceResult = createContactMech(dctx, UtilMisc.toMap("contactMechId", emailContactMechId,
-					"contactMechTypeId", "EMAIL_ADDRESS", "infoString", email));
+			serviceResult = createContactMech(dctx,
+							UtilMisc.toMap("contactMechId", emailContactMechId, "contactMechTypeId", "EMAIL_ADDRESS", "infoString", email));
 
 			if (isError(serviceResult)) {
 				return handleError(serviceResult);
@@ -251,16 +249,15 @@ public class UserServices {
 			// PartyContactMech Record Creation
 			// ================================
 
-			serviceResult = createPartyContactMech(dctx, UtilMisc.toMap("partyId", partyId, "contactMechId",
-					emailContactMechId, "fromDate", UtilDateTime.nowTimestamp()));
+			serviceResult = createPartyContactMech(dctx, UtilMisc.toMap("partyId", partyId, "contactMechId", emailContactMechId, "fromDate",
+							UtilDateTime.nowTimestamp()));
 
 			if (isError(serviceResult)) {
 				return handleError(serviceResult);
 			}
 
 			/*
-			 * ================== ================== COMMIT TRANSACTION ==================
-			 * ==================
+			 * ================== ================== COMMIT TRANSACTION ================== ==================
 			 */
 			TransactionUtil.commit();
 
@@ -283,36 +280,36 @@ public class UserServices {
 		}
 	}
 
-	private static Map<String, Object> createPartyContactMech(DispatchContext dctx,
-			Map<String, ? extends Object> context) throws GenericServiceException {
+	private static Map<String, Object> createPartyContactMech(DispatchContext dctx, Map<String, ? extends Object> context)
+					throws GenericServiceException {
 
 		return dctx.getDispatcher().runSync("createPartyContactMech", context);
 
 	}
 
 	private static Map<String, Object> createContactMech(DispatchContext dctx, Map<String, ? extends Object> context)
-			throws GenericServiceException {
+					throws GenericServiceException {
 
 		return dctx.getDispatcher().runSync("createContactMech", context);
 
 	}
 
 	private static Map<String, Object> createPerson(DispatchContext dctx, Map<String, ? extends Object> context)
-			throws GenericServiceException {
+					throws GenericServiceException {
 
 		return dctx.getDispatcher().runSync("createPerson", context);
 
 	}
 
 	private static Map<String, Object> createParty(DispatchContext dctx, Map<String, ? extends Object> context)
-			throws GenericServiceException {
+					throws GenericServiceException {
 
 		return dctx.getDispatcher().runSync("createParty", context);
 
 	}
 
 	private static Map<String, Object> createPartyRole(DispatchContext dctx, Map<String, ? extends Object> context)
-			throws GenericServiceException {
+					throws GenericServiceException {
 		return dctx.getDispatcher().runSync("createPartyRole", context);
 	}
 
@@ -342,7 +339,7 @@ public class UserServices {
 
 		try {
 			return dctx.getDispatcher().runSync("createUserLogin",
-					UtilMisc.toMap("userLoginId", username, "currentPassword", currentPassword, "partyId", partyId,
+							UtilMisc.toMap("userLoginId", username, "currentPassword", currentPassword, "partyId", partyId,
 							"enabled", "Y", "requirePasswordChange", requirePasswordChange));
 
 		} catch (GenericServiceException e) {
@@ -353,8 +350,7 @@ public class UserServices {
 	}
 
 	private static boolean isError(Map<String, Object> serviceResult) {
-		return serviceResult.containsKey("responseMessage")
-				&& "error".equalsIgnoreCase((String) serviceResult.get("responseMessage"));
+		return serviceResult.containsKey("responseMessage") && "error".equalsIgnoreCase((String) serviceResult.get("responseMessage"));
 	}
 
 	private static Map<String, Object> handleError(Map<String, Object> serviceResult) {

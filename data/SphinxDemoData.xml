@@ -27,7 +27,8 @@ under the License.
 			<Enumeration enumId="DETAILED_ANSWER" enumTypeId="SPHINX_Q_TYPE" enumCode="Q_DET_ANS" description="Descriptive" />
 			<Enumeration enumId="TRUE_FALSE" enumTypeId="SPHINX_Q_TYPE" enumCode="Q_TF" description="True or False" />
 		<!--  -->
-		<RoleType roleTypeId="SphinxAdmin" hasTable="N" description="Admin role type for Sphinx admin" />
+		<RoleType roleTypeId="SPHINX_ADMIN" hasTable="N" description="Admin role type for Sphinx Admin" />
+		<RoleType roleTypeId="SPHINX_USER" hasTable="N" description="User role type for Sphinx User" />
 		
 		<TopicMaster topicId="JAVA" topicName="JAVA" />
 

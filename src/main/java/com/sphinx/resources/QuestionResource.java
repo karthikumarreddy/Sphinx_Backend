@@ -11,6 +11,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import javax.servlet.http.Part;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -23,11 +24,13 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.http.HttpStatus;
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.DelegatorFactory;
+import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceContainer;
@@ -245,7 +248,6 @@ public class QuestionResource {
 	}
 
 	@POST
-
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response addQuestions(@Context HttpServletRequest request) {
 		try {
@@ -264,6 +266,15 @@ public class QuestionResource {
 			if (errorMsg != null) {
 				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError(errorMsg)).build();
 			}
+
+			HttpSession session = request.getSession(false);
+			if (UtilValidate.isEmpty(session)) {
+				return Response.status(HttpStatus.SC_UNAUTHORIZED).entity(ServiceUtil.returnError("Sign In Before Adding Question"))
+								.build();
+			}
+			GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
+
+			input.put("userLogin", userLogin);
 
 			Map<String, Object> result = getDispatcher().runSync("createQuestion", input);
 			if (result.get("responseMessage") != null && result.get("responseMessage").equals("error")) {
@@ -294,7 +305,7 @@ public class QuestionResource {
 			Sheet sheet = workbook.createSheet("Questions");
 
 			Row header = sheet.createRow(0);
-
+			System.out.println("Update");
 			List<ColumnConfig> columns = QuestionColumnConfigUtil.getColumnConfigs();
 
 			for (ColumnConfig col : columns) {
@@ -333,21 +344,7 @@ public class QuestionResource {
 	@Path("/upload")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
-	// public Response uploadQuestions(@FormDataParam("file") InputStream file, @FormDataParam("file") FormDataContentDisposition
-	// fileDetail) {
 	public Response uploadQuestions(@Context HttpServletRequest request, @Context HttpServletResponse response) {
-
-		// if (file == null || fileDetail == null) {
-		// return Response.status(400).entity(ServiceUtil.returnError("File not received by server")).build();
-		// }
-		//
-		// String fileName = fileDetail.getFileName();
-		//
-		// // file type check
-		// if (!fileName.endsWith(".xlsx")) {
-		// Debug.logWarning("Invalid file upload by user.", MODULE);
-		// return Response.status(400).entity(ServiceUtil.returnError("Only files with .xlsx are allowed")).build();
-		// }
 
 		InputStream file;
 		Part filePart;
@@ -396,6 +393,27 @@ public class QuestionResource {
 			Debug.logError(e, MODULE);
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
 							.entity(ServiceUtil.returnError("Unexpected error occured, try again after sometime!")).build();
+		}
+
+	}
+
+	@GET
+	@Path("/getAllQuestions")
+	@Produces(MediaType.APPLICATION_JSON)
+	public static Response getAllQuestions(@Context HttpServletRequest request) {
+
+		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+		try {
+			Map<String, Object> serviceResult = dispatcher.runSync("getAllQuestions", UtilMisc.toMap());
+
+			if (ServiceUtil.isError(serviceResult)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(serviceResult).build();
+			}
+			return Response.ok().entity(serviceResult).build();
+
+		} catch (GenericServiceException e) {
+			Debug.logError(e, MODULE);
+			return Response.serverError().entity(ServiceUtil.returnError("Something went Wrong! Try Again Later!")).build();
 		}
 
 	}

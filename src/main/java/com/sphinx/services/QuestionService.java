@@ -1,7 +1,6 @@
 package com.sphinx.services;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -11,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.ofbiz.base.util.Debug;
-import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
@@ -25,161 +23,21 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.ServiceUtil;
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.FillPatternType;
-import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.sphinx.util.QuestionColumnConfigUtil;
 import com.sphinx.util.QuestionColumnConfigUtil.ColumnConfig;
+
 
 public class QuestionService {
 
 	private static final String MODULE = QuestionService.class.getName();
 
 	// QUESTION SERVICE
-
-	// public Map<String, ? extends Object> getUploadFormatDocument(DispatchContext
-	// dctx, Map<String, ? extends Object> context) {
-	//
-	// List<GenericValue> topics =
-	// EntityQuery.use(null).from("TopicMaster").queryList();
-	// List<GenericValue> types = EntityQuery.use(null).from("Enumeration")
-	// .where(EntityCondition.makeCondition(EntityFunction.upperField("enumTypeId"),
-	// EntityOperator.LIKE,
-	// EntityFunction.upper("%SPHINX_Q_TYPE%")))
-	// .queryList();
-	//
-	// Workbook workbook = new XSSFWorkbook();
-	//
-	// // 2. Hidden sheet holding the dropdown values
-	// Sheet refSheet = workbook.createSheet("_ref");
-	// workbook.setSheetHidden(workbook.getSheetIndex("_ref"), true);
-	//
-	// for (int i = 0; i < types.size(); i++)
-	// refSheet.createRow(i).createCell(0).setCellValue(types.get(i).getString("enumId"));
-	//
-	// for (int i = 0; i < topics.size(); i++) {
-	// Row row = refSheet.getRow(i) != null ? refSheet.getRow(i) :
-	// refSheet.createRow(i);
-	// row.createCell(1).setCellValue(topics.get(i).getString("topicName"));
-	// }
-	//
-	// // 3. Main data sheet
-	// Sheet sheet = workbook.createSheet("Questions");
-	//
-	// // Header row
-	// Row header = sheet.createRow(0);
-	// header.createCell(0).setCellValue("Question Text");
-	// header.createCell(1).setCellValue("Question Type"); // dropdown
-	// header.createCell(2).setCellValue("Question Topic"); // dropdown
-	// header.createCell(3).setCellValue("Marks");
-	//
-	// // Style the header
-	// CellStyle headerStyle = workbook.createCellStyle();
-	// Font font = workbook.createFont();
-	// font.setBold(true);
-	// headerStyle.setFont(font);
-	// headerStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
-	// headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-	// for (Cell cell : header)
-	// cell.setCellStyle(headerStyle);
-	//
-	// // 4. Apply dropdowns to rows 2-1001 (1000 question rows)
-	// DataValidationHelper dvHelper = sheet.getDataValidationHelper();
-	//
-	// // Type dropdown — references _ref column A
-	// String typeFormula = "_ref!$A$1:$A$" + types.size();
-	// String topicFormula = "_ref!$B$1:$B$" + topics.size();
-	//
-	// addDropdown(sheet, dvHelper, typeFormula, 1, 1, 1000, 1); // col B
-	// addDropdown(sheet, dvHelper, topicFormula, 1, 1, 1000, 2); // col C
-	//
-	// // Auto-size columns
-	// for (int i = 0; i < 4; i++)
-	// sheet.autoSizeColumn(i);
-	//
-	// // 5. Return as downloadable response
-	// ByteArrayOutputStream out = new ByteArrayOutputStream();
-	// workbook.write(out);
-	// workbook.close();
-	//
-	// return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,
-	// "attachment; filename=questions_template.xlsx")
-	// .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
-	// .body(out.toByteArray());
-	// }
-	//
-	// private void addDropdown(Sheet sheet, DataValidationHelper dvHelper, String
-	// formula, int firstRow, int lastRow, int firstCol,
-	// int lastCol) {
-	// DataValidationConstraint constraint =
-	// dvHelper.createFormulaListConstraint(formula);
-	// CellRangeAddressList range = new CellRangeAddressList(firstRow, lastRow,
-	// firstCol, lastCol);
-	// DataValidation dv = dvHelper.createValidation(constraint, range);
-	// dv.setShowErrorBox(true);
-	// dv.createErrorBox("Invalid value", "Please select from the dropdown list.");
-	// dv.setShowDropDown(false); // false = show the arrow
-	// sheet.addValidationData(dv);
-	// }
-
-	public Map<String, ? extends Object> getTemplateDocument(DispatchContext dctx,
-			Map<String, ? extends Object> context) {
-
-		try {
-
-			Map<String, Object> result = ServiceUtil.returnSuccess();
-
-			Workbook workbook = new XSSFWorkbook();
-			Sheet sheet = workbook.createSheet("Questions");
-
-			Row header = sheet.createRow(0);
-
-			List<ColumnConfig> columns = QuestionColumnConfigUtil.getColumnConfigs();
-
-			for (ColumnConfig col : columns) {
-				Cell cell = header.createCell(col.index);
-				String imp = col.required ? "*" : "";
-				cell.setCellValue(col.label + " " + imp);
-			}
-
-			// Style the header
-			CellStyle headerStyle = workbook.createCellStyle();
-			Font font = workbook.createFont();
-			font.setBold(true);
-			headerStyle.setFont(font);
-			headerStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
-			headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-			for (Cell cell : header)
-				cell.setCellStyle(headerStyle);
-
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-			workbook.write(out);
-
-			byte[] bytes = out.toByteArray();
-
-			out.close();
-
-			workbook.close();
-
-			result.put("bytes", bytes);
-
-			return result;
-
-		} catch (Exception e) {
-			Debug.logError(e, MODULE);
-			return ServiceUtil.returnError("Unexpected error occured, try again after sometime!");
-		}
-
-	}
 
 	public Map<String, ? extends Object> getAllQuestionByTopic(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
@@ -204,63 +62,6 @@ public class QuestionService {
 			return ServiceUtil.returnError(e.getMessage());
 		}
 
-	}
-
-	public Map<String, ? extends Object> createQuestion(DispatchContext dctx, Map<String, ? extends Object> context) {
-
-		try {
-			Delegator delegator = dctx.getDelegator();
-
-			GenericValue questionRecord = delegator.makeValue("QuestionMaster");
-
-			questionRecord.setNextSeqId();
-
-			String topicId = (String) context.get("topicId");
-
-			GenericValue topic = delegator.findOne("TopicMaster", true, UtilMisc.toMap("topicId", topicId));
-
-			if (topic == null) {
-				return ServiceUtil.returnError("Question Topic was not a valid one!");
-			}
-
-			questionRecord.setNonPKFields(context);
-
-			questionRecord.create();
-
-			return ServiceUtil.returnSuccess("Question addedd successfully!");
-		} catch (GenericEntityException e) {
-			Debug.logError(e, MODULE);
-			return ServiceUtil.returnError("Unexpected error occured");
-		}
-	}
-
-	public Map<String, ? extends Object> createBulkQuestions(DispatchContext dctx,
-			Map<String, ? extends Object> context) {
-
-		try {
-			Delegator delegator = dctx.getDelegator();
-
-			GenericValue questionRecord = delegator.makeValue("QuestionMaster");
-
-			questionRecord.setNextSeqId();
-
-			String topicId = (String) context.get("topicId");
-
-			GenericValue topic = delegator.findOne("TopicMaster", true, UtilMisc.toMap("topicId", topicId));
-
-			if (topic == null) {
-				return ServiceUtil.returnError("Question Topic was not a valid one!");
-			}
-
-			questionRecord.setNonPKFields(context);
-
-			questionRecord.create();
-
-			return ServiceUtil.returnSuccess("Question addedd successfully!");
-		} catch (GenericEntityException e) {
-			Debug.logError(e, MODULE);
-			return ServiceUtil.returnError("Unexpected error occured");
-		}
 	}
 
 	public Map<String, ? extends Object> getAllQuestionTypes(DispatchContext dctx,
@@ -313,7 +114,7 @@ public class QuestionService {
 				return ServiceUtil.returnError("Please fill the details and upload the file");
 			}
 
-			for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+			for (int i = 1; i <= sheet.getPhysicalNumberOfRows(); i++) {
 
 				Row row = sheet.getRow(i);
 
@@ -325,6 +126,7 @@ public class QuestionService {
 
 				for (ColumnConfig col : columns) {
 					Cell cell = row.getCell(col.index);
+
 
 					if (col.required && (cell == null || cell.getCellType() == CellType.BLANK)) {
 						return ServiceUtil
@@ -392,6 +194,25 @@ public class QuestionService {
 			Debug.logError(e, MODULE);
 			return ServiceUtil.returnError("Unexpected error occured, try again after sometime!");
 		}
+
+	}
+
+	public Map<String, ? extends Object> getAllQuestions(DispatchContext dctx, Map<String, ? extends Object> context) {
+		
+		Delegator delegator = dctx.getDelegator();
+		
+		try {
+
+			List<GenericValue> listOfQuestions = EntityQuery.use(delegator).from("QuestionMaster").queryList();
+			Map<String, Object> serviceResult = ServiceUtil.returnSuccess();
+			serviceResult.put("data", listOfQuestions);
+			return serviceResult;
+
+		} catch (GenericEntityException e) {
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError("Something went wrong! Try again later!");
+		}
+
 
 	}
 

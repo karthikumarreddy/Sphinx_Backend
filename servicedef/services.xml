@@ -31,6 +31,7 @@
     	<attribute name="statusId" mode="IN" type="String" optional="false" />
     </service>
 
+
 	<service name="createPerson" engine="entity-auto" default-entity-name="Person" invoke="create" auth="false">
     	<attribute name="partyId" mode="INOUT" type="String" optional="false"/>
     	<attribute name="firstName" mode="IN" type="String" optional="false" />
@@ -70,6 +71,7 @@
         <attribute name="lastName" mode="IN" type="String" />
         <attribute name="email" mode="IN" type="String" />
         <attribute name="password" mode="IN" type="String" optional="true" />
+        <attribute name="confirmPassword" mode="IN" type="String" optional="true" />
         <attribute name="role" mode="IN" type="String" />
     </service>
 
@@ -319,16 +321,16 @@
     <!-- ====================================================================== -->
 
     <service name="questionFields" location="" invoke="" engine="interface">
-        <attribute name="questionDetail" mode="IN" type="String" optional="false" />
-        <attribute name="optionA" mode="IN" type="String" optional="false" />
-        <attribute name="optionB" mode="IN" type="String" optional="false" />
-        <attribute name="optionC" mode="IN" type="String" optional="true" />
-        <attribute name="optionD" mode="IN" type="String" optional="true" />
-        <attribute name="answer" mode="IN" type="String" optional="false" />
+        <attribute name="questionDetail" mode="IN" type="String" optional="false" allow-html="any"/>
+        <attribute name="optionA" mode="IN" type="String" optional="true" allow-html="any" />
+        <attribute name="optionB" mode="IN" type="String" optional="true" allow-html="any" />
+        <attribute name="optionC" mode="IN" type="String" optional="true" allow-html="any" />
+        <attribute name="optionD" mode="IN" type="String" optional="true" allow-html="any" />
+        <attribute name="answer" mode="IN" type="String" optional="false" allow-html="any" />
         <attribute name="numAnswers" mode="IN" type="String" optional="false" />
         <attribute name="questionType" mode="IN" type="String" optional="false" />
         <attribute name="difficultyLevel" mode="IN" type="String" optional="true" />
-        <attribute name="answerValue" mode="IN" type="String" optional="true" />
+        <attribute name="answerValue" mode="IN" type="String" optional="true" allow-html="any" />
         <attribute name="topicId" mode="IN" type="String" optional="false"/>
     </service>
 
@@ -354,19 +356,19 @@
 	    location="com.sphinx.services.QuestionService" invoke="getAllQuestionTypes">
 	    <attribute name="data" type="List" mode="OUT" optional="true" />
 	</service>
-	
-	<service name="downloadTemplateDocument" engine="java" location="com.sphinx.services.QuestionService" invoke="getTemplateDocument">
-        <attribute name="bytes" mode="OUT" type="Byte []" optional="true" />
-    </service>
-    
+
     <service name="uploadBulkQuestion" engine="java" location="com.sphinx.services.QuestionService" invoke="uploadBulkQuestion">
         <attribute name="file" mode="IN" type="java.nio.ByteBuffer" optional="true" />
     </service>
     
     
     <service name="getUserAssignedExams" engine="java" location="in.vastpro.sphinx.ExamServices" invoke="getUserAssignedExams" auth="false">
-    <attribute name="partyId"   type="String" mode="IN"  optional="false"/>
-    <attribute name="examList"  type="List"   mode="OUT" optional="false"/>
-</service>
+	   <attribute name="partyId"   type="String" mode="IN"  optional="false"/>
+	   <attribute name="examList"  type="List"   mode="OUT" optional="false"/>
+	</service>
+	
+	<service name="getAllQuestions" engine="java" location="com.sphinx.services.QuestionService" invoke="getAllQuestions">
+		<attribute name="data" mode="OUT" type="List"/>
+	</service>
 	
 </services>

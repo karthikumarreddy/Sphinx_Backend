@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.ofbiz.base.util.UtilMisc;
+import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.condition.EntityCondition;
@@ -42,7 +43,7 @@ public class ExamTopicServices {
 
 	        String examId = (String) context.get("examId");
 
-	        if (examId == null || examId.isEmpty()) {
+			if (UtilValidate.isEmpty(examId)) {
 	            return ServiceUtil.returnError("ExamId is required");
 	        }
 
