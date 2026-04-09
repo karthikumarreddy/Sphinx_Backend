@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
@@ -18,11 +17,8 @@ import javax.ws.rs.core.Response;
 
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
-import org.apache.ofbiz.entity.Delegator;
-import org.apache.ofbiz.entity.DelegatorFactory;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
-import org.apache.ofbiz.service.ServiceContainer;
 import org.apache.ofbiz.service.ServiceUtil;
 
 @Path("/auth")
@@ -30,45 +26,22 @@ import org.apache.ofbiz.service.ServiceUtil;
 @Consumes(MediaType.APPLICATION_JSON)
 public class UserResorce {
 
-	@Context
-	private HttpServletRequest request;
-
-	@Context
-	private ServletContext servletContext;
-
-	private Delegator getDelegator() {
-		Delegator delegator = (Delegator) servletContext.getAttribute("delegator");
-		if (delegator == null) {
-			delegator = DelegatorFactory.getDelegator("default");
-		}
-		return delegator;
-	}
-
-	private LocalDispatcher getDispatcher() {
-		LocalDispatcher dispatcher = (LocalDispatcher) servletContext.getAttribute("dispatcher");
-		if (dispatcher == null) {
-			dispatcher = ServiceContainer.getLocalDispatcher("Sphinx", getDelegator());
-		}
-		return dispatcher;
-	}
-
 	@GET
 	@Path("/getAllUsers")
 	public Response getAllUsers(@Context HttpServletRequest request) {
-
 		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
-		if (dispatcher == null)
+		if (UtilValidate.isEmpty(dispatcher)) {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-							.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after sometime!")).build();
-		else
+					.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+		} else
 			try {
 
 				Map<String, Object> result = dispatcher.runSync("getAllUsers", Collections.emptyMap());
 				return Response.status(Response.Status.OK).entity(result).build();
 			} catch (GenericServiceException e) {
 				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-								.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after sometime!")).build();
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after sometime!")).build();
 			}
 	}
 
@@ -76,7 +49,6 @@ public class UserResorce {
 	@Path("/login")
 	public Response loginUser(@Context HttpServletRequest request, @Context HttpServletResponse response) {
 		try {
-			
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
 			if (UtilValidate.isEmpty(dispatcher)) {
@@ -95,6 +67,7 @@ public class UserResorce {
 			input.put("userName", userName);
 			input.put("password", password);
 
+
 			Map<String, Object> result = dispatcher.runSync("loginUser", input);
 			return Response.status(200).entity(result).build();
 
@@ -107,6 +80,12 @@ public class UserResorce {
 	@Path("/signup")
 	public Response signupUser(@Context HttpServletRequest request) {
 		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
 
 			String userName = (String) request.getAttribute("userName");
 			String firstName = (String) request.getAttribute("firstName");
@@ -116,8 +95,25 @@ public class UserResorce {
 			String confirmPassword = (String) request.getAttribute("confirmPassword");
 			String role = (String) request.getAttribute("role");
 
+			if (UtilValidate.isEmpty(userName)) {
+				return Response.status(400).entity("UserName is required").build();
+			}
+			if (UtilValidate.isEmpty(firstName)) {
+				return Response.status(400).entity("FirstName is required").build();
+			}
+			if (UtilValidate.isEmpty(lastName)) {
+				return Response.status(400).entity("LastName is required").build();
+			}
+			if (UtilValidate.isEmpty(email)) {
+				return Response.status(400).entity("Email is required").build();
+			}
+			if (UtilValidate.isEmpty(password)) {
+				return Response.status(400).entity("Password is required").build();
+			}
+			if (UtilValidate.isEmpty(role)) {
+				return Response.status(400).entity("Role is required").build();
+			}
 
-			LocalDispatcher dispatcher = getDispatcher();
 			Map<String, Object> result = dispatcher.runSync("signupUser", UtilMisc.toMap("userName", userName, "firstName", firstName,
 							"lastName", lastName, "email", email, "password", password, "confirmPassword", confirmPassword, "role", role));
 			if (result.containsKey("responseMessage") && "error".equalsIgnoreCase((String) result.get("responseMessage"))) {
@@ -126,7 +122,8 @@ public class UserResorce {
 			return Response.status(Response.Status.CREATED).entity(result).build();
 
 		} catch (Exception e) {
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ServiceUtil.returnError(e.getMessage())).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(ServiceUtil.returnError(e.getMessage())).build();
 		}
 	}
 	

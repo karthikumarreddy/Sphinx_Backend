@@ -144,7 +144,6 @@ public class UserServices {
 			}
 
 			if (isAdmin) {
-
 				GenericValue user = delegator.findOne("UserLogin", true, UtilMisc.toMap("userLoginId", userName));
 
 				if (user != null) {

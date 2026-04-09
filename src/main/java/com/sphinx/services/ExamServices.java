@@ -31,8 +31,12 @@ public class ExamServices {
 		try {
 			Map<String, Object> result = ServiceUtil.returnSuccess();
 			Delegator delegator = dctx.getDelegator();
+
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
 			List<GenericValue> examList = delegator.findAll("ExamMaster", false);
-			if (examList == null || examList.isEmpty()) {
+			if (UtilValidate.isEmpty(examList)) {
 				return ServiceUtil.returnError("no exam created to display");
 			}
 			result.put("examList", examList);
@@ -46,6 +50,10 @@ public class ExamServices {
 	public static Map<String, Object> createExam(DispatchContext dctx, Map<String, Object> context) {
 		try {
 			Delegator delegator = dctx.getDelegator();
+
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
 
 			String examId = delegator.getNextSeqId("ExamMaster");
 			String partyId = (String) context.get("partyId");
@@ -73,7 +81,7 @@ public class ExamServices {
 			examMaster.set("examSetupProper", 0L);
 
 			GenericValue userLogin = (GenericValue) context.get("userLogin");
-			if (userLogin != null) {
+			if (!UtilValidate.isEmpty(userLogin)) {
 				examMaster.set("createdByUserLogin", userLogin.getString("userLoginId"));
 				examMaster.set("lastModifiedByUserLogin", userLogin.getString("userLoginId"));
 			}
@@ -122,10 +130,14 @@ public class ExamServices {
 		try {
 			Delegator delegator = dctx.getDelegator();
 
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
+
 			GenericValue examMaster = delegator.findOne("ExamMaster", false,
 					UtilMisc.toMap("examId", context.get("examId")));
 
-			if (examMaster == null) {
+			if (UtilValidate.isEmpty(examMaster)) {
 				return ServiceUtil.returnError("Exam not found");
 			}
 
@@ -150,13 +162,12 @@ public class ExamServices {
 			examMaster.set("examSetupProper", 0L);
 
 			GenericValue userLogin = (GenericValue) context.get("userLogin");
-			if (userLogin != null) {
+			if (UtilValidate.isEmpty(userLogin)) {
 				examMaster.set("createdByUserLogin", userLogin.getString("userLoginId"));
 				examMaster.set("lastModifiedByUserLogin", userLogin.getString("userLoginId"));
 			}
 
 			delegator.store(examMaster);
-			
 
 			return ServiceUtil.returnSuccess("Updated successfully");
 
@@ -169,10 +180,15 @@ public class ExamServices {
 	public static Map<String, Object> assignUsersToExam(DispatchContext dctx, Map<String, ? extends Object> context) {
 
 		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) dctx.getDispatcher();
 
-			LocalDispatcher dispatcher = dctx.getDispatcher();
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
 
-			if (dispatcher == null) {
+			Delegator delegator = dctx.getDelegator();
+
+			if (UtilValidate.isEmpty(delegator)) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 
@@ -201,7 +217,7 @@ public class ExamServices {
 					return ServiceUtil.returnError("Give User Details is Invalid!");
 				}
 
-				if (party == null) {
+				if (UtilValidate.isEmpty(party)) {
 					return ServiceUtil.returnError("Invalid User Details! Record Not Found!");
 				}
 
@@ -209,7 +225,7 @@ public class ExamServices {
 					GenericValue exam = EntityQuery.use(dctx.getDelegator()).from("ExamMaster").where("examId", examId)
 							.queryFirst();
 
-					if (exam == null) {
+					if (UtilValidate.isEmpty(exam)) {
 						return ServiceUtil.returnError("Invalid Exam Details! Record Not Found!");
 					}
 				}
@@ -263,16 +279,20 @@ public class ExamServices {
 			Map<String, ? extends Object> context) {
 
 		try {
+
+			Delegator delegator = dctx.getDelegator();
+
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
+
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
 			String examId = (String) context.get("examId");
 
 			if (UtilValidate.isEmpty(examId)) {
 				return ServiceUtil.returnError("Invalid Exam Id!");
-			}
-
-			Delegator delegator = dctx.getDelegator();
-
-			if (delegator == null) {
-				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 
 			List<GenericValue> assignedUsers = EntityQuery.use(delegator).from("PersonWithExam").where("partyTypeId",
@@ -296,15 +316,19 @@ public class ExamServices {
 			Map<String, ? extends Object> context) {
 
 		try {
+
+			Delegator delegator = dctx.getDelegator();
+
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
 			String partyId = (String) context.get("partyId");
 
 			if (UtilValidate.isEmpty(partyId)) {
 				return ServiceUtil.returnError("Invalid User!");
 			}
 
-			Delegator delegator = dctx.getDelegator();
-
-			if (delegator == null) {
+			if (UtilValidate.isEmpty(delegator)) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 
@@ -330,10 +354,15 @@ public class ExamServices {
 
 		try {
 
-			Delegator delegator = dctx.getDelegator();
-			LocalDispatcher dispatcher = dctx.getDispatcher();
+			LocalDispatcher dispatcher = (LocalDispatcher) dctx.getDispatcher();
 
-			if (delegator == null || dispatcher == null) {
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
+
+			Delegator delegator = dctx.getDelegator();
+
+			if (UtilValidate.isEmpty(delegator)) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 
@@ -376,7 +405,12 @@ public class ExamServices {
 	public static Map<String, ? extends Object> adminExamList(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 		try {
+
 			Delegator delegator = dctx.getDelegator();
+
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
 			String partyId = (String) context.get("partyId");
 
 			// List<GenericValue> adminExams =
@@ -398,9 +432,14 @@ public class ExamServices {
 		}
 	}
 
-	public static Map<String, ? extends Object> updateAssignedUserWrapper(DispatchContext dctx, Map<String, ? extends Object> context) {
+	public static Map<String, ? extends Object> updateAssignedUserWrapper(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
 
 		Delegator delegator = dctx.getDelegator();
+
+		if (UtilValidate.isEmpty(delegator)) {
+			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+		}
 
 		String partyId = (String) context.get("partyId");
 		String examId = (String) context.get("examId");
@@ -419,8 +458,7 @@ public class ExamServices {
 
 		if (UtilValidate.isEmpty(allowedAttemptsStr)) {
 			return ServiceUtil.returnError("Invalid Allowed Attempts!");
-		}
-		else {
+		} else {
 			try {
 				allowedAttempts = Integer.valueOf((String) allowedAttemptsStr);
 			} catch (ClassCastException | NumberFormatException e) {
@@ -430,8 +468,7 @@ public class ExamServices {
 
 		if (UtilValidate.isEmpty(timeoutDaysStr)) {
 			return ServiceUtil.returnError("Invalid Exam Timeout Period!");
-		}
-		else {
+		} else {
 			try {
 				timeoutDays = Integer.valueOf((String) timeoutDaysStr);
 			} catch (NumberFormatException | ClassCastException e) {
@@ -441,7 +478,8 @@ public class ExamServices {
 
 		GenericValue assignUser;
 		try {
-			assignUser = EntityQuery.use(delegator).from("PartyExamRelationship").where("partyId", partyId, "examId", examId).queryOne();
+			assignUser = EntityQuery.use(delegator).from("PartyExamRelationship")
+					.where("partyId", partyId, "examId", examId).queryOne();
 		} catch (GenericEntityException e) {
 			return ServiceUtil.returnError("Something Went Wrong! Try again later!");
 		}
@@ -451,9 +489,8 @@ public class ExamServices {
 		}
 
 		try {
-			Map<String, Object> result = dctx.getDispatcher().runSync("updateAssignedUser",
-							UtilMisc.toMap("partyId", partyId, "examId", examId, "allowedAttempts", allowedAttempts, "timeoutDays",
-											timeoutDays));
+			Map<String, Object> result = dctx.getDispatcher().runSync("updateAssignedUser", UtilMisc.toMap("partyId",
+					partyId, "examId", examId, "allowedAttempts", allowedAttempts, "timeoutDays", timeoutDays));
 
 			if (!ServiceHelper.isError(result)) {
 				result.put("successMessage", "Assigned User Info Updated Successfully!");
@@ -466,12 +503,20 @@ public class ExamServices {
 
 	}
 
-
 	public static Map<String, ? extends Object> deleteExamWrapper(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 
+		LocalDispatcher dispatcher = (LocalDispatcher) dctx.getDispatcher();
+
+		if (UtilValidate.isEmpty(dispatcher)) {
+			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+		}
+
 		Delegator delegator = dctx.getDelegator();
-		LocalDispatcher dispatcher = dctx.getDispatcher();
+
+		if (UtilValidate.isEmpty(delegator)) {
+			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+		}
 		String examId = (String) context.get("examId");
 
 		if (UtilValidate.isEmpty(examId)) {
@@ -479,16 +524,9 @@ public class ExamServices {
 		}
 
 		try {
-			// delete Questions from QuestionBankMasterB
-			Map<String, Object> deleteQBCtx = new HashMap<>();
-			deleteQBCtx.put("examId", examId);
-			Map<String, Object> deleteQBResult = dispatcher.runSync("deleteExamQuestions", deleteQBCtx);
 
-			if (ServiceUtil.isError(deleteQBResult)) {
-				Debug.logError("Failed to delete questions from QuestionBankMasterB for examId: " + examId, MODULE);
-				return ServiceUtil
-						.returnError("Failed to delete exam questions: " + ServiceUtil.getErrorMessage(deleteQBResult));
-			}
+			EntityCondition questionBCondition = EntityCondition.makeCondition("examId", EntityOperator.EQUALS, examId);
+			int dataRemoved = delegator.removeByCondition("QuestionBankMasterB", questionBCondition);
 
 			// delete QuestionBankMaster
 			EntityCondition qbCondition = EntityCondition.makeCondition("examId", EntityOperator.EQUALS, examId);
@@ -548,6 +586,11 @@ public class ExamServices {
 			Map<String, ? extends Object> contaxt) {
 		try {
 			Delegator delegator = dctx.getDelegator();
+
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
+
 			String examId = (String) contaxt.get("examId");
 			List<GenericValue> examQuestions = EntityQuery.use(delegator).from("QuestionBankMasterB")
 					.where("examId", examId).queryList();

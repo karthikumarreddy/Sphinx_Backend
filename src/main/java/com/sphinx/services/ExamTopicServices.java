@@ -17,14 +17,23 @@ import org.apache.ofbiz.service.ServiceUtil;
 
 public class ExamTopicServices {
 	private static final String MODULE = ExamTopicServices.class.getName();
+	private static final String UNEXPECTED_ERROR_MSG = "Unexpected Error Occured! Try Again After Sometime!";
+
 
 	public static Map<String, ? extends Object> getAllExamTopics(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 		try {
+
+
 			Delegator delegator = dctx.getDelegator();
+
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
+
 			List<GenericValue> topics = EntityQuery.use(delegator).from("ExamTopicDetails")
 					.where("examId", context.get("examId")).queryList();
-			if (topics.isEmpty()) {
+			if (UtilValidate.isEmpty(topics)) {
 				return ServiceUtil.returnError("topics is null");
 			}
 			Map<String, Object> result = ServiceUtil.returnSuccess();
@@ -39,11 +48,15 @@ public class ExamTopicServices {
 	        Map<String, Object> context) {
 
 	    try {
-	        Delegator delegator = dctx.getDelegator();
+	       
+			Delegator delegator = dctx.getDelegator();
 
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
 	        String examId = (String) context.get("examId");
 
-			if (UtilValidate.isEmpty(examId)) {
+	        if (UtilValidate.isEmpty(examId)) {
 	            return ServiceUtil.returnError("ExamId is required");
 	        }
 
@@ -59,7 +72,7 @@ public class ExamTopicServices {
 	        }
 
 	        Map<String, Object> result = ServiceUtil.returnSuccess();
-	        result.put("examTopicList", resultList); // ALWAYS return list
+	        result.put("examTopicList", resultList); 
 	        return result;
 
 	    } catch (Exception e) {
@@ -70,15 +83,20 @@ public class ExamTopicServices {
 	public static Map<String, ? extends Object> generateExamQuestions(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 		try {
+
 			Delegator delegator = dctx.getDelegator();
+
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
 			String examId = (String) context.get("examId");
 
-			if (examId == null || examId.trim().isEmpty()) {
+			if (UtilValidate.isEmpty(examId)) {
 				return ServiceUtil.returnError("examId is required");
 			}
 
 			GenericValue exam = delegator.findOne("ExamMaster", false, UtilMisc.toMap("examId", examId));
-			if (exam == null) {
+			if (UtilValidate.isEmpty(exam)) {
 				return ServiceUtil.returnError("Exam not found");
 			}
 
@@ -179,15 +197,21 @@ public class ExamTopicServices {
 	public static Map<String, ? extends Object> launchExam(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 		try {
+
 			Delegator delegator = dctx.getDelegator();
+
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
+			
 			String examId = (String) context.get("examId");
 
-			if (examId == null || examId.trim().isEmpty()) {
+			if (UtilValidate.isEmpty(examId)) {
 				return ServiceUtil.returnError("examId is required" );
 			}
 
 			GenericValue exam = delegator.findOne("ExamMaster", false, UtilMisc.toMap("examId", examId));
-			if (exam == null) {
+			if (UtilValidate.isEmpty(exam)) {
 				return ServiceUtil.returnError( "Exam not found" );
 			}
 
@@ -198,7 +222,7 @@ public class ExamTopicServices {
 
 			List<GenericValue> draftQuestions = delegator.findByAnd("QuestionBankMasterB",
 					UtilMisc.toMap("examId", examId), null, false);
-			if (draftQuestions == null || draftQuestions.isEmpty()) {
+			if (UtilValidate.isEmpty(draftQuestions)) {
 				return ServiceUtil.returnError("No draft questions found. Run generateExamQuestions first" );
 			}
 
@@ -247,12 +271,18 @@ public class ExamTopicServices {
 			Map<String, ? extends Object> context) {
 
 		try {
+			
+
 			Delegator delegator = dctx.getDelegator();
+
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
 
 			String examId = (String) context.get("examId");
 			String partyId=(String)context.get("partyId");
 
-			if (examId == null || examId.isEmpty()) {
+			if (UtilValidate.isEmpty(examId)) {
 				return ServiceUtil.returnError("ExamId is required");
 			}
 
