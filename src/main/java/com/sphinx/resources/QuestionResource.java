@@ -250,7 +250,7 @@ public class QuestionResource {
 			return Response.status(Response.Status.BAD_REQUEST)
 					.entity(ServiceUtil.returnError("Question Id is required")).build();
 		}
-		Map<String, Object> input = UtilMisc.toMap("qId", qId);
+		Map<String, Object> input = UtilMisc.toMap("questionId", qId);
 		Map<String, Object> result;
 		try {
 			result = dispatcher.runSync("deleteQuestion", input);
@@ -420,14 +420,17 @@ public class QuestionResource {
 
 	}
 
-	@GET
+	@POST
 	@Path("/getAllQuestions")
 	@Produces(MediaType.APPLICATION_JSON)
 	public static Response getAllQuestions(@Context HttpServletRequest request) {
 
 		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 		try {
-			Map<String, Object> serviceResult = dispatcher.runSync("getAllQuestions", UtilMisc.toMap());
+			Map<String, Object> serviceResult = dispatcher.runSync("getAllQuestions",
+							UtilMisc.toMap("viewIndex", request.getAttribute("viewIndex"), "viewSize", request.getAttribute("viewSize"),
+											"topicId", request.getAttribute("topicId"), "questionType",
+											request.getAttribute("questionType")));
 
 			if (ServiceUtil.isError(serviceResult)) {
 				return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(serviceResult).build();

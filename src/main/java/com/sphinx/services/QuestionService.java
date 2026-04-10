@@ -5,11 +5,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.ofbiz.base.util.Debug;
+import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericEntityException;
@@ -18,6 +20,7 @@ import org.apache.ofbiz.entity.condition.EntityCondition;
 import org.apache.ofbiz.entity.condition.EntityOperator;
 import org.apache.ofbiz.entity.transaction.GenericTransactionException;
 import org.apache.ofbiz.entity.transaction.TransactionUtil;
+import org.apache.ofbiz.entity.util.EntityListIterator;
 import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
@@ -219,9 +222,72 @@ public class QuestionService {
 		
 		try {
 
-			List<GenericValue> listOfQuestions = EntityQuery.use(delegator).from("QuestionMaster").queryList();
+			int viewIndex, viewSize;
+
+			if (UtilValidate.isEmpty(context.get("viewIndex"))) {
+				viewIndex = 0;
+			}
+			else {
+				try {
+					viewIndex = (Integer) context.get("viewIndex");
+				} catch (ClassCastException e) {
+					return ServiceUtil.returnError("");
+				}
+			}
+			if (UtilValidate.isEmpty(context.get("viewSize"))) {
+				viewSize = 10;
+			}
+			else {
+				try {
+					viewSize = (Integer) context.get("viewSize");
+				} catch (ClassCastException e) {
+					return ServiceUtil.returnError("");
+				}
+			}
+
+			// topic and type wise filtering.
+
+			EntityCondition topicCondition;
+			EntityCondition typeCondition;
+
+			if (UtilValidate.isEmpty(context.get("topicId")) || UtilValidate.isEmpty(context.get("topicId").toString().strip())) {
+				topicCondition = null;
+			} else {
+				topicCondition = EntityCondition.makeCondition("topicId", EntityOperator.LIKE, (String) context.get("topicId"));
+			}
+
+			if (UtilValidate.isEmpty(context.get("questionType")) || UtilValidate.isEmpty(context.get("questionType").toString().strip())) {
+				typeCondition = null;
+			} else {
+				typeCondition = EntityCondition.makeCondition("questionType", EntityOperator.LIKE, (String) context.get("questionType"));
+			}
+
+			EntityQuery eq = EntityQuery.use(delegator).from("QuestionMaster");
+
+			if (UtilValidate.isNotEmpty(topicCondition)) {
+				eq = eq.where(topicCondition);
+			}
+
+			if (UtilValidate.isNotEmpty(typeCondition)) {
+				eq = eq.where(typeCondition);
+			}
+
+			eq = eq.maxRows(viewSize * viewIndex).cursorScrollInsensitive();
+
+			// EntityQuery eq = EntityQuery.use(delegator).from("QuestionMaster").maxRows(viewSize * viewIndex).cursorScrollInsensitive();
+
+			List<GenericValue> listOfQuestions = Collections.emptyList();
+			int balanceRecord; 
+
+			try (EntityListIterator iterator = eq.queryIterator()) {
+				listOfQuestions = iterator.getPartialList(viewIndex, viewSize);
+				balanceRecord = iterator.getResultsSizeAfterPartialList();
+			}
+
 			Map<String, Object> serviceResult = ServiceUtil.returnSuccess();
+
 			serviceResult.put("data", listOfQuestions);
+			serviceResult.put("meta", UtilMisc.toMap("viewIndex", viewIndex, "viewSize", viewSize, "balanceRecord", balanceRecord));
 			return serviceResult;
 
 		} catch (GenericEntityException e) {
