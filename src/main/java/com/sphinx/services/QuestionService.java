@@ -10,8 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.ws.rs.core.Response;
-
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
@@ -243,22 +241,37 @@ public class QuestionService {
 
 			// topic and type wise filtering.
 
+			EntityCondition questionDetailCondition;
 			EntityCondition topicCondition;
 			EntityCondition typeCondition;
 
-			if (UtilValidate.isEmpty(context.get("topicId")) || UtilValidate.isEmpty(context.get("topicId").toString().strip())) {
-				topicCondition = null;
+			Object questionFilterObj = context.get("questionDetailFilter");
+			if (UtilValidate.isEmpty(questionFilterObj) || UtilValidate.isEmpty(questionFilterObj.toString().strip())) {
+				questionDetailCondition = null;
 			} else {
-				topicCondition = EntityCondition.makeCondition("topicId", EntityOperator.LIKE, (String) context.get("topicId"));
+				questionDetailCondition = EntityCondition.makeCondition("questionDetail", EntityOperator.LIKE,
+								("%" + questionFilterObj.toString() + "%"));
 			}
 
-			if (UtilValidate.isEmpty(context.get("questionType")) || UtilValidate.isEmpty(context.get("questionType").toString().strip())) {
+			Object topicFilterObject = context.get("topicIds");
+			if (UtilValidate.isEmpty(topicFilterObject)) {
+				topicCondition = null;
+			} else {
+				topicCondition = EntityCondition.makeCondition("topicId", EntityOperator.IN, topicFilterObject);
+			}
+
+			Object typeFilterObject = context.get("questionTypes");
+			if (UtilValidate.isEmpty(typeFilterObject)) {
 				typeCondition = null;
 			} else {
-				typeCondition = EntityCondition.makeCondition("questionType", EntityOperator.LIKE, (String) context.get("questionType"));
+				typeCondition = EntityCondition.makeCondition("questionType", EntityOperator.IN, typeFilterObject);
 			}
 
 			EntityQuery eq = EntityQuery.use(delegator).from("QuestionMaster");
+
+			if (UtilValidate.isNotEmpty(questionDetailCondition)) {
+				eq = eq.where(questionDetailCondition);
+			}
 
 			if (UtilValidate.isNotEmpty(topicCondition)) {
 				eq = eq.where(topicCondition);
@@ -303,24 +316,22 @@ public class QuestionService {
 			if (UtilValidate.isEmpty(questionIds)) {
 				return ServiceUtil.returnError("Question Id ia required");
 			}
-			transaction = TransactionUtil.begin();
+
+			int count = 0;
+
 			for (String qId : questionIds) {
-				Map<String, Object> result = dispatcher.runSync("deleteQuestion", UtilMisc.toMap("questionId", qId));
-
 				if (UtilValidate.isEmpty(qId)) {
-					TransactionUtil.rollback(transaction, "Error deleting questions", null);
-					return ServiceUtil.returnError("Question Id ia required");
+					return ServiceUtil.returnError(
+									"Total Deleted Questions: " + count + "For Question " + count + 1 + " Question Id is required");
 				}
+
+				Map<String, Object> result = dispatcher.runSync("deleteQuestion", UtilMisc.toMap("questionId", qId));
+				count++;
 			}
 
-			TransactionUtil.commit(transaction);
-			return ServiceUtil.returnSuccess("Question deleted sucessfully");
+			return ServiceUtil.returnSuccess("Questions deleted sucessfully, Total Deleted Questions: " + count);
 		} catch (Exception e) {
-			try {
-				TransactionUtil.rollback(transaction, e.getMessage(), e);
-			} catch (GenericTransactionException e1) {
-				e1.printStackTrace();
-			}
+			Debug.logError(e, MODULE);
 			return ServiceUtil.returnError("Something went wrong try again later");
 		}
 	}

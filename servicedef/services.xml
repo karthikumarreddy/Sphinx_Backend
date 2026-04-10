@@ -395,8 +395,9 @@
 	<service name="getAllQuestions" engine="java" location="com.sphinx.services.QuestionService" invoke="getAllQuestions">
 		<attribute name="viewIndex" mode="IN" type="Integer" optional="true"/>
 		<attribute name="viewSize" mode="IN" type="Integer" optional="true"/>
-		<attribute name="topicId" mode="IN" type="String" optional="true"/>
-		<attribute name="questionType" mode="IN" type="String" optional="true"/>
+		<attribute name="topicIds" mode="IN" type="List" optional="true"/>
+		<attribute name="questionTypes" mode="IN" type="List" optional="true"/>
+		<attribute name="questionDetailFilter" mode="IN" type="String" optional="true"/>
 		<attribute name="data" mode="OUT" type="List"/>
 		<attribute name="meta" mode="OUT" type="Map"/>
 	</service>
