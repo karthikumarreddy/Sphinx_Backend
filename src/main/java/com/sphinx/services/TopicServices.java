@@ -46,6 +46,32 @@ public class TopicServices {
 			return ServiceUtil.returnError(e.getMessage());
 		}
 	}
+	
+	public static Map<String, ? extends Object> getAllTopicsCount(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
+		try {
+			
+			Delegator delegator = dctx.getDelegator();
+
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
+			
+			Map<String, Object> result = ServiceUtil.returnSuccess();
+			
+			List<GenericValue> topics = delegator.findAll("TopicMaster", false);
+			if (UtilValidate.isEmpty(topics)) {
+				return ServiceUtil.returnError("Cannot find the data ");
+			}
+			result.put("count", topics.size());
+			return result;
+		} catch (Exception e) {
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError(e.getMessage());
+		}
+	}
+	
+	
 
 	public static Map<String, Object> getTopicById(DispatchContext dctx, Map<String, Object> context) {
 		

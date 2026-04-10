@@ -431,7 +431,32 @@ public class ExamServices {
 			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 		}
 	}
+	public static Map<String, ? extends Object> adminExamListCount(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
+		try {
 
+			Delegator delegator = dctx.getDelegator();
+
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
+			String partyId = (String) context.get("partyId");
+
+			List<GenericValue> listOfExams = EntityQuery.use(delegator).from("ExamByAdminDetails")
+					.where("partyId", partyId).queryList();
+
+			Map<String, Object> serviceResult = ServiceUtil.returnSuccess("Admin Exam List!");
+
+			serviceResult.put("count", listOfExams.size());
+
+			return serviceResult;
+
+		} catch (Exception e) {
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+		}
+	}
+	
 	public static Map<String, ? extends Object> updateAssignedUserWrapper(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 

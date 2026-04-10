@@ -30,7 +30,6 @@ public class ExamResource {
 
 	private static final String MODULE = ExamResource.class.getName();
 
-
 	private String validateExam(Map<String, String> map) {
 		if (UtilValidate.isEmpty(map.get("partyId")))
 			return "Admin details are invalid";
@@ -78,7 +77,7 @@ public class ExamResource {
 	@GET
 	@Path("/{examId}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getExamById(@PathParam("examId") String examId,@Context HttpServletRequest request) {
+	public Response getExamById(@PathParam("examId") String examId, @Context HttpServletRequest request) {
 
 		try {
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
@@ -377,7 +376,7 @@ public class ExamResource {
 	@GET
 	@Path("/topics/{examId}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getExamTopicsByExamId(@PathParam("examId") String examId,@Context HttpServletRequest request) {
+	public Response getExamTopicsByExamId(@PathParam("examId") String examId, @Context HttpServletRequest request) {
 
 		try {
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
@@ -493,7 +492,7 @@ public class ExamResource {
 	@GET
 	@Path("/assignedExams/{partyId}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getUserAssignedExams(@PathParam("partyId") String partyId,@Context HttpServletRequest request) {
+	public Response getUserAssignedExams(@PathParam("partyId") String partyId, @Context HttpServletRequest request) {
 		try {
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
@@ -640,6 +639,36 @@ public class ExamResource {
 		} catch (Exception e) {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
 					.entity(ServiceUtil.returnError("Something went wrong try later")).build();
+		}
+	}
+
+	@POST
+	@Path("/examCount")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response getAdminExamCount(@Context HttpServletRequest request) {
+		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
+
+			String partyId = (String) request.getAttribute("partyId");
+			if (UtilValidate.isEmail(partyId)) {
+				return Response.status(400).entity(ServiceUtil.returnError("Party id is required")).build();
+			}
+			Map<String, Object> result = dispatcher.runSync("adminExamListCount", UtilMisc.toMap("partyId", partyId));
+			if (ServiceUtil.isError(result)) {
+				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
+			}
+			return Response.status(200).entity(result).build();
+
+		} catch (Exception e) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(ServiceUtil.returnError("Something went wrong try later")).build();
+
 		}
 	}
 

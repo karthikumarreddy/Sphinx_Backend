@@ -103,6 +103,10 @@
     	<auto-attributes include="nonpk" mode="IN"/>
     </service>
     
+    <service name="getAllUsersCount" engine="java"  location="com.sphinx.services.UserServices" invoke="getAllUsersCount">
+    	<attribute name="count" mode="OUT" type="String"/>
+    </service>
+    
 
 
     <!-- ====================================================================== -->
@@ -138,6 +142,9 @@
         <attribute name="topic" type="Map" mode="OUT" optional="true" />
     </service>
 
+<service name="getAllTopicsCount" engine="java"  location="com.sphinx.services.TopicServices" invoke="getAllTopicsCount">
+	<attribute name="count" mode="OUT" type="String"/>
+</service>
 
 
     <!-- ====================================================================== -->
@@ -334,6 +341,11 @@
 <service engine="java" name="getAllExamQuestions" location="com.sphinx.services.ExamServices" invoke="getAllExamQuestions">
 	<attribute name="examId" mode="IN" type="String"/>
 	<attribute name="data" mode="OUT" type="List"/>
+</service>
+
+<service  name="adminExamListCount" engine="java" location="com.sphinx.services.ExamServices" invoke="adminExamListCount">
+	<attribute name="partyId" mode="IN" type="String"/>
+	<attribute name="count" mode="OUT" type="String"/>
 </service>
     <!-- Exam service ended  -->
     

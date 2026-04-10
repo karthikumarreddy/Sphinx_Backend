@@ -49,6 +49,25 @@ public class UserResorce {
 						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after sometime!")).build();
 			}
 	}
+	
+	@GET
+	@Path("/getAllUsersCount")
+	public Response getAllUsersCount(@Context HttpServletRequest request) {
+		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+		if (UtilValidate.isEmpty(dispatcher)) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+		} 
+			try {
+
+				Map<String, Object> result = dispatcher.runSync("getAllUsersCount", Collections.emptyMap());
+				return Response.status(Response.Status.OK).entity(result).build();
+			} catch (GenericServiceException e) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after sometime!")).build();
+			}
+	}
 
 	@POST
 	@Path("/login")

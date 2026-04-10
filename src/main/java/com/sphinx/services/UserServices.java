@@ -57,6 +57,32 @@ public class UserServices {
 		}
 
 	}
+	
+	public static Map<String, ? extends Object> getAllUsersCount(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
+
+		Delegator delegator = dctx.getDelegator();
+
+		if (UtilValidate.isEmpty(delegator)) {
+			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+		}
+
+		try {
+			List<GenericValue> users = EntityQuery.use(delegator).from("PartyPersonalInfo")
+					.where("partyTypeId", "PERSON", "statusId", "PARTY_ENABLED", "roleTypeId", "SphinxUser")
+					.queryList();
+
+			Map<String, Object> result = ServiceUtil.returnSuccess("List of User");
+			result.put("count", users.size());
+			return result;
+
+		} catch (GenericEntityException e) {
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+		}
+
+	}
+
 
 	public static Map<String, ? extends Object> loginUser(DispatchContext dctx, Map<String, ? extends Object> context) {
 		try {
