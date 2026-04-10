@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.ws.rs.core.Response;
+
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
@@ -24,6 +26,7 @@ import org.apache.ofbiz.entity.util.EntityListIterator;
 import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
+import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.ss.usermodel.Cell;
@@ -36,19 +39,15 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import com.sphinx.util.QuestionColumnConfigUtil;
 import com.sphinx.util.QuestionColumnConfigUtil.ColumnConfig;
 
-
 public class QuestionService {
 
 	private static final String MODULE = QuestionService.class.getName();
 	private static final String UNEXPECTED_ERROR_MSG = "Unexpected Error Occured! Try Again After Sometime!";
 
-
 	// QUESTION SERVICE
 
 	public Map<String, ? extends Object> getAllQuestionByTopic(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
-
-		
 
 		Delegator delegator = dctx.getDelegator();
 
@@ -79,9 +78,7 @@ public class QuestionService {
 	public Map<String, ? extends Object> getAllQuestionTypes(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 
-		
 		try {
-			
 
 			Delegator delegator = dctx.getDelegator();
 
@@ -145,7 +142,6 @@ public class QuestionService {
 
 				for (ColumnConfig col : columns) {
 					Cell cell = row.getCell(col.index);
-
 
 					if (col.required && (cell == null || cell.getCellType() == CellType.BLANK)) {
 						return ServiceUtil
@@ -217,9 +213,9 @@ public class QuestionService {
 	}
 
 	public Map<String, ? extends Object> getAllQuestions(DispatchContext dctx, Map<String, ? extends Object> context) {
-		
+
 		Delegator delegator = dctx.getDelegator();
-		
+
 		try {
 
 			int viewIndex, viewSize;
@@ -295,7 +291,38 @@ public class QuestionService {
 			return ServiceUtil.returnError("Something went wrong! Try again later!");
 		}
 
+	}
 
+	public Map<String, ? extends Object> deleteQuestionsWrapper(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
+		boolean transaction = false;
+		try {
+			LocalDispatcher dispatcher = dctx.getDispatcher();
+
+			List<String> questionIds = (List<String>) context.get("questionIds");
+			if (UtilValidate.isEmpty(questionIds)) {
+				return ServiceUtil.returnError("Question Id ia required");
+			}
+			transaction = TransactionUtil.begin();
+			for (String qId : questionIds) {
+				Map<String, Object> result = dispatcher.runSync("deleteQuestion", UtilMisc.toMap("questionId", qId));
+
+				if (UtilValidate.isEmpty(qId)) {
+					TransactionUtil.rollback(transaction, "Error deleting questions", null);
+					return ServiceUtil.returnError("Question Id ia required");
+				}
+			}
+
+			TransactionUtil.commit(transaction);
+			return ServiceUtil.returnSuccess("Question deleted sucessfully");
+		} catch (Exception e) {
+			try {
+				TransactionUtil.rollback(transaction, e.getMessage(), e);
+			} catch (GenericTransactionException e1) {
+				e1.printStackTrace();
+			}
+			return ServiceUtil.returnError("Something went wrong try again later");
+		}
 	}
 
 }

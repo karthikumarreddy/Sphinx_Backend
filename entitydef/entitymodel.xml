@@ -365,5 +365,31 @@
     	
     </view-entity>
     
+     <entity entity-name="InProgressParty" package-name="in.vastpro.sphinx">
+		<field name="partyId" type="id"/>
+		<field name="examId" type="id"/>
+		<field name="remainingTime" type="short-varchar"/>
+		<field name="totalAnswered" type="numeric"/>
+		<field name="totalRemaining" type="numeric"/>
+		<field name="isExamActive" type="numeric" not-null="true"/>
+		<field name="currentSplitAttempt" type="numeric"/>
+		<prim-key field="partyId" />
+		<prim-key field="examId" />
+		<relation rel-entity-name="Party" fk-name="INPROG_USERS_FK" type="many">
+			<key-map field-name="partyId" rel-field-name="partyId" />
+		</relation>				
+    </entity>	
+    
+    <entity entity-name="AnswerMaster" package-name="in.vastpro.sphinx">
+		<field name="qId" type="numeric"/>
+		<field name="examId" type="id"/>
+		<field name="partyId" type="id"/>
+		<field name="submittedAnswer" type="name"/>
+		<field name="sNo" type="numeric"/>
+		<field name="isFlagged" type="numeric"/>		
+		<prim-key field="qId" />
+		<prim-key field="examId" />
+		<prim-key field="partyId" />
+	</entity>
 
 </entitymodel>

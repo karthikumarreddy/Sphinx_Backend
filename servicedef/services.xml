@@ -78,6 +78,31 @@
     <service name="approveUser" engine="java" location="com.sphinx.services.AdminServices" invoke="approveUser">
         <attribute name="userName" mode="IN" type="String" />
     </service>
+    
+    <service name="deleteUser" engine="java" location="com.sphinx.services.UserServices" invoke="deleteUser">
+    	<attribute name="partyIds" mode="IN" type="List" optional="false"/>
+    </service>
+    
+    <service name="updateUser" engine="entity-auto" >
+    	<auto-attributes mode="IN" include="pk"/>
+    	<auto-attributes mode="IN" include="nonpk"/>
+    </service>
+    
+    <service name="startExam" engine="entity-auto" default-entity-name="InProgressParty" invoke="create">
+    	<auto-attributes include="pk" mode="IN"/>
+    	<auto-attributes include="nonpk" mode="IN"/>
+    </service>
+    
+    <service name="updateExamStatus" engine="entity-auto" default-entity-name="InProgressParty" invoke="create">
+    	<auto-attributes include="pk" mode="IN"/>
+    	<auto-attributes include="nonpk" mode="IN"/>
+    </service>
+    
+    <service name="submitAnswer" engine="entity-auto" default-entity-name="AnswerMaster" invoke="create">
+    	<auto-attributes include="pk" mode="IN"/>
+    	<auto-attributes include="nonpk" mode="IN"/>
+    </service>
+    
 
 
     <!-- ====================================================================== -->
@@ -343,6 +368,9 @@
     
     <service name="deleteQuestion" default-entity-name="QuestionMaster" engine="entity-auto" invoke="delete">
         <attribute name="questionId" mode="IN" type="String" optional="false" />
+    </service>
+    <service  name="deleteQuestionsWrapper" engine="java" location="com.sphinx.services.QuestionService" invoke="deleteQuestionsWrapper">
+    	<attribute name="questionIds" mode="IN" type="List" optional="false"/>
     </service>
 
     <service name="getAllQuestionByTopic" engine="java" location="com.sphinx.services.QuestionService" invoke="getAllQuestionByTopic">
