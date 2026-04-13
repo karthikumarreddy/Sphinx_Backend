@@ -25,11 +25,7 @@ public class ExamEmailServices {
 			LocalDispatcher dispatcher = ctx.getDispatcher();
 			// Locale locale = (Locale) context.get("locale");
 
-		
 			GenericValue exam = (GenericValue) context.get("examRecord");
-
-			@SuppressWarnings("unchecked")
-			List<GenericValue> assignedUsersList = (List<GenericValue>) context.get("assignedUsersList");
 
 			// GenericValue exam = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId).queryFirst();
 
@@ -38,10 +34,10 @@ public class ExamEmailServices {
 			}
 
 			String examName = (String) exam.get("examName");
-			String examDescription = (String) exam.get("description");
-			long noOfQuestions = (Long) exam.get("noOfQuestions");
-			long passPercentage = (Long) exam.get("passPercentage");
-			long duration = (Long) exam.get("duration");
+			// String examDescription = (String) exam.get("description");
+			// long noOfQuestions = (Long) exam.get("noOfQuestions");
+			// long passPercentage = (Long) exam.get("passPercentage");
+			// long duration = (Long) exam.get("duration");
 
 			List<GenericValue> assignedUsersListsWithEmails = EntityQuery.use(delegator).from("UserDetailsForEmail")
 							.where("contactMechTypeId", "EMAIL_ADDRESS", "examId", exam.get("examId"))
@@ -51,38 +47,49 @@ public class ExamEmailServices {
 				return ServiceUtil.returnError("No assigned users found for the exam.");
 			}
 
-			GenericValue userLogin = (GenericValue) context.get("userLogin"); // who triggers the email
+			// // Prepare template data
+			// Map<String, Object> templateData = new HashMap<>();
+			// templateData.put("examName", examName);
+			// templateData.put("description", examDescription);
+			// templateData.put("noOfQuestions", noOfQuestions);
+			// templateData.put("passPercentage", passPercentage);
+			// templateData.put("duration", duration);
+			//
+			// // Assume username/password are in context for assigned users
+			// templateData.put("assignedUsers", context.get("assignedUsers")); // List<Map<String, String>> with keys: username, password,
+			// // email
+			// // Prepare sendMail context
+			// Map<String, Object> sendMailContext = new HashMap<>();
+			//
+			// sendMailContext.put("sendFrom", "vasudevantmail@gmail.com");
+			// sendMailContext.put("subject", "Exam Assigned: " + examName);
+			// sendMailContext.put("templateName", "component://Sphinx/template/email/ExamNotificaitonEmailTemplate.ftl");
+			// sendMailContext.put("templateData", templateData);
 
-			// Prepare template data
-			Map<String, Object> templateData = new HashMap<>();
-			templateData.put("examName", examName);
-			templateData.put("description", examDescription);
-			templateData.put("noOfQuestions", noOfQuestions);
-			templateData.put("passPercentage", passPercentage);
-			templateData.put("duration", duration);
+			Map<String, Object> emailContext = new HashMap<>();
+			emailContext.put("subject", "Exam Assigned : " + examName);
 
-			// Assume username/password are in context for assigned users
-			templateData.put("assignedUsers", context.get("assignedUsers")); // List<Map<String, String>> with keys: username, password,
-																				// email
-			// Prepare sendMail context
-			Map<String, Object> sendMailContext = new HashMap<>();
+			String emailBody = "Hello,\n\n" + "You have been assigned to: " + examName + "\n\n" + "Username:  %s \n"
+							+ "Security Code: %s \n\n" + "Use these Secrity code to start your exam On our Sphinx Application.\n\n"
+							+ "Regards,\nAdmin";
 
-			sendMailContext.put("sendFrom", "vasudevantmail@gmail.com");
-			sendMailContext.put("subject", "Exam Assigned: " + examName);
-			sendMailContext.put("templateName", "component://Sphinx/template/email/ExamNotificaitonEmailTemplate.ftl");
-			sendMailContext.put("templateData", templateData);
+			emailContext.put("contentType", "text/plain");
 
 			for (GenericValue assignedUser : assignedUsersListsWithEmails) {
-				sendMailContext.put("sendTo", assignedUser.getString("infoString"));
-				sendMailContext.put("userLogin", assignedUser.getString("userLoginId"));
-				sendMailContext.put("securityCode", assignedUser.getString("securityCode"));
+
+				emailContext.put("sendTo", assignedUser.getString("infoString"));
+				emailContext.put("body",
+								String.format(emailBody, assignedUser.getString("userLoginId"), assignedUser.getString("securityCode")));
+
 				try {
-					dispatcher.runAsync("sendGenericNotificationEmail", sendMailContext);
+					dispatcher.runAsync("sendMail", emailContext);
 				} catch (GenericServiceException e) {
 					Debug.logError(e, "Failed to send exam notification email", MODULE);
-					return ServiceUtil.returnError("Failed to send exam notification: " + e.getMessage());
+					// return ServiceUtil.returnError("Failed to send exam notification: " + e.getMessage());
 				}
+
 			}
+
 
 			return ServiceUtil.returnSuccess("Mail Notificaiton Initiated! The Users will recieve the Email shortly!");
 

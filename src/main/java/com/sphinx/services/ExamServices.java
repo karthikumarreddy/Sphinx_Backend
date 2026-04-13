@@ -165,7 +165,7 @@ public class ExamServices {
 			examMaster.set("examSetupProper", 0L);
 
 			GenericValue userLogin = (GenericValue) context.get("userLogin");
-			if (UtilValidate.isEmpty(userLogin)) {
+			if (!UtilValidate.isEmpty(userLogin)) {
 				examMaster.set("createdByUserLogin", userLogin.getString("userLoginId"));
 				examMaster.set("lastModifiedByUserLogin", userLogin.getString("userLoginId"));
 			}
@@ -706,4 +706,5 @@ public class ExamServices {
 			return ServiceUtil.returnError("Something went wrong try again later");
 		}
 	}
+
 }

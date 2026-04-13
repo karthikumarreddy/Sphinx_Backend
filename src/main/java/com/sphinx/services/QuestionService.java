@@ -20,7 +20,6 @@ import org.apache.ofbiz.entity.condition.EntityCondition;
 import org.apache.ofbiz.entity.condition.EntityOperator;
 import org.apache.ofbiz.entity.transaction.GenericTransactionException;
 import org.apache.ofbiz.entity.transaction.TransactionUtil;
-import org.apache.ofbiz.entity.util.EntityListIterator;
 import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
@@ -288,22 +287,24 @@ public class QuestionService {
 
 			eq = eq.where(EntityCondition.makeCondition(conditions, EntityOperator.AND)).cursorScrollInsensitive();
 
+			long totalRecords = eq.queryCount();
+
 			// EntityQuery eq = EntityQuery.use(delegator).from("QuestionMaster").maxRows(viewSize * viewIndex).cursorScrollInsensitive();
 
 			List<GenericValue> listOfQuestions = Collections.emptyList();
-			int balanceRecord; 
+			// int balanceRecord;
 
-			try (EntityListIterator iterator = eq.queryIterator()) {
-				listOfQuestions = iterator.getPartialList(viewIndex, viewSize);
-				balanceRecord = iterator.getResultsSizeAfterPartialList();
-			}
+			// try (EntityListIterator iterator = eq.queryIterator()) {
+			// listOfQuestions = iterator.getPartialList(viewIndex, viewSize);
+			// balanceRecord = iterator.getResultsSizeAfterPartialList();
+			// }
 
-			// listOfQuestions = eq.limit(viewSize).offset(viewSize * viewIndex).queryList();
+			listOfQuestions = eq.limit(viewSize).offset(viewSize * viewIndex).queryList();
 
 			Map<String, Object> serviceResult = ServiceUtil.returnSuccess();
 
 			serviceResult.put("data", listOfQuestions);
-			serviceResult.put("meta", UtilMisc.toMap("viewIndex", viewIndex, "viewSize", viewSize, "balanceRecord", balanceRecord));
+			serviceResult.put("meta", UtilMisc.toMap("viewIndex", viewIndex, "viewSize", viewSize, "totalRecords", totalRecords));
 			return serviceResult;
 
 		} catch (GenericEntityException e) {
