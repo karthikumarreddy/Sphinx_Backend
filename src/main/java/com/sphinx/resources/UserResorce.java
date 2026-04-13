@@ -24,7 +24,6 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
-import clojure.repl__init;
 
 @Path("/auth")
 @Produces(MediaType.APPLICATION_JSON)
@@ -118,24 +117,24 @@ public class UserResorce {
 			String confirmPassword = (String) request.getAttribute("confirmPassword");
 			String role = (String) request.getAttribute("role");
 
-			if (UtilValidate.isEmpty(userName)) {
-				return Response.status(400).entity("UserName is required").build();
-			}
-			if (UtilValidate.isEmpty(firstName)) {
-				return Response.status(400).entity("FirstName is required").build();
-			}
-			if (UtilValidate.isEmpty(lastName)) {
-				return Response.status(400).entity("LastName is required").build();
-			}
-			if (UtilValidate.isEmpty(email)) {
-				return Response.status(400).entity("Email is required").build();
-			}
-			if (UtilValidate.isEmpty(password)) {
-				return Response.status(400).entity("Password is required").build();
-			}
-			if (UtilValidate.isEmpty(role)) {
-				return Response.status(400).entity("Role is required").build();
-			}
+			// if (UtilValidate.isEmpty(userName)) {
+			// return Response.status(400).entity("UserName is required").build();
+			// }
+			// if (UtilValidate.isEmpty(firstName)) {
+			// return Response.status(400).entity("FirstName is required").build();
+			// }
+			// if (UtilValidate.isEmpty(lastName)) {
+			// return Response.status(400).entity("LastName is required").build();
+			// }
+			// if (UtilValidate.isEmpty(email)) {
+			// return Response.status(400).entity("Email is required").build();
+			// }
+			// if (UtilValidate.isEmpty(password)) {
+			// return Response.status(400).entity("Password is required").build();
+			// }
+			// if (UtilValidate.isEmpty(role)) {
+			// return Response.status(400).entity("Role is required").build();
+			// }
 
 			Map<String, Object> result = dispatcher.runSync("signupUser",
 					UtilMisc.toMap("userName", userName, "firstName", firstName, "lastName", lastName, "email", email,

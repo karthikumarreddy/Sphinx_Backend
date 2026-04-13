@@ -1,5 +1,7 @@
 package com.sphinx.services;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +23,7 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import com.sphinx.util.RandomPasswordGenerator;
 import com.sphinx.util.ServiceHelper;
 
 public class ExamServices {
@@ -180,7 +183,7 @@ public class ExamServices {
 	public static Map<String, Object> assignUsersToExam(DispatchContext dctx, Map<String, ? extends Object> context) {
 
 		try {
-			LocalDispatcher dispatcher = (LocalDispatcher) dctx.getDispatcher();
+			LocalDispatcher dispatcher = dctx.getDispatcher();
 
 			if (UtilValidate.isEmpty(dispatcher)) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
@@ -192,6 +195,7 @@ public class ExamServices {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 
+			@SuppressWarnings("unchecked")
 			List<Map<String, Object>> users = (List<Map<String, Object>>) context.get("users");
 
 			// ================ BEGIN TRANSACTION ==================================
@@ -354,7 +358,7 @@ public class ExamServices {
 
 		try {
 
-			LocalDispatcher dispatcher = (LocalDispatcher) dctx.getDispatcher();
+			LocalDispatcher dispatcher = dctx.getDispatcher();
 
 			if (UtilValidate.isEmpty(dispatcher)) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
@@ -531,7 +535,7 @@ public class ExamServices {
 	public static Map<String, ? extends Object> deleteExamWrapper(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 
-		LocalDispatcher dispatcher = (LocalDispatcher) dctx.getDispatcher();
+		LocalDispatcher dispatcher = dctx.getDispatcher();
 
 		if (UtilValidate.isEmpty(dispatcher)) {
 			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
@@ -551,7 +555,8 @@ public class ExamServices {
 		try {
 
 			EntityCondition questionBCondition = EntityCondition.makeCondition("examId", EntityOperator.EQUALS, examId);
-			int dataRemoved = delegator.removeByCondition("QuestionBankMasterB", questionBCondition);
+			// int dataRemoved = delegator.removeByCondition("QuestionBankMasterB", questionBCondition);
+			delegator.removeByCondition("QuestionBankMasterB", questionBCondition);
 
 			// delete QuestionBankMaster
 			EntityCondition qbCondition = EntityCondition.makeCondition("examId", EntityOperator.EQUALS, examId);
@@ -628,6 +633,76 @@ public class ExamServices {
 			return result;
 
 		} catch (Exception e) {
+			return ServiceUtil.returnError("Something went wrong try again later");
+		}
+	}
+
+	public static Map<String, ? extends Object> setupExam(DispatchContext dctx, Map<String, ? extends Object> contaxt) {
+		try {
+			Delegator delegator = dctx.getDelegator();
+
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
+
+			String examId = (String) contaxt.get("examId");
+			if (UtilValidate.isEmpty(examId)) {
+				return ServiceUtil.returnError("Invalid Exam details!");
+			}
+
+			GenericValue examRecord = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId).queryOne();
+
+			if (UtilValidate.isEmpty(examRecord)) {
+				return ServiceUtil.returnError("Exam Not Found!");
+			}
+
+			examRecord.set("fromDate", Timestamp.valueOf(LocalDateTime.now()));
+
+			delegator.store(examRecord);
+
+			List<GenericValue> assignedUsersList = EntityQuery.use(delegator).from("PartyExamRelationship").where("examId", examId)
+							.queryList();
+
+			if (UtilValidate.isEmpty(assignedUsersList)) {
+				return ServiceUtil.returnError("No Assigned Users were Found! Assign some Users to the Exam!");
+			}
+
+			for (GenericValue assignedUser : assignedUsersList) {
+				if (UtilValidate.isNotEmpty(assignedUser)) {
+					
+					LocalDateTime now = LocalDateTime.now();
+					assignedUser.set("fromDate", Timestamp.valueOf(now));
+					long timeoutDays = assignedUser.getLong("timeoutDays");
+					int timeoutDaysInt = (int) timeoutDays;
+					if(timeoutDays < 0 ) {
+						return ServiceUtil.returnError("Invalid Timeout Days");
+					}
+					assignedUser.set("thruDate", UtilDateTime.addDaysToTimestamp(Timestamp.valueOf(now), timeoutDaysInt));
+					
+					delegator.store(assignedUser);
+
+					// generate security Code.
+					
+					String otp = RandomPasswordGenerator.generateSecurityCode(6);
+
+					GenericValue securityCodeRecord = delegator.makeValue("ExamSecurityCode");
+
+					securityCodeRecord.set("examId", examId);
+					securityCodeRecord.set("partyId", assignedUser.getString("partyId"));
+					securityCodeRecord.set("securityCode", otp);
+
+					delegator.create(securityCodeRecord);
+
+				}
+			}
+
+			Map<String, Object> serviceResult = dctx.getDispatcher().runSync("sendExamNotification",
+							UtilMisc.toMap("examRecord", examRecord));
+
+			return serviceResult;
+
+		} catch (Exception e) {
+			Debug.logError(e, MODULE);
 			return ServiceUtil.returnError("Something went wrong try again later");
 		}
 	}

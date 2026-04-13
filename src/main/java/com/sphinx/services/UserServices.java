@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import javax.ws.rs.core.Response;
-
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilDateTime;
 import org.apache.ofbiz.base.util.UtilMisc;
@@ -18,7 +16,6 @@ import org.apache.ofbiz.entity.transaction.TransactionUtil;
 import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
-import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
 import com.sphinx.util.RandomPasswordGenerator;
@@ -406,6 +403,7 @@ public class UserServices {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 
+			@SuppressWarnings("unchecked")
 			List<String> partyIds = (List<String>) context.get("partyIds");
 			if (UtilValidate.isEmpty(partyIds)) {
 				return ServiceUtil.returnError("partyIds cannot be empty");

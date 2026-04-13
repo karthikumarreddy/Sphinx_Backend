@@ -52,24 +52,13 @@
 
         <div class="box">
             <p><b>Exam Name:</b> ${examName}</p>
-            <p><b>Date:</b> ${examDate}</p>
             <p><b>Duration:</b> ${examDuration} minutes</p>
         </div>
 
-        <#-- Loop users -->
-        <#if assignedUsers??>
-            <div class="box">
-                <b>Login Details:</b>
-                <ul>
-                    <#list assignedUsers as user>
-                        <li>
-                            Username: ${user.username} <br/>
-                            Password: ${user.password}
-                        </li>
-                    </#list>
-                </ul>
-            </div>
-        </#if>
+       <div class="box">
+            <p><b>Username:</b> ${userName}</p>
+            <p><b>Security Code for exam:</b> ${securityCode}</p>
+        </div>
 
         <div class="info">
             Please log in and complete your exam on time.

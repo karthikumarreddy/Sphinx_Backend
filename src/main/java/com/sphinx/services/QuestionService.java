@@ -269,19 +269,24 @@ public class QuestionService {
 
 			EntityQuery eq = EntityQuery.use(delegator).from("QuestionMaster");
 
+			List<EntityCondition> conditions = new ArrayList<>();
+
 			if (UtilValidate.isNotEmpty(questionDetailCondition)) {
-				eq = eq.where(questionDetailCondition);
+				// eq = eq.where(questionDetailCondition);
+				conditions.add(questionDetailCondition);
 			}
 
 			if (UtilValidate.isNotEmpty(topicCondition)) {
-				eq = eq.where(topicCondition);
+				// eq = eq.where(topicCondition);
+				conditions.add(topicCondition);
 			}
 
 			if (UtilValidate.isNotEmpty(typeCondition)) {
-				eq = eq.where(typeCondition);
+				// eq = eq.where(typeCondition);
+				conditions.add(typeCondition);
 			}
 
-			eq = eq.maxRows(viewSize * viewIndex).cursorScrollInsensitive();
+			eq = eq.where(EntityCondition.makeCondition(conditions, EntityOperator.AND)).cursorScrollInsensitive();
 
 			// EntityQuery eq = EntityQuery.use(delegator).from("QuestionMaster").maxRows(viewSize * viewIndex).cursorScrollInsensitive();
 
@@ -292,6 +297,8 @@ public class QuestionService {
 				listOfQuestions = iterator.getPartialList(viewIndex, viewSize);
 				balanceRecord = iterator.getResultsSizeAfterPartialList();
 			}
+
+			// listOfQuestions = eq.limit(viewSize).offset(viewSize * viewIndex).queryList();
 
 			Map<String, Object> serviceResult = ServiceUtil.returnSuccess();
 
@@ -308,10 +315,11 @@ public class QuestionService {
 
 	public Map<String, ? extends Object> deleteQuestionsWrapper(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
-		boolean transaction = false;
+
 		try {
 			LocalDispatcher dispatcher = dctx.getDispatcher();
 
+			@SuppressWarnings("unchecked")
 			List<String> questionIds = (List<String>) context.get("questionIds");
 			if (UtilValidate.isEmpty(questionIds)) {
 				return ServiceUtil.returnError("Question Id ia required");
@@ -326,6 +334,9 @@ public class QuestionService {
 				}
 
 				Map<String, Object> result = dispatcher.runSync("deleteQuestion", UtilMisc.toMap("questionId", qId));
+				if (ServiceUtil.isError(result)) {
+					return result;
+				}
 				count++;
 			}
 

@@ -2,7 +2,6 @@ package com.sphinx.resources;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
@@ -199,7 +198,8 @@ public class QuestionResource {
 						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
 			}
 
-			Map<String, Object> input = new HashMap();
+			Map<String, Object> input = new HashMap<>();
+
 			input.put("questionDetail", request.getAttribute("questionDetail"));
 			input.put("optionA", request.getAttribute("optionA"));
 			input.put("optionB", request.getAttribute("optionB"));
@@ -208,22 +208,27 @@ public class QuestionResource {
 			input.put("answer", request.getAttribute("answer"));
 			input.put("questionType", request.getAttribute("questionType"));
 			input.put("difficultyLevel", request.getAttribute("difficultyLevel"));
+			input.put("numAnswers", request.getAttribute("numAnswers"));
 			input.put("answerValue", request.getAttribute("answerValue"));
 			input.put("topicId", request.getAttribute("topicId"));
 			input.put("questionId", request.getAttribute("questionId"));
 
 			String errorMsg = validateQuestionData(input);
 
-			if (UtilValidate.isEmpty(errorMsg)) {
+			if (UtilValidate.isNotEmpty(errorMsg)) {
 				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError(errorMsg)).build();
 			}
 
 			Map<String, Object> result;
 			result = dispatcher.runSync("updateQuestion", input);
-			if (result.get("responseMessage") != null && result.get("responseMessage").equals("error")) {
+			if (ServiceUtil.isError(result)) {
 				return Response.status(Response.Status.BAD_REQUEST).entity(result).build();
 			}
-			return Response.status(Response.Status.CREATED).entity(result).build();
+			else {
+				result.put("successMessage", "Question Updated Successfully!");
+			}
+
+			return Response.status(Response.Status.OK).entity(result).build();
 		} catch (GenericServiceException e) {
 			Debug.logError(e, MODULE);
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -285,7 +290,7 @@ public class QuestionResource {
 
 			String errorMsg = validateQuestionData(input);
 
-			if (UtilValidate.isEmpty(errorMsg)) {
+			if (UtilValidate.isNotEmpty(errorMsg)) {
 				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError(errorMsg)).build();
 			}
 
@@ -319,10 +324,10 @@ public class QuestionResource {
 	@Produces("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 	public Response downloadTemplate(@Context HttpServletRequest request) {
 
-		Map<String, ? extends Object> result;
+		// Map<String, ? extends Object> result;
 		try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream();) {
 
-			result = ServiceUtil.returnSuccess();
+			// result = ServiceUtil.returnSuccess();
 
 			Sheet sheet = workbook.createSheet("Questions");
 
@@ -365,7 +370,7 @@ public class QuestionResource {
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response uploadQuestions(@Context HttpServletRequest request, @Context HttpServletResponse response) {
-		InputStream file;
+		// InputStream file;
 		Part filePart;
 		ByteBuffer buffer;
 		try {
@@ -552,6 +557,8 @@ public class QuestionResource {
 				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
 						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
 			}
+
+			@SuppressWarnings("unchecked")
 			List<String> questionIds = (List<String>) request.getAttribute("questionIds");
 			if (UtilValidate.isEmpty(questionIds)) {
 				return Response.status(400).entity(ServiceUtil.returnError("Question Id is required")).build();

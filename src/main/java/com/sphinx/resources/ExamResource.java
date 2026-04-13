@@ -457,6 +457,27 @@ public class ExamResource {
 		}
 	}
 
+	@POST
+	@Path("/setupExam")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response setupExam(@Context HttpServletRequest request) {
+		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			String examId = (String) request.getAttribute("examId");
+			if (UtilValidate.isEmail(examId)) {
+				return Response.status(400).entity(ServiceUtil.returnError("Invalid Exam details!")).build();
+			}
+
+			Map<String, Object> result = dispatcher.runSync("setupExam", UtilMisc.toMap("examId", examId));
+			return Response.status(201).entity(result).build();
+		} catch (Exception e) {
+			Debug.logError(e, MODULE);
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
+		}
+	}
+
 	// launch the exam
 	@POST
 	@Path("/assignUser")
@@ -470,6 +491,7 @@ public class ExamResource {
 				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
 						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
 			}
+			@SuppressWarnings("unchecked")
 			List<Map<String, Object>> listOfUsers = (List<Map<String, Object>>) request.getAttribute("users");
 
 			Map<String, Object> result = dispatcher.runSync("createPartyExamRelationshipWrapper",

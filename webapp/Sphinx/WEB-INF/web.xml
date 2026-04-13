@@ -62,7 +62,7 @@
 	</filter-mapping> 
 	
 	
-<filter>
+	<filter>
   	  <filter-name>corsFilter</filter-name>
   	  <filter-class>com.sphinx.config.CorsFilter</filter-class>
 	</filter>

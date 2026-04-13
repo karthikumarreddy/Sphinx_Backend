@@ -163,6 +163,14 @@
 		</relation>
 	</entity>
 	
+	<entity entity-name="ExamSecurityCode" package-name="com.sphinx">
+		<field name="examId" type="id"/>
+		<field name="partyId" type="id"/>
+		<field name="securityCode" type="name" not-null="true"/>
+		<prim-key field="examId" />
+		<prim-key field="partyId" />
+	</entity>
+
 	
 	<entity entity-name="AdminPartyExamRel" package-name="in.vastpro.sphinx">
 		<field name="partyId" type="id"></field>
@@ -271,48 +279,80 @@
        
     </view-entity>
   
+  <entity entity-name="ExamSecurityCode" package-name="com.sphinx">
+		<field name="examId" type="id"/>
+		<field name="partyId" type="id"/>
+		<field name="securityCode" type="name" not-null="true"/>
+		<prim-key field="examId" />
+		<prim-key field="partyId" />
+	</entity>
+  
    
-    <view-entity entity-name="UserDetailsForEmail" package-name="com.sphinx">
+    <view-entity entity-name="UserDetailsForEmail" package-name="com.sphinx" >
    	 
-   	 	<member-entity entity-alias="EM" entity-name="ExamMaster" />
     	<member-entity entity-alias="PXR" entity-name="PartyExamRelationship" />
     	<member-entity entity-alias="PCM" entity-name="PartyContactMech" />
     	<member-entity entity-alias="CM" entity-name="ContactMech" />
     	<member-entity entity-alias="UL" entity-name="UserLogin" /> 
-    	
-    	
-    	<alias entity-alias="EM" name="examId" />
-   		<alias entity-alias="EM" name="examName" />
-   		<alias entity-alias="EM" name="description" />
-   		<alias entity-alias="EM" name="noOfQuestions" />
-   		<alias entity-alias="EM" name="duration" />
-   		<alias entity-alias="EM" name="passPercentage" />
-   
+    	<member-entity entity-alias="ESC" entity-name="ExamSecurityCode" /> 
+ 
     	<alias entity-alias="PXR" name="partyId" />
+    	<alias entity-alias="PXR" name="examId"/>
     	<alias entity-alias="PXR" name="allowedAttempts" />
+    	<alias entity-alias="PXR" name="timeoutDays" />
+    	<alias entity-alias="PXR" name="numAttempts" />
+    	<alias entity-alias="PXR" name="fromDate" />
+    	<alias entity-alias="PXR" name="thruDate" />
     	
 		<alias entity-alias="PCM" name="contactMechId" /> 
 		
 		<alias entity-alias="CM" name="infoString" />
 		<alias entity-alias="CM" name="contactMechTypeId" />   	
 		
-		<alias entity-alias="UL" name="userLoginId" />   	
-		<alias entity-alias="UL" name="currentPassword" />   		
-    	
-    	<!-- PartyExamRelationship & PartyContactMech Join with partyId  -->
+		<alias entity-alias="UL" name="userLoginId" />
+		
+		<alias entity-alias="ESC" name="securityCode" />   	 		
+    	<!-- 
+    	PartyExamRelationship & PartyContactMech Join with partyId 
     	<view-link rel-entity-alias="PXR" entity-alias="PCM">
     		<key-map field-name="partyId"/>
     	</view-link>
     	
-    	<!-- PartyExamRelationship & UserLogin Join with partyId  -->
+    	PartyContactMech & ContactMech Join with contactMechId 
+    	<view-link rel-entity-alias="PCM" entity-alias="CM">
+    		<key-map field-name="contactMechId"/>
+    	</view-link>
+    	
+    	PartyExamRelationship & UserLogin Join with partyId 
     	<view-link rel-entity-alias="PXR" entity-alias="UL">
     		<key-map field-name="partyId"/>
     	</view-link>
     	
-    	<!-- PartyContactMech & ContactMech Join with contactMechId  -->
-    	<view-link rel-entity-alias="PCM" entity-alias="CM">
-    		<key-map field-name="contactMechId"/>
+    	<view-link rel-entity-alias="PXR" entity-alias="ESC">
+    		<key-map field-name="examId"/>
     	</view-link>
+    	 -->
+    	
+		<view-link entity-alias="PXR" rel-entity-alias="PCM">
+		    <key-map field-name="partyId"/>
+		</view-link>
+		
+		
+		<view-link entity-alias="PCM" rel-entity-alias="CM">
+		    <key-map field-name="contactMechId"/>
+		</view-link>
+		
+		
+		<view-link entity-alias="PXR" rel-entity-alias="UL">
+		    <key-map field-name="partyId"/>
+		</view-link>
+		
+		
+		<view-link entity-alias="PXR" rel-entity-alias="ESC">
+		    <key-map field-name="examId"/>
+		    <key-map field-name="partyId"/>
+		</view-link>
+		
     </view-entity>
     
     

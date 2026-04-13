@@ -192,6 +192,14 @@
     <service name="launchExam" engine="java" location="com.sphinx.services.ExamTopicServices" invoke="launchExam" auth="false">
         <attribute name="examId" type="String" mode="IN"/>
     </service>
+    
+    <service name="setupExam" engine="java" location="com.sphinx.services.ExamServices" invoke="setupExam">
+    	<attribute name="examId" mode="IN" type="String"/>
+    </service>
+    
+    <service engine="java" name="sendExamNotification" location="com.sphinx.services.ExamEmailServices" invoke="sendExamNotification">
+    	<attribute name="examRecord" mode="IN" type="Map"/>
+    </service>
        
     
     <!-- Exam topic services end -->
