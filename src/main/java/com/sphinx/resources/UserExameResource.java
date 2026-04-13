@@ -187,6 +187,11 @@ public class UserExameResource {
 				return Response.status(400).entity(ServiceUtil.returnError("Exam id is required")).build();
 			}
 
+			String partyId = (String) request.getAttribute("partyId");
+			if (UtilValidate.isEmpty(examId)) {
+				return Response.status(400).entity(ServiceUtil.returnError("party id is required")).build();
+			}
+
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
 			if (UtilValidate.isEmpty(dispatcher)) {
@@ -194,7 +199,8 @@ public class UserExameResource {
 						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
 			}
 
-			Map<String, Object> result = dispatcher.runSync("getAllExamQuestions", UtilMisc.toMap("examId", examId));
+			Map<String, Object> result = dispatcher.runSync("getAllExamQuestions",
+					UtilMisc.toMap("examId", examId, "partyId", partyId));
 			if (ServiceUtil.isError(result)) {
 				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
 			}

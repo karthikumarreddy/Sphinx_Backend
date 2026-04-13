@@ -1,5 +1,7 @@
 package com.sphinx.services;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +23,7 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import com.sphinx.util.RandomPasswordGenerator;
 import com.sphinx.util.ServiceHelper;
 
 public class ExamServices {
@@ -162,7 +165,7 @@ public class ExamServices {
 			examMaster.set("examSetupProper", 0L);
 
 			GenericValue userLogin = (GenericValue) context.get("userLogin");
-			if (UtilValidate.isEmpty(userLogin)) {
+			if (!UtilValidate.isEmpty(userLogin)) {
 				examMaster.set("createdByUserLogin", userLogin.getString("userLoginId"));
 				examMaster.set("lastModifiedByUserLogin", userLogin.getString("userLoginId"));
 			}
@@ -631,4 +634,75 @@ public class ExamServices {
 			return ServiceUtil.returnError("Something went wrong try again later");
 		}
 	}
+
+	public static Map<String, ? extends Object> setupExam(DispatchContext dctx, Map<String, ? extends Object> contaxt) {
+		try {
+			Delegator delegator = dctx.getDelegator();
+
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
+
+			String examId = (String) contaxt.get("examId");
+			if (UtilValidate.isEmpty(examId)) {
+				return ServiceUtil.returnError("Invalid Exam details!");
+			}
+
+			GenericValue examRecord = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId).queryOne();
+
+			if (UtilValidate.isEmpty(examRecord)) {
+				return ServiceUtil.returnError("Exam Not Found!");
+			}
+
+			examRecord.set("fromDate", Timestamp.valueOf(LocalDateTime.now()));
+
+			delegator.store(examRecord);
+
+			List<GenericValue> assignedUsersList = EntityQuery.use(delegator).from("PartyExamRelationship").where("examId", examId)
+							.queryList();
+
+			if (UtilValidate.isEmpty(assignedUsersList)) {
+				return ServiceUtil.returnError("No Assigned Users were Found! Assign some Users to the Exam!");
+			}
+
+			for (GenericValue assignedUser : assignedUsersList) {
+				if (UtilValidate.isNotEmpty(assignedUser)) {
+					
+					LocalDateTime now = LocalDateTime.now();
+					assignedUser.set("fromDate", Timestamp.valueOf(now));
+					long timeoutDays = assignedUser.getLong("timeoutDays");
+					int timeoutDaysInt = (int) timeoutDays;
+					if(timeoutDays < 0 ) {
+						return ServiceUtil.returnError("Invalid Timeout Days");
+					}
+					assignedUser.set("thruDate", UtilDateTime.addDaysToTimestamp(Timestamp.valueOf(now), timeoutDaysInt));
+					
+					delegator.store(assignedUser);
+
+					// generate security Code.
+					
+					String otp = RandomPasswordGenerator.generateSecurityCode(6);
+
+					GenericValue securityCodeRecord = delegator.makeValue("ExamSecurityCode");
+
+					securityCodeRecord.set("examId", examId);
+					securityCodeRecord.set("partyId", assignedUser.getString("partyId"));
+					securityCodeRecord.set("securityCode", otp);
+
+					delegator.create(securityCodeRecord);
+
+				}
+			}
+
+			Map<String, Object> serviceResult = dctx.getDispatcher().runSync("sendExamNotification",
+							UtilMisc.toMap("examRecord", examRecord));
+
+			return serviceResult;
+
+		} catch (Exception e) {
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError("Something went wrong try again later");
+		}
+	}
+
 }

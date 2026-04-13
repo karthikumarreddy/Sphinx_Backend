@@ -17,9 +17,13 @@ public class UserExamServices {
 			Map<String, ? extends Object> context) {
 		try {
 			String examId = (String) context.get("examId");
+			String partyId = (String) context.get("partyId");
 			if (UtilValidate.isEmpty(examId)) {
 				return ServiceUtil.returnError("Exam Id ia required ");
 
+			}
+			if (UtilValidate.isEmpty(partyId)) {
+				return ServiceUtil.returnError("Party Id ia required ");
 			}
 
 			Delegator delegator = dctx.getDelegator();
@@ -28,12 +32,19 @@ public class UserExamServices {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 
-			List<GenericValue> exams = EntityQuery.use(delegator).from("QuestionBankMaster").where("examId", examId)
-					.orderBy("questionDetail").queryList();
+			GenericValue person = EntityQuery.use(delegator).from("PartyExamRelationship")
+					.where("partyId", partyId, "examId", examId).queryOne();
+			if (UtilValidate.isEmpty(person)) {
+				return ServiceUtil.returnError("Exam is Not assigned to the user");
+			}
 
-			Map<String, Object> result = ServiceUtil.returnSuccess();
-			result.put("data", exams);
-			return result;
+				List<GenericValue> exams = EntityQuery.use(delegator).from("QuestionBankMaster").where("examId", examId)
+						.orderBy("questionDetail").queryList();
+
+				Map<String, Object> result = ServiceUtil.returnSuccess();
+				result.put("data", exams);
+				return result;
+			
 
 		} catch (Exception e) {
 			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
