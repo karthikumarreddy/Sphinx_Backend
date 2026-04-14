@@ -214,27 +214,44 @@
     
     
     <view-entity entity-name="PartyPersonalInfo" package-name="com.sphinx">
-        <member-entity entity-alias="PY" entity-name="Party"/>
-        <member-entity entity-alias="PN" entity-name="Person"/>
-        <member-entity entity-alias="PR" entity-name="PartyRole"/>
-        
-        <alias entity-alias="PR" name="roleTypeId"/>
-        <alias entity-alias="PY" name="partyId"/>
-        <alias entity-alias="PY" name="partyTypeId"/>
-        <alias entity-alias="PY" name="statusId"/>
-        <alias entity-alias="PN" name="firstName"/>
-        <alias entity-alias="PN" name="lastName"/> 
-        
-        <view-link entity-alias="PY" rel-entity-alias="PN">
-            <key-map field-name="partyId"/>
-        </view-link>
-        
-        <view-link entity-alias="PY" rel-entity-alias="PR">
-            <key-map field-name="partyId"/>
-        </view-link>
-       
-    </view-entity>
     
+    <member-entity entity-alias="PY" entity-name="Party"/>
+    <member-entity entity-alias="PN" entity-name="Person"/>
+    <member-entity entity-alias="PR" entity-name="PartyRole"/>
+    <member-entity entity-alias="PCM" entity-name="PartyContactMech" />
+    <member-entity entity-alias="CM" entity-name="ContactMech" />
+    
+    
+    <alias entity-alias="PR" name="roleTypeId"/>
+    <alias entity-alias="PY" name="partyId"/>
+    <alias entity-alias="PY" name="partyTypeId"/>
+    <alias entity-alias="PY" name="statusId"/>
+    <alias entity-alias="PN" name="firstName"/>
+    <alias entity-alias="PN" name="lastName"/> 
+    <alias entity-alias="PCM" name="contactMechId" /> 
+    <alias entity-alias="CM" name="infoString" />
+    <alias entity-alias="CM" name="contactMechTypeId" /> 
+
+    
+    <view-link entity-alias="PY" rel-entity-alias="PN">
+        <key-map field-name="partyId"/>
+    </view-link>
+
+    <view-link entity-alias="PY" rel-entity-alias="PR">
+        <key-map field-name="partyId"/>
+    </view-link>
+
+    <view-link entity-alias="PY" rel-entity-alias="PCM">
+        <key-map field-name="partyId"/>
+    </view-link>
+
+    
+    <view-link entity-alias="PCM" rel-entity-alias="CM">
+        <key-map field-name="contactMechId"/>
+    </view-link>
+
+</view-entity>
+
     <view-entity entity-name="PersonWithExam" package-name="com.sphinx">
         
         <member-entity entity-alias="PY" entity-name="Party"/>

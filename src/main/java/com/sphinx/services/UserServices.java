@@ -41,7 +41,8 @@ public class UserServices {
 
 		try {
 			List<GenericValue> users = EntityQuery.use(delegator).from("PartyPersonalInfo")
-					.where("partyTypeId", "PERSON", "statusId", "PARTY_ENABLED", "roleTypeId", "SphinxUser")
+							.where("partyTypeId", "PERSON", "statusId", "PARTY_ENABLED", "roleTypeId", "SphinxUser", "contactMechTypeId",
+											"EMAIL_ADDRESS")
 					.queryList();
 
 			Map<String, Object> result = ServiceUtil.returnSuccess("List of User");
@@ -179,17 +180,26 @@ public class UserServices {
 			if (UtilValidate.isEmpty(firstName)) {
 				return ServiceUtil.returnError("Firstname is required!");
 			}
-			if (!Pattern.matches("^[A-Za-z ]{2,20}$", firstName))
+			// if (!Pattern.matches(" ", firstName)) {
+			// return ServiceUtil.returnError("Invalid first name. No White space are allowed!.");
+			// }
+			if (!Pattern.matches("^[A-Za-z]{2,20}$", firstName))
 				return ServiceUtil
-						.returnError("Invalid first name. It must be 2–20 characters and contain only letters.");
+								.returnError("Invalid first name. It must be 2–20 characters and contain only letters and no space.");
 
-			if (!Pattern.matches("^[A-Za-z ]{1,20}$", lastName))
-				return ServiceUtil
-						.returnError("Invalid last name. It must be 2–20 characters and contain only letters.");
+			firstName = firstName.strip();
 
 			if (UtilValidate.isEmpty(lastName)) {
 				return ServiceUtil.returnError("Lastname is required!");
 			}
+			// if (!Pattern.matches(" ", lastName)) {
+			// return ServiceUtil.returnError("Invalid last name. No White space are allowed!.");
+			// }
+			if (!Pattern.matches("^[A-Za-z]{1,20}$", lastName)) {
+				return ServiceUtil.returnError("Invalid last name. It must be 2–20 characters and contain only letters and no space.");
+			}
+
+			lastName = lastName.strip();
 			if (UtilValidate.isEmpty(email)) {
 				return ServiceUtil.returnError("Email is required!");
 			}
