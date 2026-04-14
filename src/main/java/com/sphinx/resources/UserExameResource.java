@@ -176,4 +176,39 @@ public class UserExameResource {
 		}
 	}
 
+	@POST
+	@Path("/exam-questions")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public static Response getAllExamQuestions(@Context HttpServletRequest request) {
+		try {
+			String examId = (String) request.getAttribute("examId");
+			if (UtilValidate.isEmpty(examId)) {
+				return Response.status(400).entity(ServiceUtil.returnError("Exam id is required")).build();
+			}
+
+			String partyId = (String) request.getAttribute("partyId");
+			if (UtilValidate.isEmpty(examId)) {
+				return Response.status(400).entity(ServiceUtil.returnError("party id is required")).build();
+			}
+
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
+
+			Map<String, Object> result = dispatcher.runSync("getAllExamQuestions",
+					UtilMisc.toMap("examId", examId, "partyId", partyId));
+			if (ServiceUtil.isError(result)) {
+				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
+			}
+			return Response.status(200).entity(result).build();
+
+		} catch (Exception e) {
+			return Response.status(500).entity(ServiceUtil.returnError("Something Went wrong try again later")).build();
+		}
+	}
+
 }

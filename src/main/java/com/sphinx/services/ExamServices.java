@@ -183,7 +183,7 @@ public class ExamServices {
 	public static Map<String, Object> assignUsersToExam(DispatchContext dctx, Map<String, ? extends Object> context) {
 
 		try {
-			LocalDispatcher dispatcher = dctx.getDispatcher();
+			LocalDispatcher dispatcher = (LocalDispatcher) dctx.getDispatcher();
 
 			if (UtilValidate.isEmpty(dispatcher)) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
@@ -195,7 +195,6 @@ public class ExamServices {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 
-			@SuppressWarnings("unchecked")
 			List<Map<String, Object>> users = (List<Map<String, Object>>) context.get("users");
 
 			// ================ BEGIN TRANSACTION ==================================
@@ -358,7 +357,7 @@ public class ExamServices {
 
 		try {
 
-			LocalDispatcher dispatcher = dctx.getDispatcher();
+			LocalDispatcher dispatcher = (LocalDispatcher) dctx.getDispatcher();
 
 			if (UtilValidate.isEmpty(dispatcher)) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
@@ -535,7 +534,7 @@ public class ExamServices {
 	public static Map<String, ? extends Object> deleteExamWrapper(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 
-		LocalDispatcher dispatcher = dctx.getDispatcher();
+		LocalDispatcher dispatcher = (LocalDispatcher) dctx.getDispatcher();
 
 		if (UtilValidate.isEmpty(dispatcher)) {
 			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
@@ -555,8 +554,7 @@ public class ExamServices {
 		try {
 
 			EntityCondition questionBCondition = EntityCondition.makeCondition("examId", EntityOperator.EQUALS, examId);
-			// int dataRemoved = delegator.removeByCondition("QuestionBankMasterB", questionBCondition);
-			delegator.removeByCondition("QuestionBankMasterB", questionBCondition);
+			int dataRemoved = delegator.removeByCondition("QuestionBankMasterB", questionBCondition);
 
 			// delete QuestionBankMaster
 			EntityCondition qbCondition = EntityCondition.makeCondition("examId", EntityOperator.EQUALS, examId);

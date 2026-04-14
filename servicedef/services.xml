@@ -107,6 +107,12 @@
     	<attribute name="count" mode="OUT" type="String"/>
     </service>
     
+    <service engine="java" name="getAllExamQuestions" location="com.sphinx.services.UserExamServices" invoke="getAllExamQuestions">
+    <attribute name="examId" mode="IN" type="String"/>
+    <attribute name="partyId" mode="IN" type="String"/>
+    <attribute name="data" mode="OUT" type="List"/>
+    </service>
+    
 
 
     <!-- ====================================================================== -->
