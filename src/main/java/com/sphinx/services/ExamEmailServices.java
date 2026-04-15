@@ -67,11 +67,12 @@ public class ExamEmailServices {
 			// sendMailContext.put("templateData", templateData);
 
 			Map<String, Object> emailContext = new HashMap<>();
-			emailContext.put("subject", "Exam Assigned : " + examName);
+			emailContext.put("subject", "Exam Assignment and Access Details");
 
-			String emailBody = "Hello,\n\n" + "You have been assigned to: " + examName + "\n\n" + "Username:  %s \n"
-							+ "Security Code: %s \n\n" + "Use these Secrity code to start your exam On our Sphinx Application.\n\n"
-							+ "Regards,\nAdmin";
+			String emailBody = "Dear Candidate,\n\n" + "You have been successfully assigned to the following examination: " + examName
+							+ "\n\nPlease find your login credentials below: \n\n" + "Username:  %s \n" + "Security Code: %s \n\n"
+							+ "Kindly use the above credentials to access the Sphinx application and commence your examination.\n\nShould you require any assistance, please do not hesitate to contact the administrator."
+							+ "Best regards,\nSphinx Administrator";
 
 			emailContext.put("contentType", "text/plain");
 
