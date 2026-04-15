@@ -211,4 +211,121 @@ public class UserExameResource {
 		}
 	}
 
+	@POST
+	@Path("/get-all-exam")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public static Response getAllPartyExam(@Context HttpServletRequest request) {
+		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
+			String partyId = (String) request.getAttribute("partyId");
+			if (UtilValidate.isEmpty(partyId)) {
+				return Response.status(400).entity(ServiceUtil.returnError("Party Id is required ")).build();
+			}
+
+			Map<String, Object> result = dispatcher.runSync("getAllPartyExam", UtilMisc.toMap("partyId", partyId));
+			if (ServiceUtil.isError(result)) {
+				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
+			}
+			return Response.status(200).entity(result).build();
+
+		} catch (Exception e) {
+			return Response.status(500).entity(ServiceUtil.returnError("Something Went wrong try again later")).build();
+
+		}
+	}
+
+	@POST
+	@Path("/submit")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public static Response submitExam(@Context HttpServletRequest request) {
+		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected error occurred! Try again later.")).build();
+			}
+
+			String examId = (String) request.getAttribute("examId");
+			String partyId = (String) request.getAttribute("partyId");
+
+			if (UtilValidate.isEmpty(examId)) {
+				return Response.status(Response.Status.BAD_REQUEST)
+						.entity(ServiceUtil.returnError("Exam ID is required.")).build();
+			}
+
+			if (UtilValidate.isEmpty(partyId)) {
+				return Response.status(Response.Status.BAD_REQUEST)
+						.entity(ServiceUtil.returnError("Party ID is required.")).build();
+			}
+
+			Map<String, Object> input = UtilMisc.toMap("examId", examId, "partyId", partyId);
+
+			Map<String, Object> result = dispatcher.runSync("submitExam", input);
+
+			if (ServiceUtil.isError(result)) {
+				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.getErrorMessage(result)).build();
+			}
+
+			return Response.status(Response.Status.OK).entity(result).build();
+
+		} catch (Exception e) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(ServiceUtil.returnError("Something went wrong. Please try again later.")).build();
+		}
+	}
+
+	@POST
+	@Path("/result")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public static Response getExamResult(@Context HttpServletRequest request) {
+		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected error occurred! Try again later.")).build();
+			}
+
+			String examId = (String) request.getAttribute("examId");
+			String partyId = (String) request.getAttribute("partyId");
+			Long performanceId = (Long) request.getAttribute("performanceId");
+
+			if (UtilValidate.isEmpty(examId)) {
+				return Response.status(Response.Status.BAD_REQUEST)
+						.entity(ServiceUtil.returnError("Exam ID is required.")).build();
+			}
+
+			if (UtilValidate.isEmpty(partyId)) {
+				return Response.status(Response.Status.BAD_REQUEST)
+						.entity(ServiceUtil.returnError("Party ID is required.")).build();
+			}
+
+			Map<String, Object> input = UtilMisc.toMap("examId", examId, "partyId", partyId);
+			if (performanceId != null) {
+				input.put("performanceId", performanceId);
+			}
+
+			Map<String, Object> result = dispatcher.runSync("getExamResult", input);
+
+			if (ServiceUtil.isError(result)) {
+				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.getErrorMessage(result)).build();
+			}
+
+			return Response.status(Response.Status.OK).entity(result).build();
+
+		} catch (Exception e) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(ServiceUtil.returnError("Something went wrong. Please try again later.")).build();
+		}
+	}
+
 }

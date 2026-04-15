@@ -431,5 +431,42 @@
 		<prim-key field="examId" />
 		<prim-key field="partyId" />
 	</entity>
+	
+    
+    <entity entity-name="PartyPerformance" package-name="in.vastpro.sphinx">
+		<field name="partyId" type="id-ne" not-null="true"></field>
+		<field name="examId" type="id-ne" not-null="true"></field>
+		<field name="score" type="currency-amount" not-null="true"/>
+		<field name="date" type="date-time" not-null="true"></field>
+		<field name="noOfQuestions" type="numeric"></field>
+		<field name="totalCorrect" type="numeric"/>
+		<field name="totalWrong" type="numeric"></field>
+		<field name="userPassed" type="numeric"></field>
+		<field name="performanceId" type="numeric"/>
+		<field name="attemptNo" type="numeric"></field>		
+		<prim-key field="performanceId" />
+    </entity>
+
+    <entity entity-name="DetailedPartyPerformance" package-name="in.vastpro.sphinx">
+	<field name="detailedPerformanceId" type="numeric"></field>		
+		<field name="partyId" type="id-ne"></field>
+		<field name="examId" type="id-ne"></field>
+		<field name="topicId" type="short-varchar"/>
+		<field name="topicPassPercentage" type="currency-amount"></field>
+		<field name="userTopicPercentage" type="currency-amount"></field>
+		<field name="correctQuestionsInthisTopic" type="numeric" not-null="true"/>
+		<field name="totalQuestionsInThisTopic" type="numeric" not-null="true"></field>
+		<field name="userPassedThisTopic" type="numeric"></field>
+		<field name="performanceId" type="numeric" not-null="true"></field>
+				
+		<prim-key field="detailedPerformanceId" />
+		<relation rel-entity-name="PartyPerformance" fk-name="DETAILED_PERF_FK" type="one">
+			<key-map field-name="performanceId" rel-field-name="performanceId" />
+		</relation>			
+    </entity>
+    
+    
+    
+    
 
 </entitymodel>
