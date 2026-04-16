@@ -315,42 +315,6 @@ public class ExamServices {
 
 	}
 
-	public static Map<String, Object> getAllExamAssignedForUser(DispatchContext dctx,
-			Map<String, ? extends Object> context) {
-
-		try {
-
-			Delegator delegator = dctx.getDelegator();
-
-			if (UtilValidate.isEmpty(delegator)) {
-				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
-			}
-			String partyId = (String) context.get("partyId");
-
-			if (UtilValidate.isEmpty(partyId)) {
-				return ServiceUtil.returnError("Invalid User!");
-			}
-
-			if (UtilValidate.isEmpty(delegator)) {
-				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
-			}
-
-			List<GenericValue> assignedExams = EntityQuery.use(delegator).from("AssignedExamDetails")
-					.where("partyId", partyId).queryList();
-
-			Map<String, Object> result = ServiceUtil.returnSuccess("Exam Details!");
-			result.put("data", assignedExams);
-			return result;
-
-		} catch (ClassCastException e) {
-			Debug.logError(e, MODULE);
-			return ServiceUtil.returnError("Invalid Input values!");
-		} catch (GenericEntityException e) {
-			Debug.logError(e, MODULE);
-			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
-		}
-
-	}
 
 	public static Map<String, Object> removeAssignedUserFromExam(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
@@ -444,6 +408,10 @@ public class ExamServices {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 			String partyId = (String) context.get("partyId");
+
+			if (UtilValidate.isEmpty(partyId)) {
+				return ServiceUtil.returnError("Invalid Admin Details!");
+			}
 
 			List<GenericValue> listOfExams = EntityQuery.use(delegator).from("ExamByAdminDetails")
 					.where("partyId", partyId).queryList();

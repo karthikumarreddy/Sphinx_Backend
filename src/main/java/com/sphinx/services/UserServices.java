@@ -90,12 +90,9 @@ public class UserServices {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 			Map<String, Object> result = ServiceUtil.returnSuccess();
-			GenericValue user = delegator.findOne("UserLogin", false, Map.of("userLoginId", context.get("userName")));
+			GenericValue user = delegator.findOne("UserLogin", true, Map.of("userLoginId", context.get("userName")));
 			if (UtilValidate.isEmpty(user))
-				return ServiceUtil.returnError("No account found with the provided credentials.");
-
-			GenericValue party = delegator.findOne("Party", false,
-					UtilMisc.toMap("partyId", user.getString("partyId")));
+				return ServiceUtil.returnError("Invalid Credentials!");
 
 			List<GenericValue> partyRoles = delegator.findByAnd("PartyRole",
 					UtilMisc.toMap("partyId", user.getString("partyId")), null, false);
@@ -117,8 +114,7 @@ public class UserServices {
 				result.put("partyId", user.getString("partyId"));
 				return result;
 			} else {
-				return ServiceUtil
-						.returnError("Invalid username or password. Please check your credentials and try again.");
+				return ServiceUtil.returnError("Invalid Credentials!");
 			}
 
 		} catch (GenericEntityException e) {
@@ -264,7 +260,7 @@ public class UserServices {
 			// =========================
 
 			serviceResult = createUserLogin(dctx, UtilMisc.toMap("userName", userName, "partyId", partyId,
-					"currentPassword", password, "firstName", firstName), isAdmin);
+							"currentPassword", password, "firstName", firstName, "userLogin", context.get("userLogin")), isAdmin);
 			if (isError(serviceResult)) {
 				return handleError(serviceResult);
 			}
@@ -359,6 +355,7 @@ public class UserServices {
 		String currentPassword;
 		String requirePasswordChange;
 
+
 		// if not admin generate password dynamically.
 		if (isAdmin) {
 			currentPassword = (String) context.get("currentPassword");
@@ -372,14 +369,30 @@ public class UserServices {
 			firstName = firstName.strip();
 			username = (String) context.get("firstName") + "-" + partyId;
 			currentPassword = "" + RandomPasswordGenerator.generatePassword(USER_PASSWORD_LEN); // Random generation
+			System.out.println("============================================================================================");
+			System.out.println("Generated Password for " + username + " is " + currentPassword);
+			System.out.println("============================================================================================");
 			requirePasswordChange = "Y"; // password valid for only one session. hence this flag.
 		}
+		// <attribute name="userLoginId" type="String" mode="IN" optional="false"/>
+		// <attribute name="enabled" type="String" mode="IN" optional="true"/>
+		// <attribute name="currentPassword" type="String" mode="IN" optional="false"/>
+		// <attribute name="currentPasswordVerify" type="String" mode="IN" optional="false"/>
+		// <attribute name="passwordHint" type="String" mode="IN" optional="true"/>
+		// <attribute name="requirePasswordChange" type="String" mode="IN" optional="true"/>
+		// <attribute name="externalAuthId" type="String" mode="IN" optional="true"/>
+		// <attribute name="partyId" type="String" mode="IN" optional="true"/>
 
 		try {
-			return dctx.getDispatcher().runSync("createUserLogin",
-					UtilMisc.toMap("userLoginId", username, "currentPassword", currentPassword, "partyId", partyId,
-							"enabled", "Y", "requirePasswordChange", requirePasswordChange));
+			// return dctx.getDispatcher().runSync("createUserLogin",
+			// UtilMisc.toMap("userLoginId", username, "currentPassword", currentPassword, "partyId", partyId,
+			// "enabled", "Y", "requirePasswordChange", requirePasswordChange));
 
+			return dctx.getDispatcher().runSync("createUserLogin",
+							UtilMisc.toMap("userLoginId", username, "currentPassword", currentPassword, "currentPasswordVerify",
+											currentPassword, "partyId", partyId,
+											"enabled", "Y", "requirePasswordChange", requirePasswordChange, "userLogin",
+											context.get("userLogin")));
 		} catch (GenericServiceException e) {
 			Debug.logError(e, MODULE);
 			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);

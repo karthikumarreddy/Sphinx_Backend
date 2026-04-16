@@ -19,7 +19,7 @@
     <!-- ======================== USER SERVICES =========================== -->
     <!-- ====================================================================== -->
     
-    <service name="loginUser" engine="java" location="com.sphinx.services.UserServices" invoke="loginUser">
+    <!-- <service name="loginUser" engine="java" location="com.sphinx.services.UserServices" invoke="loginUser">
         <attribute name="userName" mode="IN" type="String" />
         <attribute name="password" mode="IN" type="String" />
         <attribute name="partyId" mode="OUT" type="String"></attribute>
@@ -38,13 +38,13 @@
     	<attribute name="lastName" mode="IN" type="String" optional="false" />
     </service>
     
-   	<service name="createUserLogin" engine="entity-auto" default-entity-name="UserLogin" invoke="create" auth="false">
+	<service name="createUserLogin" engine="entity-auto" default-entity-name="UserLogin" invoke="create" auth="false">
    		<attribute name="userLoginId" mode="INOUT" type="String" optional="false" />
    		<attribute name="currentPassword" mode="IN" type="String" optional="false" />
    		<attribute name="partyId" mode="IN" type="String" optional="false" />
    		<attribute name="requirePasswordChange" mode="IN" type="String" optional="false" />
    		<attribute name="enabled" mode="IN" type="String" optional="false"/>
-   	</service>
+   	</service> 
    	
    	<service name="createPartyRole" engine="entity-auto" default-entity-name="PartyRole" invoke="create" auth="false">
    		<attribute name="partyId" mode="IN" type="String" optional="false" />
@@ -63,7 +63,7 @@
    		<attribute name="contactMechId" mode="IN" type="String" optional="false" />
    		<attribute name="fromDate" mode="IN" type="Timestamp" optional="false" />
    	</service>
-   	
+   	 -->
     
     <service name="signupUser" engine="java" location="com.sphinx.services.UserServices" invoke="signupUser">
         <attribute name="userName" mode="IN" type="String" optional="true"/>
@@ -342,9 +342,9 @@
     	<attribute name="data" mode="OUT" type="List"></attribute>
     </service>
     
-    <service name="getAllExamAssignedForUser" engine="java" location="com.sphinx.services.ExamServices"  invoke="getAllExamAssignedForUser" auth="false">
-    	<attribute name="partyId" mode="IN" type="String"></attribute>
-    	<attribute name="data" mode="OUT" type="List"></attribute>
+    <service name="getAllExamAssignedForUser" engine="java" location="com.sphinx.services.UserExamServices"  invoke="getAllExamAssignedForUser" auth="false">
+    	<attribute name="partyId" mode="IN" type="String"/>
+    	<attribute name="data" mode="OUT" type="List"/>
     </service>
     
     <service engine="java" name="getAllExamsByAdmin" location="com.sphinx.services.ExamServices" invoke="adminExamList">

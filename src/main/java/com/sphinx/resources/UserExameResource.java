@@ -14,10 +14,11 @@ import javax.ws.rs.core.Response;
 
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
+import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
-@Path("/user")
+@Path("/userExam")
 public class UserExameResource {
 
 	public static String validateExamStatus(Map<String, Object> input) {
@@ -189,7 +190,7 @@ public class UserExameResource {
 
 			String partyId = (String) request.getAttribute("partyId");
 			if (UtilValidate.isEmpty(examId)) {
-				return Response.status(400).entity(ServiceUtil.returnError("party id is required")).build();
+				return Response.status(400).entity(ServiceUtil.returnError("Party id is required")).build();
 			}
 
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
@@ -209,6 +210,30 @@ public class UserExameResource {
 		} catch (Exception e) {
 			return Response.status(500).entity(ServiceUtil.returnError("Something Went wrong try again later")).build();
 		}
+	}
+
+	@POST
+	@Path("/getAllExamAssignedForUser")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getAllExamAssignedForUser(@Context HttpServletRequest request) {
+
+		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+								.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
+
+			Map<String, Object> result = dispatcher.runSync("getAllExamAssignedForUser",
+							UtilMisc.toMap("partyId", request.getAttribute("partyId")));
+
+			return Response.status(Response.Status.OK).entity(result).build();
+		} catch (GenericServiceException e) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+							.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+		}
+
 	}
 
 }

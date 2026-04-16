@@ -6,6 +6,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -21,6 +22,7 @@ import javax.ws.rs.core.Response;
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
+import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
@@ -116,7 +118,13 @@ public class ExamResource {
 			}
 			Map<String, String> map = new HashMap<>();
 
-			map.put("partyId", (String) request.getAttribute("partyId"));
+			// map.put("partyId", (String) request.getAttribute("partyId"));
+			GenericValue userLogin = (GenericValue) request.getSession().getAttribute("userLogin");
+			if (UtilValidate.isNotEmpty(userLogin)) {
+				String partyId = (String) userLogin.get("partyId");
+				map.put("partyId", partyId);
+			}
+
 			map.put("examName", (String) request.getAttribute("examName"));
 			map.put("description", (String) request.getAttribute("description"));
 			map.put("noOfQuestions", (String) request.getAttribute("noOfQuestions"));
@@ -613,29 +621,6 @@ public class ExamResource {
 
 	}
 
-	@POST
-	@Path("/getAllExamAssignedForUser")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getAllExamAssignedForUser(@Context HttpServletRequest request) {
-
-		try {
-			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
-
-			if (UtilValidate.isEmpty(dispatcher)) {
-				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
-			}
-
-			Map<String, Object> result = dispatcher.runSync("getAllExamAssignedForUser",
-					UtilMisc.toMap("partyId", request.getAttribute("partyId")));
-
-			return Response.status(Response.Status.OK).entity(result).build();
-		} catch (GenericServiceException e) {
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-					.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
-		}
-
-	}
 
 	@POST
 	@Path("/getAllExamsByAdmin")
@@ -645,13 +630,22 @@ public class ExamResource {
 		try {
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
-			if (UtilValidate.isEmpty(dispatcher)) {
-				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			HttpSession session = request.getSession(false);
+			GenericValue userLogin = null;
+			if (UtilValidate.isNotEmpty(session)) {
+				userLogin = (GenericValue) session.getAttribute("userLogin");
 			}
+
 			String partyId = (String) request.getAttribute("partyId");
-			if (partyId == null || partyId.isEmpty()) {
-				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError("Login to proceed"))
+			if (UtilValidate.isEmpty(partyId)) {
+				if (UtilValidate.isNotEmpty(userLogin)) {
+					partyId = (String) userLogin.get("partyId");
+				}
+			}
+
+			if (UtilValidate.isEmpty(partyId)) {
+				Debug.logError("Party Id Doesn't comes from frontend, partyId => " + partyId, MODULE);
+				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError("Invalid Admin Details!"))
 						.build();
 			}
 			Map<String, Object> result = dispatcher.runSync("getAllExamsByAdmin", UtilMisc.toMap("partyId", partyId));
@@ -672,15 +666,20 @@ public class ExamResource {
 		try {
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
-			if (UtilValidate.isEmpty(dispatcher)) {
-				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			HttpSession session = request.getSession();
+			GenericValue userLogin = null;
+			if (UtilValidate.isNotEmpty(session)) {
+				userLogin = (GenericValue) session.getAttribute("userLogin");
 			}
 
 			String partyId = (String) request.getAttribute("partyId");
-			if (UtilValidate.isEmail(partyId)) {
-				return Response.status(400).entity(ServiceUtil.returnError("Party id is required")).build();
+
+			if (UtilValidate.isEmpty(partyId)) {
+				if (UtilValidate.isNotEmpty(userLogin)) {
+					partyId = userLogin.getString("partyId");
+				}
 			}
+
 			Map<String, Object> result = dispatcher.runSync("adminExamListCount", UtilMisc.toMap("partyId", partyId));
 			if (ServiceUtil.isError(result)) {
 				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
