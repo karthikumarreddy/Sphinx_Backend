@@ -579,8 +579,8 @@ public class ExamServices {
 
 	}
 
-	public static Map<String, ? extends Object> getAllExamQuestions(DispatchContext dctx,
-			Map<String, ? extends Object> contaxt) {
+
+	public static Map<String, ? extends Object> generateQuestionsForExam(DispatchContext dctx, Map<String, ? extends Object> contaxt) {
 		try {
 			Delegator delegator = dctx.getDelegator();
 
@@ -589,10 +589,16 @@ public class ExamServices {
 			}
 
 			String examId = (String) contaxt.get("examId");
+			String partyId = (String) contaxt.get("partyId");
 
 			if (UtilValidate.isEmpty(examId)) {
 				Debug.logError("Exam Id is Invalid from from frontend Exam Id => " + examId, MODULE);
 				return ServiceUtil.returnError("Invalid Exam Details!");
+			}
+
+			if (UtilValidate.isEmpty(partyId)) {
+				Debug.logError("Party Id is Invalid from from frontend Party Id => " + partyId, MODULE);
+				return ServiceUtil.returnError("Invalid User Details!");
 			}
 
 			List<GenericValue> examQuestions = new ArrayList<>();
@@ -627,6 +633,7 @@ public class ExamServices {
 					GenericValue questionBank = delegator.makeValue("QuestionBankMaster");
 					questionBank.set("qId", question.getString("questionId"));
 					questionBank.set("examId", examId);
+					questionBank.set("partyId", partyId);
 					questionBank.set("topicId", question.get("topicId"));
 					questionBank.set("questionDetail", question.get("questionDetail"));
 					questionBank.set("optionA", question.get("optionA"));
@@ -648,16 +655,17 @@ public class ExamServices {
 
 			}
 
-			Map<String, Object> result = ServiceUtil.returnSuccess("Exam Questions!");
-			result.put("data", examQuestions);
+			Map<String, Object> result = ServiceUtil.returnSuccess("Exam and Questions are Ready!");
 			return result;
 
 		} catch (Exception e) {
+			Debug.logError(e, MODULE);
 			return ServiceUtil.returnError("Something went wrong try again later");
 		}
 	}
 
-	public static Map<String, ? extends Object> setupExam(DispatchContext dctx, Map<String, ? extends Object> contaxt) {
+
+	public static Map<String, ? extends Object> setupExam(DispatchContext dctx, Map<String, ? extends Object> context) {
 		try {
 			Delegator delegator = dctx.getDelegator();
 
@@ -665,7 +673,7 @@ public class ExamServices {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 
-			String examId = (String) contaxt.get("examId");
+			String examId = (String) context.get("examId");
 			if (UtilValidate.isEmpty(examId)) {
 				return ServiceUtil.returnError("Invalid Exam details!");
 			}

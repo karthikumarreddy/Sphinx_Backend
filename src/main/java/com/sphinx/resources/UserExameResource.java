@@ -5,6 +5,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -13,9 +14,12 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.http.HttpStatus;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
+import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericValue;
+import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
@@ -74,12 +78,13 @@ public class UserExameResource {
 			long totalAnswered = (Integer) request.getAttribute("totalAnswered");
 			long totalRemaining = (Integer) request.getAttribute("totalRemaining");
 			long isExamActive = (Integer) request.getAttribute("isExamActive");
+			long currentSplitAttempt = (Integer) request.getAttribute("currentSplitAttempt");
 			
 			
 
 			Map<String, Object> input = UtilMisc.toMap("partyId", partyId, "examId", examId, "remainingTime",
 					remainingTime, "totalAnswered", totalAnswered, "totalRemaining", totalRemaining, "isExamActive",
-							isExamActive, "currentSplitAttempt", request.getAttribute("currentSplitAttempt"));
+							isExamActive, "currentSplitAttempt", currentSplitAttempt);
 			String error = validateExamStatus(input);
 			if (UtilValidate.isNotEmpty(error)) {
 				return Response.status(400).entity(ServiceUtil.returnError(error)).build();
@@ -147,12 +152,12 @@ public class UserExameResource {
 				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
 						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
 			}
-			Long qId = (Long) request.getAttribute("qId");
+			String qId = (String) request.getAttribute("qId");
 			String examId = (String) request.getAttribute("examId");
 			String partyId = (String) request.getAttribute("partyId");
 			String submittedAnswer = (String) request.getAttribute("submittedAnswer");
-			Long sNo = (Long) request.getAttribute("sNo");
-			Long isFlagged = (Long) request.getAttribute("isFlagged");
+			long sNo = (Integer) request.getAttribute("sNo");
+			long isFlagged = (Integer) request.getAttribute("isFlagged");
 
 			if (UtilValidate.isEmpty(qId)) {
 				return Response.status(400).entity(ServiceUtil.returnError("qId is required ")).build();
@@ -172,6 +177,27 @@ public class UserExameResource {
 			if (UtilValidate.isEmpty(isFlagged)) {
 				return Response.status(400).entity(ServiceUtil.returnError("IsFlagged is required ")).build();
 			}
+
+			Delegator delegator = (Delegator) request.getAttribute("delegator");
+
+			// get in progree party check the party is in progress party
+			GenericValue isPartyAlreadyInExam = EntityQuery.use(delegator).from("InProgressParty")
+							.where("partyId", partyId, "examId", examId).queryFirst();
+
+			if (UtilValidate.isEmpty(isPartyAlreadyInExam)) {
+				return Response.status(HttpStatus.SC_BAD_REQUEST).entity(ServiceUtil.returnError("Exam Not Started or Finished For you!"))
+								.build();
+			}
+
+			GenericValue isAnswerAlreadyPresent = EntityQuery.use(delegator).from("AnswerMaster")
+							.where("partyId", partyId, "examId", examId, "qId", qId).queryFirst();
+
+			if (UtilValidate.isNotEmpty(isAnswerAlreadyPresent)) {
+				isAnswerAlreadyPresent.set("submittedAnswer", submittedAnswer);
+				delegator.store(isAnswerAlreadyPresent);
+				return Response.status(HttpStatus.SC_OK).entity(ServiceUtil.returnSuccess("Answer Updated Successfully!")).build();
+			}
+
 			Map<String, Object> result = dispatcher.runSync("submitAnswer", UtilMisc.toMap("qId", qId, "examId", examId,
 					"partyId", partyId, "submittedAnswer", submittedAnswer, "sNo", sNo, "isFlagged", isFlagged));
 
@@ -185,15 +211,24 @@ public class UserExameResource {
 		}
 	}
 
-	@POST
-	@Path("/exam-questions")
+	/*
+	 * Get a Single question with answer at a time.
+	 * 
+	 * @param: partyId -> User PartyId, examId -> Registered Exam id, questionNumber -> Current question number.
+	 * 
+	 * @return: A Response object contains GenericValue(question with Answer(if present)).
+	 */
+	@GET
+	@Path("/examQuestion")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public static Response getAllExamQuestions(@Context HttpServletRequest request) {
+	public static Response getExamQuestion(@Context HttpServletRequest request) {
 		try {
-			HttpSession session = request.getSession();
 
-			String partyId = (String) request.getAttribute("partyId");
+			HttpSession session = request.getSession();
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			String partyId = request.getParameter("partyId");
 			if (UtilValidate.isEmpty(partyId)) {
 				GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
 				if (UtilValidate.isNotEmpty(userLogin)) {
@@ -201,27 +236,18 @@ public class UserExameResource {
 				}
 			}
 
-			String examId = (String) request.getAttribute("examId");
-			if (UtilValidate.isEmpty(examId)) {
-				return Response.status(400).entity(ServiceUtil.returnError("Exam id is required")).build();
-			}
-
-			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
-
-			if (UtilValidate.isEmpty(dispatcher)) {
-				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
-			}
-
 			Map<String, Object> result = dispatcher.runSync("getAllExamQuestions",
-					UtilMisc.toMap("examId", examId, "partyId", partyId));
+							UtilMisc.toMap("examId", request.getParameter("examId"), "partyId", partyId, "questionNumber",
+											Integer.valueOf(request.getParameter("questionNumber"))));
+			
 			if (ServiceUtil.isError(result)) {
-				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
+				return Response.status(HttpStatus.SC_BAD_REQUEST).entity(result).build();
 			}
-			return Response.status(200).entity(result).build();
+			return Response.status(HttpStatus.SC_OK).entity(result).build();
 
 		} catch (Exception e) {
-			return Response.status(500).entity(ServiceUtil.returnError("Something Went wrong try again later")).build();
+			return Response.status(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+							.entity(ServiceUtil.returnError("Something Went wrong try again later")).build();
 		}
 	}
 

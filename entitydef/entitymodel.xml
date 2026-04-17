@@ -65,9 +65,10 @@
 	</entity>
 	
 
-	 <entity entity-name="QuestionBankMasterB" package-name="">
+	 <entity entity-name="QuestionBankMasterB" package-name="com.sphinx">
 		<field name="examId" type="id"></field>
 		<field name="qId" type="id"></field>
+		<field name="partyId" type="id"></field>
 		<field name="topicId" type="id" not-null="true"/>
 		<field name="questionDetail" type="very-long" not-null="true"></field>
 		<field name="optionA" type="very-long"/>
@@ -83,6 +84,7 @@
 		<field name="negativeMarkValue" type="numeric"></field>			
 		<prim-key field="examId" />
 		<prim-key field="qId" />
+		<prim-key field="partyId" />
 		<relation rel-entity-name="ExamMaster" fk-name="QUESTION_BANK_B_FK" type="many">
 			<key-map field-name="examId" rel-field-name="examId" />
 		</relation>			
@@ -91,6 +93,7 @@
     <entity entity-name="QuestionBankMaster" package-name="">
 		<field name="examId" type="id"/>
 		<field name="qId" type="id"/>
+		<field name="partyId" type="id"/>
 		<field name="topicId" type="id" not-null="true"/>
 		<field name="questionDetail" type="very-long" not-null="true"></field>
 		<field name="optionA" type="very-long"/>
@@ -105,6 +108,7 @@
 		<field name="answerValue" type="very-long"/>
 		<field name="negativeMarkValue" type="numeric"></field>		
 		<prim-key field="examId" />
+		<prim-key field="partyId" />
 		<prim-key field="qId" />
 		<relation rel-entity-name="ExamMaster" fk-name="QUESTION_BANK_FK" type="many">
 			<key-map field-name="examId" rel-field-name="examId" />
@@ -329,26 +333,7 @@
 		<alias entity-alias="UL" name="userLoginId" />
 		
 		<alias entity-alias="ESC" name="securityCode" />   	 		
-    	<!-- 
-    	PartyExamRelationship & PartyContactMech Join with partyId 
-    	<view-link rel-entity-alias="PXR" entity-alias="PCM">
-    		<key-map field-name="partyId"/>
-    	</view-link>
     	
-    	PartyContactMech & ContactMech Join with contactMechId 
-    	<view-link rel-entity-alias="PCM" entity-alias="CM">
-    		<key-map field-name="contactMechId"/>
-    	</view-link>
-    	
-    	PartyExamRelationship & UserLogin Join with partyId 
-    	<view-link rel-entity-alias="PXR" entity-alias="UL">
-    		<key-map field-name="partyId"/>
-    	</view-link>
-    	
-    	<view-link rel-entity-alias="PXR" entity-alias="ESC">
-    		<key-map field-name="examId"/>
-    	</view-link>
-    	 -->
     	
 		<view-link entity-alias="PXR" rel-entity-alias="PCM">
 		    <key-map field-name="partyId"/>
@@ -498,8 +483,23 @@
 		
 		<view-link rel-entity-alias="RT" entity-alias="PR">
 			<key-map field-name="roleTypeId"/>
-		</view-link>
-		
+	</view-link>	
 		
 	</view-entity>
+	
+	<view-entity entity-name="ExamQuestionsWithAnswer" package-name="om.sphinx" >
+		<member-entity entity-alias="QBM" entity-name="QuestionBankMaster"/>
+		<member-entity entity-alias="AM" entity-name="AnswerMaster"/>
+		
+		<alias-all entity-alias="QBM"/>
+		<alias-all entity-alias="AM"/>
+		
+		<view-link rel-entity-alias="AM" entity-alias="QBM" rel-optional="true">
+			<key-map field-name="examId"/>
+			<key-map field-name="partyId"/>
+		</view-link>
+		
+	</view-entity>
+	
+	
 </entitymodel>

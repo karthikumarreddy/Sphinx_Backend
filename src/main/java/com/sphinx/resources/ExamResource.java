@@ -693,36 +693,6 @@ public class ExamResource {
 		}
 	}
 
-	@GET
-	@Path("/getAllExamQuestions")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response getAllExamQuestions(@Context HttpServletRequest request) {
-		try {
-			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
-			if (UtilValidate.isEmpty(dispatcher)) {
-				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
-			}
-			String examId = request.getParameter("examId");
-			if (UtilValidate.isEmpty(examId)) {
-				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-						.entity(ServiceUtil.returnError("examId is required")).build();
-			}
-
-			Map<String, Object> result = dispatcher.runSync("getAllExamQuestions", UtilMisc.toMap("examId", examId));
-
-			if (UtilValidate.isEmpty(result)) {
-				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-						.entity(ServiceUtil.returnError("Exam id is undefined ")).build();
-			}
-			return Response.status(Response.Status.OK).entity(result).build();
-
-		} catch (Exception e) {
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-					.entity(ServiceUtil.returnError("Something went wrong try again later")).build();
-		}
-	}
 
 }

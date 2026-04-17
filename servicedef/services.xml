@@ -96,9 +96,11 @@
     <service engine="java" name="startExamWrapper" location="com.sphinx.services.UserExamServices" invoke="startExamWrapper">
 		<attribute name="partyId" type="String" mode="IN" />
 		<attribute name="examId" type="String" mode="IN" />
-		<attribute name="totalAnswered" type="String" mode="IN" />
-		<attribute name="totalRemaining" type="String" mode="IN" />
-		<attribute name="isExamActive" type="String" mode="IN" />
+		<attribute name="remainingTime" type="String" mode="IN" optional="true"/>
+		<attribute name="totalAnswered" type="Integer" mode="IN" />
+		<attribute name="totalRemaining" type="Integer" mode="IN" />
+		<attribute name="isExamActive" type="Integer" mode="IN" />
+		<attribute name="currentSplitAttempt" type="Integer" mode="IN" optional="true"/>
 	</service>
     
     <service name="updateExamStatus" engine="entity-auto" default-entity-name="InProgressParty" invoke="create">
@@ -115,10 +117,14 @@
     	<attribute name="count" mode="OUT" type="String"/>
     </service>
     
-    <service engine="java" name="getAllExamQuestions" location="com.sphinx.services.UserExamServices" invoke="getAllExamQuestions">
-    <attribute name="examId" mode="IN" type="String"/>
-    <attribute name="partyId" mode="IN" type="String"/>
-    <attribute name="data" mode="OUT" type="List"/>
+    <service name="getAllExamQuestions" engine="java"  location="com.sphinx.services.UserExamServices" invoke="getUserExamQuestion">
+    
+	    <attribute name="examId" mode="IN" type="String"/>
+	    <attribute name="partyId" mode="IN" type="String"/>
+	    <attribute name="questionNumber" mode="IN" type="Integer"/>
+	    
+	    <attribute name="data" mode="OUT" type="List"/>
+	    
     </service>
     
     
@@ -364,16 +370,21 @@
     	<attribute name="partyId" mode="IN" type="String"/>
     	<attribute name="data" mode="OUT" type="List"/>
     </service>
-
+<!-- 
 <service engine="java" name="getAllExamQuestions" location="com.sphinx.services.ExamServices" invoke="getAllExamQuestions">
 	<attribute name="examId" mode="IN" type="String"/>
 	<attribute name="data" mode="OUT" type="List"/>
-</service>
+</service> -->
 
 <service  name="adminExamListCount" engine="java" location="com.sphinx.services.ExamServices" invoke="adminExamListCount">
 	<attribute name="partyId" mode="IN" type="String"/>
 	<attribute name="count" mode="OUT" type="String"/>
 </service>
+
+	<service name="generateQuestionsForExam" engine="java"  location="com.sphinx.services.ExamServices" invoke="generateQuestionsForExam">
+		<attribute name="partyId" mode="IN" type="String"/>
+		<attribute name="examId" mode="IN" type="String"/>
+	</service>
     <!-- Exam service ended  -->
     
     

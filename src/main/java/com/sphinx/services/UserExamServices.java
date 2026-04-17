@@ -28,14 +28,8 @@ public class UserExamServices {
 		try {
 			LocalDispatcher dispatcher = dctx.getDispatcher();
 
-			if (UtilValidate.isEmpty(dispatcher)) {
-				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
-			}
 			Delegator delegator = dctx.getDelegator();
 
-			if (UtilValidate.isEmpty(delegator)) {
-				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
-			}
 			String partyId = (String) context.get("partyId");
 			String examId = (String) context.get("examId");
 
@@ -56,8 +50,9 @@ public class UserExamServices {
 
 			GenericValue exam = EntityQuery.use(delegator).from("PartyExamRelationship")
 					.where("partyId", partyId, "examId", examId).queryOne();
+
 			if (UtilValidate.isEmpty(exam)) {
-				return ServiceUtil.returnError("Invalid Credential Cannot start exam");
+				return ServiceUtil.returnError("You are Not Assigned to the Exam!");
 			}
 
 			GenericValue totalQuestions = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId)
@@ -65,7 +60,7 @@ public class UserExamServices {
 			long noOfQuestions = totalQuestions.getLong("noOfQuestions");
 
 			if (sum > noOfQuestions) {
-				return ServiceUtil.returnError("Inproper totalAnswers and totalRemaining");
+				return ServiceUtil.returnError("Invalid Total Answered and Remaining Questions!");
 			}
 
 			GenericValue isExamLaunched = EntityQuery.use(delegator).from("InProgressParty")
@@ -76,52 +71,22 @@ public class UserExamServices {
 
 			Map<String, Object> result = dispatcher.runSync("startExam", context);
 			if (ServiceUtil.isError(result)) {
-				return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
+				return result;
 			}
+
+			result = dispatcher.runSync("generateQuestionsForExam", context);
+
+			if (ServiceUtil.isError(result)) {
+				return result;
+			}
+
 			return result;
 
 		} catch (Exception e) {
 			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 		}
 	}
- 
-	public static Map<String, ? extends Object> getAllExamQuestions(DispatchContext dctx,
-			Map<String, ? extends Object> context) {
-		try {
-			String examId = (String) context.get("examId");
-			String partyId = (String) context.get("partyId");
-			if (UtilValidate.isEmpty(examId)) {
-				return ServiceUtil.returnError("Exam Id is required ");
 
-			}
-			if (UtilValidate.isEmpty(partyId)) {
-				return ServiceUtil.returnError("Party Id is required ");
-			}
-
-			Delegator delegator = dctx.getDelegator();
-
-			if (UtilValidate.isEmpty(delegator)) {
-				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
-			}
-
-			GenericValue person = EntityQuery.use(delegator).from("PartyExamRelationship")
-					.where("partyId", partyId, "examId", examId).queryOne();
-			if (UtilValidate.isEmpty(person)) {
-				return ServiceUtil.returnError("Exam is Not assigned to the user");
-			}
-
-			List<GenericValue> exams = EntityQuery.use(delegator).from("QuestionBankMaster").where("examId", examId)
-					.orderBy("questionDetail").queryList();
-
-			Map<String, Object> result = ServiceUtil.returnSuccess();
-			result.put("data", exams);
-			return result;
-
-		} catch (Exception e) {
-			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
-		}
-
-	}
 
 	public static Map<String, Object> getAllExamAssignedForUser(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
@@ -253,8 +218,10 @@ public class UserExamServices {
 	            GenericValue question = questionMap.get(qId);
 	            if (question == null) continue;
 
+
 	            String correct = question.getString("answer");
 	            String topicId = question.getString("topicId");
+
 
 	            double marks = 1.0;
 
@@ -447,6 +414,64 @@ public class UserExamServices {
 		} catch (Exception e) {
 			Debug.logError(e, "Error in getExamResult service", MODULE);
 			return ServiceUtil.returnError("Error fetching exam result: " + e.getMessage());
+		}
+	}
+
+	// getAllExamQuestions
+	public static Map<String, ? extends Object> getUserExamQuestion(DispatchContext dctx, Map<String, ? extends Object> context) {
+		try {
+
+			Delegator delegator = dctx.getDelegator();
+
+
+			String partyId = (String) context.get("partyId");
+			String examId = (String) context.get("examId");
+			Integer questionNumber = (Integer) context.get("questionNumber");
+
+			if (UtilValidate.isEmpty(partyId)) {
+				return ServiceUtil.returnError("Invalid User Details!");
+			}
+
+			if (UtilValidate.isEmpty(examId)) {
+				return ServiceUtil.returnError("Invalid Exam Details!");
+			}
+
+			// EntityCondition examMatchingContion = EntityCondition.makeCondition("examId", EntityOperator.EQUALS, examId);
+			// EntityCondition partyMatchingCondition = EntityCondition.makeCondition("partyId", EntityOperator.EQUALS, partyId);
+
+			EntityQuery baseCondition = EntityQuery.use(delegator).from("ExamQuestionsWithAnswer")
+							.where("examId", examId, "partyId", partyId);
+
+			long totalRecords = baseCondition.queryCount();
+
+			if (totalRecords <= 0) {
+				return ServiceUtil.returnError("No Questions Found, Please Ensure the Details are Correct!");
+			}
+
+			if (questionNumber <= 0 || questionNumber > totalRecords) {
+				return ServiceUtil.returnError("Requested Question Number exceeds Total Number of questions!");
+			}
+
+			GenericValue question = baseCondition.orderBy("qId").limit(1).offset(questionNumber - 1).queryOne();
+
+			Map<String, Object> result = ServiceUtil.returnSuccess();
+
+			result.put("end", false);
+			if (UtilValidate.isEmpty(question)) {
+				result.put("successMessage", "End of Questions!");
+				result.put("end", true);
+			}
+
+			result.put("data", question);
+
+			return result;
+
+		} catch (ClassCastException e) {
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError("Invalid Input Values!");
+		} catch (Exception e) {
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError("Something went wrong try again later");
 		}
 	}
 
