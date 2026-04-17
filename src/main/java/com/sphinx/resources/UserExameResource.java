@@ -69,6 +69,8 @@ public class UserExameResource {
 			long totalAnswered = (Integer) request.getAttribute("totalAnswered");
 			long totalRemaining = (Integer) request.getAttribute("totalRemaining");
 			long isExamActive = (Integer) request.getAttribute("isExamActive");
+			
+			
 
 			Map<String, Object> input = UtilMisc.toMap("partyId", partyId, "examId", examId, "remainingTime",
 					remainingTime, "totalAnswered", totalAnswered, "totalRemaining", totalRemaining, "isExamActive",
@@ -78,7 +80,7 @@ public class UserExameResource {
 				return Response.status(400).entity(ServiceUtil.returnError(error)).build();
 			}
 
-			Map<String, Object> result = dispatcher.runSync("startExam", input);
+			Map<String, Object> result = dispatcher.runSync("startExamWrapper", input);
 			if (ServiceUtil.isError(result)) {
 				return Response.status(400).entity(result).build();
 			}

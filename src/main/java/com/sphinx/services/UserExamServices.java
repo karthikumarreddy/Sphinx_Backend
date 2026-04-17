@@ -22,7 +22,67 @@ public class UserExamServices {
 
 	private static final String UNEXPECTED_ERROR_MSG = "Unexpected Error Occured! Try Again After Sometime!";
 
-	private static final String ERROR_MSG = "An unexpected error occurred. Please try again.";
+	public static Map<String, ? extends Object> startExamWrapper(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
+		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) dctx.getDispatcher();
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
+			Delegator delegator = dctx.getDelegator();
+
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
+			String partyId = (String) context.get("partyId");
+			String examId = (String) context.get("examId");
+
+			long totalAnswered = (Integer) context.get("totalAnswered");
+			long totalRemaining = (Integer) context.get("totalRemaining");
+			long isExamActive = (Integer) context.get("isExamActive");
+			if (totalAnswered < 0) {
+				return ServiceUtil.returnError("Total Answered can not be negative");
+			}
+			if (totalRemaining < 0) {
+				return ServiceUtil.returnError("Total Remaining can not be negative");
+			}
+			if (!(isExamActive == 0 || isExamActive == 1)) {
+				return ServiceUtil.returnError("ExamActive value is invalid");
+			}
+
+			long sum = totalAnswered + totalRemaining;
+
+			GenericValue exam = EntityQuery.use(delegator).from("PartyExamRelationship")
+					.where("partyId", partyId, "examId", examId).queryOne();
+			if (UtilValidate.isEmpty(exam)) {
+				return ServiceUtil.returnError("Invalid Credential Cannot start exam");
+			}
+
+			GenericValue totalQuestions = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId)
+					.queryOne();
+			long noOfQuestions = totalQuestions.getLong("noOfQuestions");
+
+			if (sum > noOfQuestions) {
+				return ServiceUtil.returnError("Inproper totalAnswers and totalRemaining");
+			}
+
+			GenericValue isExamLaunched = EntityQuery.use(delegator).from("InProgressParty")
+					.where("partyId", partyId, "examId", examId).queryOne();
+			if (!UtilValidate.isEmpty(isExamLaunched)) {
+				return ServiceUtil.returnError("Exam is already started can not start again");
+			}
+
+			Map<String, Object> result = dispatcher.runSync("startExam", context);
+			if (ServiceUtil.isError(result)) {
+				return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
+			}
+			return result;
+
+		} catch (Exception e) {
+			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+		}
+	}
 
 	public static Map<String, ? extends Object> getAllExamQuestions(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
@@ -62,8 +122,8 @@ public class UserExamServices {
 
 	}
 
-
-	public static Map<String, Object> getAllExamAssignedForUser(DispatchContext dctx, Map<String, ? extends Object> context) {
+	public static Map<String, Object> getAllExamAssignedForUser(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
 		try {
 
 			Delegator delegator = dctx.getDelegator();
@@ -74,7 +134,8 @@ public class UserExamServices {
 				return ServiceUtil.returnError("Invalid User!");
 			}
 
-			List<GenericValue> assignedExams = EntityQuery.use(delegator).from("AssignedExamDetails").where("partyId", partyId).queryList();
+			List<GenericValue> assignedExams = EntityQuery.use(delegator).from("AssignedExamDetails")
+					.where("partyId", partyId).queryList();
 
 			Map<String, Object> result = ServiceUtil.returnSuccess("Exam Details!");
 			result.put("data", assignedExams);
@@ -310,84 +371,72 @@ public class UserExamServices {
 			return ServiceUtil.returnError(e.getMessage());
 		}
 	}
-	
+
 	public static Map<String, Object> getExamResult(DispatchContext dctx, Map<String, Object> context) {
 
-	        Delegator delegator = dctx.getDelegator();
+		Delegator delegator = dctx.getDelegator();
 
-	        try {
-	            String examId = (String) context.get("examId");
-	            String partyId = (String) context.get("partyId");
-	            Long performanceId = (Long) context.get("performanceId");
+		try {
+			String examId = (String) context.get("examId");
+			String partyId = (String) context.get("partyId");
+			Long performanceId = (Long) context.get("performanceId");
 
-	            if (UtilValidate.isEmpty(examId) || UtilValidate.isEmpty(partyId)) {
-	                return ServiceUtil.returnError("examId and partyId are required.");
-	            }
+			if (UtilValidate.isEmpty(examId) || UtilValidate.isEmpty(partyId)) {
+				return ServiceUtil.returnError("examId and partyId are required.");
+			}
 
-	            GenericValue performance = null;
+			GenericValue performance = null;
 
-	            // Fetch specific attempt if performanceId is provided
-	            if (performanceId != null) {
-	                performance = EntityQuery.use(delegator)
-	                        .from("PartyPerformance")
-	                        .where("performanceId", performanceId,
-	                               "examId", examId,
-	                               "partyId", partyId)
-	                        .queryOne();
-	            } else {
-	                // Fetch latest attempt
-	                List<GenericValue> performances = EntityQuery.use(delegator)
-	                        .from("PartyPerformance")
-	                        .where("examId", examId, "partyId", partyId)
-	                        .orderBy("-attemptNo")
-	                        .queryList();
+			// Fetch specific attempt if performanceId is provided
+			if (performanceId != null) {
+				performance = EntityQuery.use(delegator).from("PartyPerformance")
+						.where("performanceId", performanceId, "examId", examId, "partyId", partyId).queryOne();
+			} else {
+				// Fetch latest attempt
+				List<GenericValue> performances = EntityQuery.use(delegator).from("PartyPerformance")
+						.where("examId", examId, "partyId", partyId).orderBy("-attemptNo").queryList();
 
-	                if (UtilValidate.isNotEmpty(performances)) {
-	                    performance = performances.get(0);
-	                }
-	            }
+				if (UtilValidate.isNotEmpty(performances)) {
+					performance = performances.get(0);
+				}
+			}
 
-	            if (performance == null) {
-	                return ServiceUtil.returnError("No exam result found.");
-	            }
+			if (performance == null) {
+				return ServiceUtil.returnError("No exam result found.");
+			}
 
-	            Long resolvedPerformanceId = performance.getLong("performanceId");
+			Long resolvedPerformanceId = performance.getLong("performanceId");
 
-	            // Fetch topic-wise details
-	            List<GenericValue> topicDetails = EntityQuery.use(delegator)
-	                    .from("DetailedPartyPerformance")
-	                    .where("performanceId", resolvedPerformanceId)
-	                    .queryList();
+			// Fetch topic-wise details
+			List<GenericValue> topicDetails = EntityQuery.use(delegator).from("DetailedPartyPerformance")
+					.where("performanceId", resolvedPerformanceId).queryList();
 
-	            // Calculate percentage
-	            Double score = performance.getDouble("score");
-	            Long totalQuestions = performance.getLong("noOfQuestions");
+			// Calculate percentage
+			Double score = performance.getDouble("score");
+			Long totalQuestions = performance.getLong("noOfQuestions");
 
-	            double percentage = 0.0;
-	            if (score != null && totalQuestions != null && totalQuestions > 0) {
-	                percentage = (score / totalQuestions) * 100;
-	            }
+			double percentage = 0.0;
+			if (score != null && totalQuestions != null && totalQuestions > 0) {
+				percentage = (score / totalQuestions) * 100;
+			}
 
-	            // Determine pass/fail status
-	            Long passed = performance.getLong("userPassed");
-	            String resultStatus = (passed != null && passed == 1)
-	                    ? "PASS" : "FAIL";
+			// Determine pass/fail status
+			Long passed = performance.getLong("userPassed");
+			String resultStatus = (passed != null && passed == 1) ? "PASS" : "FAIL";
 
-	            // Prepare response
-	            Map<String, Object> result = ServiceUtil.returnSuccess(
-	                    "Exam result fetched successfully.");
-	            result.put("performance", performance);
-	            result.put("topicDetails", topicDetails);
-	            result.put("scorePercentage", percentage);
-	            result.put("resultStatus", resultStatus);
+			// Prepare response
+			Map<String, Object> result = ServiceUtil.returnSuccess("Exam result fetched successfully.");
+			result.put("performance", performance);
+			result.put("topicDetails", topicDetails);
+			result.put("scorePercentage", percentage);
+			result.put("resultStatus", resultStatus);
 
-	            return result;
+			return result;
 
-	        } catch (Exception e) {
-	            Debug.logError(e, "Error in getExamResult service", MODULE);
-	            return ServiceUtil.returnError(
-	                    "Error fetching exam result: " + e.getMessage());
-	        }
-	    }
-	
+		} catch (Exception e) {
+			Debug.logError(e, "Error in getExamResult service", MODULE);
+			return ServiceUtil.returnError("Error fetching exam result: " + e.getMessage());
+		}
+	}
+
 }

@@ -93,6 +93,14 @@
     	<auto-attributes include="nonpk" mode="IN"/>
     </service>
     
+    <service engine="java" name="startExamWrapper" location="com.sphinx.services.UserExamServices" invoke="startExamWrapper">
+		<attribute name="partyId" type="String" mode="IN" />
+		<attribute name="examId" type="String" mode="IN" />
+		<attribute name="totalAnswered" type="String" mode="IN" />
+		<attribute name="totalRemaining" type="String" mode="IN" />
+		<attribute name="isExamActive" type="String" mode="IN" />
+	</service>
+    
     <service name="updateExamStatus" engine="entity-auto" default-entity-name="InProgressParty" invoke="create">
     	<auto-attributes include="pk" mode="IN"/>
     	<auto-attributes include="nonpk" mode="IN"/>
