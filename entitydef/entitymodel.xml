@@ -451,8 +451,8 @@
 	
     
     <entity entity-name="PartyPerformance" package-name="in.vastpro.sphinx">
-		<field name="partyId" type="id-ne" not-null="true"></field>
-		<field name="examId" type="id-ne" not-null="true"></field>
+		<field name="partyId" type="id" not-null="true"></field>
+		<field name="examId" type="id" not-null="true"></field>
 		<field name="score" type="currency-amount" not-null="true"/>
 		<field name="date" type="date-time" not-null="true"></field>
 		<field name="noOfQuestions" type="numeric"></field>
@@ -466,8 +466,8 @@
 
     <entity entity-name="DetailedPartyPerformance" package-name="in.vastpro.sphinx">
 	<field name="detailedPerformanceId" type="numeric"></field>		
-		<field name="partyId" type="id-ne"></field>
-		<field name="examId" type="id-ne"></field>
+		<field name="partyId" type="id"></field>
+		<field name="examId" type="id"></field>
 		<field name="topicId" type="short-varchar"/>
 		<field name="topicPassPercentage" type="currency-amount"></field>
 		<field name="userTopicPercentage" type="currency-amount"></field>
