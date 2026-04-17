@@ -2,6 +2,7 @@ package com.sphinx.services;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -588,13 +589,66 @@ public class ExamServices {
 			}
 
 			String examId = (String) contaxt.get("examId");
-			List<GenericValue> examQuestions = EntityQuery.use(delegator).from("QuestionBankMasterB")
-					.where("examId", examId).queryList();
-			if (examQuestions == null || examQuestions.isEmpty()) {
-				return ServiceUtil.returnError("Questions is not assigned to the exam");
+
+			if (UtilValidate.isEmpty(examId)) {
+				Debug.logError("Exam Id is Invalid from from frontend Exam Id => " + examId, MODULE);
+				return ServiceUtil.returnError("Invalid Exam Details!");
 			}
 
-			Map<String, Object> result = ServiceUtil.returnSuccess();
+			List<GenericValue> examQuestions = new ArrayList<>();
+
+			// find all topics for the exam.
+			List<GenericValue> examTopics = EntityQuery.use(delegator).from("ExamTopicDetails").where("examId", examId).queryList();
+
+			if (UtilValidate.isEmpty(examTopics)) {
+				return ServiceUtil.returnError("No Topics Assigend for this Exam!");
+			}
+
+			// Get all questions from questionMaster and put in the QuestionBankMaster
+			for (GenericValue examTopic : examTopics) {
+				String topicId = examTopic.getString("topicId");
+				if (UtilValidate.isEmpty(topicId)) {
+					Debug.logError("Topic Id is Invalid from DB topicId => " + topicId + ", Exam Id => " + examId, MODULE);
+					continue;
+				}
+				// total percentage of questions.
+				Long percentage = examTopic.getLong("percentage");
+
+				long totalRecords = delegator.findCountByCondition("QuestionMaster",
+								EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId), null, null);
+
+				int totalQuestions = (int) (totalRecords * percentage) / 100;
+
+				List<GenericValue> topicWiseQuestions = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId)
+								.maxRows(totalQuestions).queryList();
+
+				// insert all question in the question Bank Master.
+				for (GenericValue question : topicWiseQuestions) {
+					GenericValue questionBank = delegator.makeValue("QuestionBankMaster");
+					questionBank.set("qId", question.getString("questionId"));
+					questionBank.set("examId", examId);
+					questionBank.set("topicId", question.get("topicId"));
+					questionBank.set("questionDetail", question.get("questionDetail"));
+					questionBank.set("optionA", question.get("optionA"));
+					questionBank.set("optionB", question.get("optionB"));
+					questionBank.set("optionC", question.get("optionC"));
+					questionBank.set("optionD", question.get("optionD"));
+					questionBank.set("optionE", question.get("optionE"));
+					questionBank.set("answer", question.get("answer"));
+					questionBank.set("numAnswers", (Long) question.get("numAnswers"));
+					questionBank.set("questionType", question.get("questionType"));
+					questionBank.set("difficultyLevel", question.get("difficultyLevel"));
+					questionBank.set("answerValue", question.get("answerValue"));
+					questionBank.set("negativeMarkValue", 0);
+
+					delegator.create(questionBank);
+				}
+
+				examQuestions.addAll(topicWiseQuestions);
+
+			}
+
+			Map<String, Object> result = ServiceUtil.returnSuccess("Exam Questions!");
 			result.put("data", examQuestions);
 			return result;
 

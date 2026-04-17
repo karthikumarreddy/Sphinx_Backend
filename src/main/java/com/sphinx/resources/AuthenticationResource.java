@@ -1,6 +1,5 @@
 package com.sphinx.resources;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -48,7 +47,7 @@ public class AuthenticationResource {
 			if (UtilValidate.isEmpty(password)) {
 				return Response.status(400).entity("Password is required ").build();
 			}
-			Map<String, Object> input = new HashMap<String, Object>();
+			// Map<String, Object> input = new HashMap<String, Object>();
 			// input.put("userName", userName);
 			// input.put("password", password);
 			//
@@ -62,7 +61,7 @@ public class AuthenticationResource {
 					GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
 					if(UtilValidate.isNotEmpty(userLogin)) {
 						GenericValue userRole = EntityQuery.use(delegator).from("UserRoleWithDesc")
-										.where("partyId", userLogin.getString("partyId")).queryOne();
+										.where("partyId", userLogin.getString("partyId")).queryFirst();
 						session.setAttribute("userRole", userRole);
 						result.put("userRole", userRole);
 					}

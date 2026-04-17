@@ -113,6 +113,11 @@
     <attribute name="data" mode="OUT" type="List"/>
     </service>
     
+    
+    <service name="getAllPartyExam" engine="java" location="com.sphinx.services.UserExamServices" invoke="getAllPartyExam">
+    	<attribute name="partyId" type="String" mode="IN" optional="false"/>
+    	<attribute name="data" type="List" mode="OUT" optional="true"/>
+	</service>
 
 
     <!-- ====================================================================== -->
@@ -427,5 +432,85 @@
 		<attribute name="data" mode="OUT" type="List"/>
 		<attribute name="meta" mode="OUT" type="Map"/>
 	</service>
+	
+	
+	
+	
+	
+	 <!-- ============================= -->
+    <!-- User Exam Service       -->
+    <!-- ============================= -->
+    <service name="submitExam" engine="java" location="com.sphinx.services.ExamServices" invoke="submitExam" >
+
+        <attribute name="examId" type="String" mode="IN" optional="false"/>
+        <attribute name="partyId" type="String" mode="IN" optional="false"/>
+
+        <attribute name="performanceId" type="Long" mode="OUT"/>
+        <attribute name="totalCorrect" type="Integer" mode="OUT"/>
+        <attribute name="totalWrong" type="Integer" mode="OUT"/>
+        <attribute name="score" type="Double" mode="OUT"/>
+        <attribute name="scorePercentage" type="Double" mode="OUT"/>
+        <attribute name="userPassed" type="Integer" mode="OUT"/>
+        <attribute name="attemptNo" type="Long" mode="OUT"/>
+    </service>
+
+  
+    <service name="getExamResults" engine="java" location="com.sphinx.services.ExamServices" invoke="getExamResults">
+
+        <attribute name="examId" type="String" mode="IN"/>
+        <attribute name="partyId" type="String" mode="IN"/>
+        <attribute name="performanceId" type="Long" mode="IN" optional="true"/>
+
+        <attribute name="performance" type="GenericValue" mode="OUT"/>
+        <attribute name="topicDetails" type="List" mode="OUT"/>
+    </service>
+
+   
+    <service name="getExamHistory" engine="java" location="com.sphinx.services.ExamServices" invoke="getExamHistory" >
+
+        <attribute name="examId" type="String" mode="IN"/>
+        <attribute name="partyId" type="String" mode="IN"/>
+
+        <attribute name="performanceHistory" type="List" mode="OUT"/>
+    </service>
+
+ 
+
+    <service name="createPartyPerformance" engine="entity-auto" default-entity-name="PartyPerformance" invoke="create" >
+             
+        <auto-attributes include="pk" mode="IN" optional="false"/>
+        <auto-attributes include="nonpk" mode="IN" optional="true"/>
+        <auto-attributes include="pk" mode="OUT"/>
+    </service>
+
+    <service name="createDetailedPartyPerformance"  engine="entity-auto" default-entity-name="DetailedPartyPerformance" invoke="create">
+        <auto-attributes include="pk" mode="IN" optional="false"/>
+        <auto-attributes include="nonpk" mode="IN" optional="true"/>
+        <auto-attributes include="pk" mode="OUT"/>
+    </service>
+
+    <service name="updatePartyExamRelationship" engine="entity-auto" default-entity-name="PartyExamRelationship" invoke="update">
+        <auto-attributes include="pk" mode="IN" optional="false"/>
+        <auto-attributes include="nonpk" mode="IN" optional="true"/>
+    </service>
+
+    <service name="updateInProgressParty" engine="entity-auto" default-entity-name="InProgressParty" invoke="update">
+        <auto-attributes include="pk" mode="IN" optional="false"/>
+        <auto-attributes include="nonpk" mode="IN" optional="true"/>
+    </service>
+
+	 <service name="getExamResult" engine="java" location="com.sphinx.services.ExamServices" invoke="getExamResult" >
+
+        <attribute name="examId" type="String" mode="IN" optional="false"/>
+        <attribute name="partyId" type="String" mode="IN" optional="false"/>
+        <attribute name="performanceId" type="Long" mode="IN" optional="true"/>
+
+        <attribute name="performance" type="GenericValue" mode="OUT"/>
+        <attribute name="topicDetails" type="List" mode="OUT"/>
+        <attribute name="scorePercentage" type="Double" mode="OUT"/>
+        <attribute name="resultStatus" type="String" mode="OUT"/>
+    </service>
+
+
 	
 </services>
