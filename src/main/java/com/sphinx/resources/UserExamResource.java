@@ -13,8 +13,10 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 
 import org.apache.http.HttpStatus;
+import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
@@ -25,7 +27,9 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
 @Path("/userExam")
-public class UserExameResource {
+public class UserExamResource {
+
+	private static final String MODULE = UserExamResource.class.getName();
 
 	public static String validateExamStatus(Map<String, Object> input) {
 		String partyId = (String) input.get("partyId");
@@ -387,6 +391,38 @@ public class UserExameResource {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
 					.entity(ServiceUtil.returnError("Something went wrong. Please try again later.")).build();
 		}
+	}
+
+	@POST
+	@Path("/verifyOtp")
+	@Produces(MediaType.APPLICATION_JSON)
+	public static Response verifyOtp(@Context HttpServletRequest request) {
+
+		try {
+
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+			String partyId = (String) request.getAttribute("partyId");
+
+			Map<String, Object> serviceResult = dispatcher.runSync("verifySecurityCode", UtilMisc.toMap("partyId", partyId, "examId",
+							request.getAttribute("examId"), "securityCode",
+							request.getAttribute("securityCode")));
+
+
+			ResponseBuilder response;
+			if (ServiceUtil.isError(serviceResult)) {
+				response = Response.status(HttpStatus.SC_BAD_REQUEST);
+			} else {
+				response = Response.status(HttpStatus.SC_OK);
+			}
+
+			return response.entity(serviceResult).build();
+
+		} catch (Exception e) {
+			Debug.logError(e, MODULE);
+			return Response.status(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+							.entity(ServiceUtil.returnError("Something Went Wrong, Try again later!")).build();
+		}
+
 	}
 
 }

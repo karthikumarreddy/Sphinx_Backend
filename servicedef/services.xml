@@ -529,6 +529,22 @@
         <attribute name="scorePercentage" type="Double" mode="OUT"/>
         <attribute name="resultStatus" type="String" mode="OUT"/>
     </service>
+    
+    <!-- ====================================================================== -->
+    <!-- =================== SECURITY CODE SERVICES =========================== -->
+    <!-- ====================================================================== -->
+    
+    <service name="verifySecurityCode" engine="java" location="com.sphinx.services.SecurityCodeService" invoke="verifySecurityCode"> 
+    	<attribute name="partyId" mode="IN" type="String"/>
+    	<attribute name="examId" mode="IN" type="String"/>
+    	<attribute name="securityCode" mode="IN" type="String"/>
+    </service>
+    
+    
+    <service name="generateSecurityCode" engine="java" location="com.sphinx.services.SecurityCodeService" invoke="generateSecurityCode">
+    	<attribute name="partyId" mode="IN" type="String"/>
+    	<attribute name="examId" mode="IN" type="String"/>
+    </service>
 
 
 	

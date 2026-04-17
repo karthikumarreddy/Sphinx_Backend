@@ -24,7 +24,6 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
-import com.sphinx.util.RandomPasswordGenerator;
 import com.sphinx.util.ServiceHelper;
 
 public class ExamServices {
@@ -523,7 +522,7 @@ public class ExamServices {
 		try {
 
 			EntityCondition questionBCondition = EntityCondition.makeCondition("examId", EntityOperator.EQUALS, examId);
-			int dataRemoved = delegator.removeByCondition("QuestionBankMasterB", questionBCondition);
+			// int dataRemoved = delegator.removeByCondition("QuestionBankMasterB", questionBCondition);
 
 			// delete QuestionBankMaster
 			EntityCondition qbCondition = EntityCondition.makeCondition("examId", EntityOperator.EQUALS, examId);
@@ -668,6 +667,7 @@ public class ExamServices {
 	public static Map<String, ? extends Object> setupExam(DispatchContext dctx, Map<String, ? extends Object> context) {
 		try {
 			Delegator delegator = dctx.getDelegator();
+			LocalDispatcher dispatcher = dctx.getDispatcher();
 
 			if (UtilValidate.isEmpty(delegator)) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
@@ -708,18 +708,9 @@ public class ExamServices {
 					assignedUser.set("thruDate", UtilDateTime.addDaysToTimestamp(Timestamp.valueOf(now), timeoutDaysInt));
 					
 					delegator.store(assignedUser);
-
-					// generate security Code.
 					
-					String otp = RandomPasswordGenerator.generateSecurityCode(6);
-
-					GenericValue securityCodeRecord = delegator.makeValue("ExamSecurityCode");
-
-					securityCodeRecord.set("examId", examId);
-					securityCodeRecord.set("partyId", assignedUser.getString("partyId"));
-					securityCodeRecord.set("securityCode", otp);
-
-					delegator.create(securityCodeRecord);
+					dispatcher.runSync("generateSecurityCode",
+									UtilMisc.toMap("partyId", assignedUser.getString("partyId"), "examId", examId));
 
 				}
 			}

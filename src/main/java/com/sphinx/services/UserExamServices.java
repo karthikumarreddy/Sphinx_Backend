@@ -404,7 +404,7 @@ public class UserExamServices {
 		}
 	}
 
-	// getAllExamQuestions
+	// oldname - getAllExamQuestions
 	public static Map<String, ? extends Object> getUserExamQuestion(DispatchContext dctx, Map<String, ? extends Object> context) {
 		try {
 
@@ -461,5 +461,6 @@ public class UserExamServices {
 			return ServiceUtil.returnError("Something went wrong try again later");
 		}
 	}
+
 
 }

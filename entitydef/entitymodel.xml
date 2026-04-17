@@ -304,6 +304,7 @@
 		<field name="examId" type="id"/>
 		<field name="partyId" type="id"/>
 		<field name="securityCode" type="name" not-null="true"/>
+		<field name="securityCodeVerified" type="indicator"/>
 		<prim-key field="examId" />
 		<prim-key field="partyId" />
 	</entity>
