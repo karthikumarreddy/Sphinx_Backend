@@ -459,7 +459,7 @@
 	 <!-- ============================= -->
     <!-- User Exam Service       -->
     <!-- ============================= -->
-    <service name="submitExam" engine="java" location="com.sphinx.services.ExamServices" invoke="submitExam" >
+    <service name="submitExam" engine="java" location="com.sphinx.services.UserExamServices" invoke="submitExam" >
 
         <attribute name="examId" type="String" mode="IN" optional="false"/>
         <attribute name="partyId" type="String" mode="IN" optional="false"/>

@@ -64,6 +64,11 @@ public class UserExamResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public static Response startExamStatus(@Context HttpServletRequest request) {
+		HttpSession session=request.getSession(false);
+		if(UtilValidate.isEmpty(session)) {
+			return Response.status(400).entity(ServiceUtil.returnError("Session is not available")).build();
+		}
+		session.setAttribute("remningTime",(String) request.getAttribute("remainingTime"));
 		try {
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
@@ -132,7 +137,6 @@ public class UserExamResource {
 				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
 			}
 			return Response.status(200).entity(result).build();
-
 		} catch (Exception e) {
 			return Response.status(500).entity("Something went wrong try again later").build();
 		}
@@ -343,7 +347,7 @@ public class UserExamResource {
 
 		} catch (Exception e) {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-					.entity(ServiceUtil.returnError("Something went wrong. Please try again later.")).build();
+					.entity(ServiceUtil.returnError("Something went wrong. Please try again later."+e.getMessage())).build();
 		}
 	}
 

@@ -1,5 +1,6 @@
 package com.sphinx.services;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -64,7 +65,7 @@ public class UserExamServices {
 
 			GenericValue isExamLaunched = EntityQuery.use(delegator).from("InProgressParty")
 					.where("partyId", partyId, "examId", examId).queryOne();
-			if (!UtilValidate.isEmpty(isExamLaunched)) {
+			if(!UtilValidate.isEmpty(isExamLaunched)) {
 				return ServiceUtil.returnError("Exam is already started can not start again");
 			}
 
@@ -153,188 +154,200 @@ public class UserExamServices {
 
 	public static Map<String, Object> submitExam(DispatchContext dctx, Map<String, Object> context) {
 
-		Delegator delegator = dctx.getDelegator();
-		LocalDispatcher dispatcher = dctx.getDispatcher();
+	    Delegator delegator = dctx.getDelegator();
+	    LocalDispatcher dispatcher = dctx.getDispatcher();
 
-		try {
-			String examId = (String) context.get("examId");
-			String partyId = (String) context.get("partyId");
+	    try {
+	        String examId  = (String) context.get("examId");
+	        String partyId = (String) context.get("partyId");
 
-			if (UtilValidate.isEmpty(examId) || UtilValidate.isEmpty(partyId)) {
-				return ServiceUtil.returnError("Missing examId or partyId.");
-			}
+	        if (UtilValidate.isEmpty(examId) || UtilValidate.isEmpty(partyId)) {
+	            return ServiceUtil.returnError("Missing examId or partyId.");
+	        }
 
-			// fetchexam details
-			GenericValue examMaster = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId).queryOne();
+	        // Fetch exam
+	        GenericValue examMaster = EntityQuery.use(delegator)
+	                .from("ExamMaster")
+	                .where("examId", examId)
+	                .queryOne();
 
-			if (examMaster == null) {
-				return ServiceUtil.returnError("Exam not found.");
-			}
+	        if (examMaster == null) {
+	            return ServiceUtil.returnError("Exam not found.");
+	        }
 
-			double passPercentage = examMaster.getDouble("passPercentage") != null
-					? examMaster.getDouble("passPercentage")
-					: 50.0;
+	        long passPercentage = examMaster.getLong("passPercentage") != null
+	                ? examMaster.getLong("passPercentage") : 50L;
 
-			boolean negativeEnabled = examMaster.getLong("allowNegativeMarks") != null
-					&& examMaster.getLong("allowNegativeMarks") == 1;
+	        boolean negativeEnabled = examMaster.getLong("allowNegativeMarks") != null
+	                && examMaster.getLong("allowNegativeMarks") == 1L;
 
-			double negativeMark = examMaster.getDouble("negativeMarkValue") != null
-					? examMaster.getDouble("negativeMarkValue")
-					: 0.0;
+	        long negativeMarkValue = examMaster.getLong("negativeMarkValue") != null
+	                ? examMaster.getLong("negativeMarkValue") : 0L;
 
-			// fetch questions
-			List<GenericValue> questions = EntityQuery.use(delegator).from("QuestionBankMaster").where("examId", examId)
-					.queryList();
+	        // Questions
+	        List<GenericValue> questions = EntityQuery.use(delegator)
+	                .from("QuestionBankMaster")
+	                .where("examId", examId)
+	                .queryList();
 
-			Map<String, GenericValue> questionMap = new HashMap<>();
-			double totalMaxMarks = 0.0;
+	        Map<String, GenericValue> questionMap = new HashMap<>();
+	        for (GenericValue q : questions) {
+	            questionMap.put(String.valueOf(q.get("qId")), q);
+	        }
 
-			for (GenericValue q : questions) {
-				questionMap.put(String.valueOf(q.get("qId")), q);
-				String val = q.getString("answerValue");
-				totalMaxMarks += val != null ? Double.parseDouble(val) : 1.0;
-			}
+	        double totalMaxMarks = questions.size();
 
-			// getsubmitted answers
-			List<GenericValue> answers = EntityQuery.use(delegator).from("AnswerMaster")
-					.where("examId", examId, "partyId", partyId).queryList();
+	        // Answers
+	        List<GenericValue> answers = EntityQuery.use(delegator)
+	                .from("AnswerMaster")
+	                .where("examId", examId, "partyId", partyId)
+	                .queryList();
 
-			int totalCorrect = 0;
-			int totalWrong = 0;
-			double totalScore = 0.0;
+	        int totalCorrect = 0;
+	        int totalWrong = 0;
+	        double totalScore = 0.0;
 
-			Map<String, int[]> topicStats = new HashMap<>();
-			Map<String, Double> topicScores = new HashMap<>();
-			Map<String, Double> topicMaxMarks = new HashMap<>();
+	        Map<String, int[]> topicStats = new HashMap<>();
+	        Map<String, Double> topicScores = new HashMap<>();
+	        Map<String, Double> topicMaxMarks = new HashMap<>();
 
-			for (GenericValue ans : answers) {
-				String qId = String.valueOf(ans.get("qId"));
-				String submitted = ans.getString("submittedAnswer");
+	        for (GenericValue ans : answers) {
+	            String qId = String.valueOf(ans.get("qId"));
+	            String submitted = ans.getString("submittedAnswer");
 
-				GenericValue question = questionMap.get(qId);
-				if (question == null) {
-					continue;
-				}
+	            GenericValue question = questionMap.get(qId);
+	            if (question == null) continue;
 
-				String correct = question.getString("answer");
-				String topicId = question.getString("topicId");
-				// String type = question.getString("questionType");
 
-				double marks = Double.parseDouble(
-						question.getString("answerValue") != null ? question.getString("answerValue") : "1");
+	            String correct = question.getString("answer");
+	            String topicId = question.getString("topicId");
 
-				topicStats.putIfAbsent(topicId, new int[] { 0, 0 });
-				topicScores.putIfAbsent(topicId, 0.0);
-				topicMaxMarks.putIfAbsent(topicId, 0.0);
 
-				topicStats.get(topicId)[1]++;
-				topicMaxMarks.put(topicId, topicMaxMarks.get(topicId) + marks);
+	            double marks = 1.0;
 
-				if (UtilValidate.isEmpty(submitted))
-					continue;
+	            topicStats.putIfAbsent(topicId, new int[]{0, 0});
+	            topicScores.putIfAbsent(topicId, 0.0);
+	            topicMaxMarks.putIfAbsent(topicId, 0.0);
 
-				boolean correctAns = submitted.trim().equalsIgnoreCase(correct.trim());
+	            topicStats.get(topicId)[1]++;
+	            topicMaxMarks.put(topicId, topicMaxMarks.get(topicId) + marks);
 
-				if (correctAns) {
-					totalCorrect++;
-					totalScore += marks;
-					topicStats.get(topicId)[0]++;
-					topicScores.put(topicId, topicScores.get(topicId) + marks);
-				} else {
-					totalWrong++;
-					if (negativeEnabled) {
-						totalScore -= negativeMark;
-						topicScores.put(topicId, topicScores.get(topicId) - negativeMark);
-					}
-				}
-			}
+	            if (UtilValidate.isEmpty(submitted)) continue;
 
-			double percentage = totalMaxMarks > 0 ? (totalScore / totalMaxMarks) * 100 : 0;
+	            boolean isCorrect = submitted.trim().equalsIgnoreCase(correct.trim());
 
-			int userPassed = percentage >= passPercentage ? 1 : 0;
+	            if (isCorrect) {
+	                totalCorrect++;
+	                totalScore += marks;
+	                topicStats.get(topicId)[0]++;
+	                topicScores.put(topicId, topicScores.get(topicId) + marks);
+	            } else {
+	                totalWrong++;
+	                if (negativeEnabled) {
+	                    totalScore -= negativeMarkValue;
+	                    topicScores.put(topicId, topicScores.get(topicId) - negativeMarkValue);
+	                }
+	            }
+	        }
 
-			// attempt Count
-			GenericValue rel = EntityQuery.use(delegator).from("PartyExamRelationship")
-					.where("examId", examId, "partyId", partyId).queryOne();
+	        double percentage = totalMaxMarks > 0 ? (totalScore / totalMaxMarks) * 100.0 : 0.0;
+	        int userPassed = percentage >= passPercentage ? 1 : 0;
 
-			long attempts = rel != null && rel.getLong("noOfAttempts") != null ? rel.getLong("noOfAttempts") + 1 : 1;
+	        // Attempt count
+	        GenericValue rel = EntityQuery.use(delegator)
+	                .from("PartyExamRelationship")
+	                .where("examId", examId, "partyId", partyId)
+	                .queryOne();
 
-			long performanceId = Long.parseLong(delegator.getNextSeqId("PartyPerformance"));
+	        long attempts = (rel != null && rel.getLong("noOfAttempts") != null)
+	                ? rel.getLong("noOfAttempts") + 1L : 1L;
 
-			// Create PartyPerformanc
-			Map<String, Object> perfCtx = new HashMap<>();
-			perfCtx.put("performanceId", performanceId);
-			perfCtx.put("examId", examId);
-			perfCtx.put("partyId", partyId);
-			perfCtx.put("score", totalScore);
-			perfCtx.put("date", UtilDateTime.nowTimestamp());
-			perfCtx.put("noOfQuestions", (long) questions.size());
-			perfCtx.put("totalCorrect", (long) totalCorrect);
-			perfCtx.put("totalWrong", (long) totalWrong);
-			perfCtx.put("userPassed", (long) userPassed);
-			perfCtx.put("attemptNo", attempts);
+	        String performanceId = delegator.getNextSeqId("PartyPerformance");
 
-			dispatcher.runSync("createPartyPerformance", perfCtx);
+	        Map<String, Object> perfCtx = new HashMap<>();
+	        perfCtx.put("performanceId", performanceId);
+	        perfCtx.put("examId", examId);
+	        perfCtx.put("partyId", partyId);
+	        perfCtx.put("score", BigDecimal.valueOf(totalScore));
+	        perfCtx.put("date", UtilDateTime.nowTimestamp());
+	        perfCtx.put("noOfQuestions", (long) questions.size());
+	        perfCtx.put("totalCorrect", (long) totalCorrect);
+	        perfCtx.put("totalWrong", (long) totalWrong);
+	        perfCtx.put("userPassed", (long) userPassed);
+	        perfCtx.put("attemptNo", attempts);
 
-			// topic wise Performance
-			for (Map.Entry<String, int[]> entry : topicStats.entrySet()) {
-				String topicId = entry.getKey();
+	        Map<String, Object> perfResult = dispatcher.runSync("createPartyPerformance", perfCtx);
+	        if (ServiceUtil.isError(perfResult)) {
+	            return perfResult;
+	        }
 
-				double topicScore = topicScores.get(topicId);
-				double topicMax = topicMaxMarks.get(topicId);
+	        // Topic performance
+	        for (Map.Entry<String, int[]> entry : topicStats.entrySet()) {
+	            String topicId = entry.getKey();
+	            double topicScore = topicScores.get(topicId);
+	            double topicMax = topicMaxMarks.get(topicId);
+	            double topicPct = topicMax > 0 ? (topicScore / topicMax) * 100.0 : 0.0;
 
-				double topicPct = topicMax > 0 ? (topicScore / topicMax) * 100 : 0;
+	            String detailId = delegator.getNextSeqId("DetailedPartyPerformance");
 
-				long detailId = Long.parseLong(delegator.getNextSeqId("DetailedPartyPerformance"));
+	            Map<String, Object> topicCtx = new HashMap<>();
+	            topicCtx.put("detailedPerformanceId", detailId);
+	            topicCtx.put("performanceId", performanceId);
+	            topicCtx.put("examId", examId);
+	            topicCtx.put("partyId", partyId);
+	            topicCtx.put("topicId", topicId);
+	            topicCtx.put("userTopicPercentage", BigDecimal.valueOf(topicPct)); // ✅ FIX
+	            topicCtx.put("correctQuestionsInthisTopic", (long) entry.getValue()[0]);
+	            topicCtx.put("totalQuestionsInThisTopic", (long) entry.getValue()[1]);
+	            topicCtx.put("userPassedThisTopic", topicPct >= passPercentage ? 1L : 0L);
 
-				Map<String, Object> topicCtx = new HashMap<>();
-				topicCtx.put("detailedPerformanceId", detailId);
-				topicCtx.put("performanceId", performanceId);
-				topicCtx.put("examId", examId);
-				topicCtx.put("partyId", partyId);
-				topicCtx.put("topicId", topicId);
-				topicCtx.put("userTopicPercentage", topicPct);
-				topicCtx.put("correctQuestionsInthisTopic", (long) entry.getValue()[0]);
-				topicCtx.put("totalQuestionsInThisTopic", (long) entry.getValue()[1]);
-				topicCtx.put("userPassedThisTopic", topicPct >= passPercentage ? 1L : 0L);
+	            Map<String, Object> topicResult = dispatcher.runSync("createDetailedPartyPerformance", topicCtx);
+	            if (ServiceUtil.isError(topicResult)) {
+	                return topicResult;
+	            }
+	        }
 
-				dispatcher.runSync("createDetailedPartyPerformance", topicCtx);
-			}
+	        // Update attempts
+	        if (rel != null) {
+	            Map<String, Object> updateCtx = new HashMap<>();
+	            updateCtx.put("examId", examId);
+	            updateCtx.put("partyId", partyId);
+	            updateCtx.put("noOfAttempts", attempts);
+	            updateCtx.put("lastPerformanceDate", UtilDateTime.nowTimestamp());
 
-			// update attempt tracking
-			if (rel != null) {
-				Map<String, Object> updateCtx = new HashMap<>();
-				updateCtx.put("examId", examId);
-				updateCtx.put("partyId", partyId);
-				updateCtx.put("noOfAttempts", attempts);
-				updateCtx.put("lastPerformanceDate", UtilDateTime.nowTimestamp());
+	            Map<String, Object> updateResult = dispatcher.runSync("updatePartyExamRelationship", updateCtx);
+	            if (ServiceUtil.isError(updateResult)) {
+	                return updateResult;
+	            }
+	        }
 
-				dispatcher.runSync("updatePartyExamRelationship", updateCtx);
-			}
+	        // deactivate exam
+	        Map<String, Object> inProgressCtx = new HashMap<>();
+	        inProgressCtx.put("examId", examId);
+	        inProgressCtx.put("partyId", partyId);
+	        inProgressCtx.put("isExamActive", 0L);
 
-			// deactivate exam
-			Map<String, Object> inProgressCtx = new HashMap<>();
-			inProgressCtx.put("examId", examId);
-			inProgressCtx.put("partyId", partyId);
-			inProgressCtx.put("isExamActive", 0L);
+	        Map<String, Object> inProgressResult = dispatcher.runSync("updateInProgressParty", inProgressCtx);
+	        if (ServiceUtil.isError(inProgressResult)) {
+	            return inProgressResult;
+	        }
 
-			dispatcher.runSync("updateInProgressParty", inProgressCtx);
+	     
+	        Map<String, Object> result = ServiceUtil.returnSuccess("Exam submitted successfully.");
+	        result.put("performanceId", performanceId);
+	        result.put("totalCorrect", totalCorrect);
+	        result.put("totalWrong", totalWrong);
+	        result.put("score", totalScore);
+	        result.put("scorePercentage", percentage);
+	        result.put("userPassed", userPassed);
+	        result.put("attemptNo", attempts);
 
-			Map<String, Object> result = ServiceUtil.returnSuccess("Exam submitted successfully.");
-			result.put("performanceId", performanceId);
-			result.put("totalCorrect", totalCorrect);
-			result.put("totalWrong", totalWrong);
-			result.put("score", totalScore);
-			result.put("scorePercentage", percentage);
-			result.put("userPassed", userPassed);
-			result.put("attemptNo", attempts);
+	        return result;
 
-			return result;
-
-		} catch (Exception e) {
-			Debug.logError(e, "Error in submitExam", MODULE);
-			return ServiceUtil.returnError(e.getMessage());
-		}
+	    } catch (Exception e) {
+	        Debug.logError(e, "Error in submitExam", MODULE);
+	        return ServiceUtil.returnError(e.getMessage());
+	    }
 	}
 
 	public static Map<String, Object> getExamResult(DispatchContext dctx, Map<String, Object> context) {
