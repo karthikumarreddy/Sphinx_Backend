@@ -3,7 +3,6 @@ package com.sphinx.services;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -499,84 +498,6 @@ public class ExamServices {
 
 	}
 
-	public static Map<String, ? extends Object> deleteExamWrapper(DispatchContext dctx,
-			Map<String, ? extends Object> context) {
-
-		LocalDispatcher dispatcher = (LocalDispatcher) dctx.getDispatcher();
-
-		if (UtilValidate.isEmpty(dispatcher)) {
-			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
-		}
-
-		Delegator delegator = dctx.getDelegator();
-
-		if (UtilValidate.isEmpty(delegator)) {
-			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
-		}
-		String examId = (String) context.get("examId");
-
-		if (UtilValidate.isEmpty(examId)) {
-			return ServiceUtil.returnError("examId is required to delete an exam.");
-		}
-
-		try {
-
-			EntityCondition questionBCondition = EntityCondition.makeCondition("examId", EntityOperator.EQUALS, examId);
-			// int dataRemoved = delegator.removeByCondition("QuestionBankMasterB", questionBCondition);
-
-			// delete QuestionBankMaster
-			EntityCondition qbCondition = EntityCondition.makeCondition("examId", EntityOperator.EQUALS, examId);
-			delegator.removeByCondition("QuestionBankMaster", qbCondition);
-			Debug.logInfo("Deleted all QuestionBankMaster records for examId: " + examId, MODULE);
-
-			// delete ExamTopicDetails it has a composite PK examId , topicId
-			// so we fetch all topics for this exam first then delete each.
-
-			List<GenericValue> examTopics = delegator.findByAnd("ExamTopicDetails", UtilMisc.toMap("examId", examId),
-					null, false);
-
-			if (UtilValidate.isNotEmpty(examTopics)) {
-				for (GenericValue examTopic : examTopics) {
-					Map<String, Object> deleteTopicCtx = new HashMap<>();
-					deleteTopicCtx.put("examId", examId);
-					deleteTopicCtx.put("topicId", examTopic.getString("topicId"));
-
-					Map<String, Object> deleteTopicResult = dispatcher.runSync("deleteExamTopics", deleteTopicCtx);
-
-					if (ServiceUtil.isError(deleteTopicResult)) {
-						Debug.logError("Failed to delete ExamTopicDetails for examId: " + examId + ", topicId: "
-								+ examTopic.getString("topicId"), MODULE);
-						return ServiceUtil.returnError(
-								"Failed to delete exam topic: " + ServiceUtil.getErrorMessage(deleteTopicResult));
-					}
-				}
-				Debug.logInfo("exam topics deleted", MODULE);
-			} else {
-				Debug.logInfo("No ExamTopicDetails found for examId: " + examId, MODULE);
-			}
-
-			// delete the ExamMaster record
-			Map<String, Object> deleteExamCtx = new HashMap<>();
-			deleteExamCtx.put("examId", examId);
-			Map<String, Object> deleteExamResult = dispatcher.runSync("deleteExam", deleteExamCtx);
-
-			if (ServiceUtil.isError(deleteExamResult)) {
-				Debug.logError("Failed to delete ExamMaster for examId: " + examId, MODULE);
-				return ServiceUtil
-						.returnError("Failed to delete exam: " + ServiceUtil.getErrorMessage(deleteExamResult));
-			}
-
-			Debug.logInfo("Exam deleted successfully for examId: " + examId, MODULE);
-			return ServiceUtil.returnSuccess("Exam and all related data deleted successfully.");
-
-		} catch (GenericEntityException e) {
-			Debug.logError(e, "Entity error while deleting exam: " + examId, MODULE);
-			return ServiceUtil.returnError("Database error: " + e.getMessage());
-		} catch (GenericServiceException e) {
-			return ServiceUtil.returnError("Database error: " + e.getMessage());
-		}
-
-	}
 
 
 	public static Map<String, ? extends Object> generateQuestionsForExam(DispatchContext dctx, Map<String, ? extends Object> contaxt) {
