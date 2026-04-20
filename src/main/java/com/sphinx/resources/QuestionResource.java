@@ -49,91 +49,7 @@ public class QuestionResource {
 
 	private static final String MODULE = QuestionResource.class.getName();
 
-	private String validateQuestionData(Map<String, Object> input) {
-
-		String questionDetail = (String) input.get("questionDetail");
-		String optionA = (String) input.get("optionA");
-		String optionB = (String) input.get("optionB");
-		String optionC = (String) input.get("optionC");
-		String optionD = (String) input.get("optionD");
-		String answer = (String) input.get("answer");
-		String questionType = (String) input.get("questionType");
-		String difficultyLevel = (String) input.get("difficultyLevel");
-		String answerValue = (String) input.get("answerValue");
-		String topicId = (String) input.get("topicId");
-
-		if (UtilValidate.isEmpty(questionDetail)) {
-			return "Question detail is required";
-		}
-
-		if (UtilValidate.isEmpty(questionType)) {
-			return "Question type is required";
-		}
-
-		if (UtilValidate.isEmpty(difficultyLevel)) {
-			return "Difficulty level is required";
-		}
-
-		if (UtilValidate.isEmpty(topicId)) {
-			return "Invalid Topic, Choose a Valid one.";
-		}
-
-		// here we give the question types is based on the enum type (hard coded).
-
-		// Fill Ups or True/False question type
-		if (questionType.equals("FILL_UP") || questionType.equals("TRUE_FALSE")
-				|| questionType.equals("DETAILED_ANSWER")) {
-			if (UtilValidate.isEmpty(answerValue)) {
-				return "Answer value is mandatory for Fill Ups type questions.";
-			}
-		}
-
-		// Multiple, Single choice questions
-		if (questionType.equals("MULTIPLE_CHOICE") || questionType.equals("SINGLE_CHOICE")) {
-			if (UtilValidate.isEmpty(optionA)) {
-				return "Option A is mandatory";
-			}
-
-			if (UtilValidate.isEmpty(optionB)) {
-				return "Option B is mandatory";
-			}
-
-			if (UtilValidate.isEmpty(optionC)) {
-				return "Option C is mandatory";
-			}
-
-			if (UtilValidate.isEmpty(optionD)) {
-				return "Option D is mandatory";
-			}
-
-			if (UtilValidate.isEmpty(answer)) {
-				return "Answer is mandatory";
-			}
-
-			if (UtilValidate.isEmpty(input.get("numAnswers"))) {
-				return "Number of Answer is mandatory";
-			}
-
-			int numOfAnswers;
-			try {
-				numOfAnswers = (Integer) input.get("numAnswers");
-			} catch (ClassCastException e) {
-				return "Invalid Number of Answers";
-			}
-
-			if (questionType.equals("MULTIPLE_CHOICE") && numOfAnswers <= 0) {
-				return "Invalid Number of answers.";
-			}
-
-			if (questionType.equals("MULTIPLE_CHOICE")
-					&& (answer == null || answer.split(",").length != numOfAnswers)) {
-				return "Number of answers marked is invalid.";
-			}
-
-		}
-
-		return null;
-	}
+	
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
@@ -156,6 +72,11 @@ public class QuestionResource {
 
 			Map<String, Object> result = dispatcher.runSync("getAllQuestionByTopic",
 					UtilMisc.toMap("topicId", topicId));
+			
+			if(ServiceUtil.isError(result)) {
+				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
+			}
+			
 			return Response.status(Response.Status.OK).entity(result).build();
 
 		} catch (GenericServiceException e) {
@@ -177,6 +98,9 @@ public class QuestionResource {
 		}
 		try {
 			Map<String, Object> result = dispatcher.runSync("getAllQuestionTypes", UtilMisc.toMap());
+			if(ServiceUtil.isError(result)) {
+				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
+			}
 			return Response.status(Response.Status.OK).entity(result).build();
 
 		} catch (GenericServiceException e) {
@@ -213,14 +137,9 @@ public class QuestionResource {
 			input.put("topicId", request.getAttribute("topicId"));
 			input.put("questionId", request.getAttribute("questionId"));
 
-			String errorMsg = validateQuestionData(input);
-
-			if (UtilValidate.isNotEmpty(errorMsg)) {
-				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError(errorMsg)).build();
-			}
 
 			Map<String, Object> result;
-			result = dispatcher.runSync("updateQuestion", input);
+			result = dispatcher.runSync("updateQuestionWrapper", input);
 			if (ServiceUtil.isError(result)) {
 				return Response.status(Response.Status.BAD_REQUEST).entity(result).build();
 			}
@@ -288,11 +207,6 @@ public class QuestionResource {
 					request.getAttribute("answer"), "numAnswers", request.getAttribute("numAnswers"), "difficultyLevel",
 					request.getAttribute("difficultyLevel"), "answerValue", request.getAttribute("answerValue"));
 
-			String errorMsg = validateQuestionData(input);
-
-			if (UtilValidate.isNotEmpty(errorMsg)) {
-				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError(errorMsg)).build();
-			}
 
 			HttpSession session = request.getSession(false);
 			if (UtilValidate.isEmpty(session)) {
@@ -303,7 +217,7 @@ public class QuestionResource {
 
 			input.put("userLogin", userLogin);
 
-			Map<String, Object> result = dispatcher.runSync("createQuestion", input);
+			Map<String, Object> result = dispatcher.runSync("createQuestionWrapper", input);
 
 			if (result.get("responseMessage") != null && result.get("responseMessage").equals("error")) {
 				return Response.status(Response.Status.BAD_REQUEST).entity(result).build();

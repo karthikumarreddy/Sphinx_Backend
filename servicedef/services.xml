@@ -153,8 +153,17 @@
         <attribute name="topicId" type="String" mode="IN" />
         <attribute name="topicName" type="String" mode="IN" />
     </service>
+    
+    <service name="updateTopicWrapper" engine="java" location="com.sphinx.services.TopicServices" invoke="updateTopicWrapper">
+        <attribute name="topicId" type="String" mode="IN" />
+        <attribute name="topicName" type="String" mode="IN" />
+    </service>
 
     <service name="deleteTopic" engine="entity-auto" invoke="delete" default-entity-name="TopicMaster">
+        <attribute name="topicId" type="String" mode="IN" />
+    </service>
+    
+     <service name="deleteTopicWrapper" engine="java" location="com.sphinx.services.TopicServices" invoke="deleteTopicWrapper">
         <attribute name="topicId" type="String" mode="IN" />
     </service>
 
@@ -411,8 +420,18 @@
         <attribute name="questionId" mode="INOUT" type="String" optional="true" />
     </service>
     
+    <service engine="java" name="createQuestionWrapper" location="com.sphinx.services.QuestionService" invoke="createQuestionWrapper">
+    	<implements service="questionFields" optional="false" />
+        <attribute name="questionId" mode="INOUT" type="String" optional="true" />
+    </service>
+    
     <service name="updateQuestion" default-entity-name="QuestionMaster" engine="entity-auto" invoke="update">
         <implements service="questionFields" optional="false" />
+        <attribute name="questionId" mode="IN" type="String" optional="true" />
+    </service>
+    
+    <service engine="java" name="updateQuestionWrapper" location="com.sphinx.services.QuestionService" invoke="updateQuestionWrapper">
+    	 <implements service="questionFields" optional="false" />
         <attribute name="questionId" mode="IN" type="String" optional="true" />
     </service>
     

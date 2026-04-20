@@ -296,7 +296,7 @@ public class UserExamServices {
 	            topicCtx.put("examId", examId);
 	            topicCtx.put("partyId", partyId);
 	            topicCtx.put("topicId", topicId);
-	            topicCtx.put("userTopicPercentage", BigDecimal.valueOf(topicPct)); // ✅ FIX
+	            topicCtx.put("userTopicPercentage", BigDecimal.valueOf(topicPct)); 
 	            topicCtx.put("correctQuestionsInthisTopic", (long) entry.getValue()[0]);
 	            topicCtx.put("totalQuestionsInThisTopic", (long) entry.getValue()[1]);
 	            topicCtx.put("userPassedThisTopic", topicPct >= passPercentage ? 1L : 0L);

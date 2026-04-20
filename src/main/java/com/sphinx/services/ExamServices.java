@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.ws.rs.core.Response;
+
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilDateTime;
 import org.apache.ofbiz.base.util.UtilMisc;
@@ -27,8 +29,33 @@ import org.apache.ofbiz.service.ServiceUtil;
 import com.sphinx.util.ServiceHelper;
 
 public class ExamServices {
+	
 	private static final String MODULE = ExamServices.class.getName();
 	private static final String UNEXPECTED_ERROR_MSG = "Unexpected Error Occured! Try Again After Sometime!";
+	
+	private static String validateExam(Map<String, ? extends Object> context) {
+		if (UtilValidate.isEmpty(context.get("partyId")))
+			return "Admin details are invalid";
+		if (UtilValidate.isEmpty(context.get("examName")))
+			return "Exam name is required";
+		if (UtilValidate.isEmpty(context.get("description")))
+			return "Exam description is required";
+		if (UtilValidate.isEmpty(context.get("noOfQuestions")))
+			return "Number of questions is required";
+		if (UtilValidate.isEmpty(context.get("duration")))
+			return "Duration is required";
+		if (UtilValidate.isEmpty(context.get("passPercentage")))
+			return "Pass percentage is required";
+		if (UtilValidate.isEmpty(context.get("questionsRandomized")))
+			return "Questions randomized preference is required";
+		if (UtilValidate.isEmpty(context.get("answersMust")))
+			return "Answers must preference is required";
+		if (UtilValidate.isEmpty(context.get("allowNegativeMarks")))
+			return "Allow negative marks preference is required";
+		if ("Y".equalsIgnoreCase((String) context.get("allowNegativeMarks")) && UtilValidate.isEmpty(context.get("negativeMarkValue")))
+			return "Negative mark value is required when negative marks are allowed";
+		return null;
+	}
 
 	public static Map<String, ? extends Object> getExam(DispatchContext dctx, Map<String, ? extends Object> context) {
 		try {
@@ -56,6 +83,11 @@ public class ExamServices {
 
 			if (UtilValidate.isEmpty(delegator)) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
+			String error = validateExam(context);
+
+			if (error != null) {
+				return ServiceUtil.returnError(error);
 			}
 
 			String examId = delegator.getNextSeqId("ExamMaster");
@@ -135,6 +167,11 @@ public class ExamServices {
 
 			if (UtilValidate.isEmpty(delegator)) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
+			
+			String error = validateExam(context);
+			if (error != null) {
+				return ServiceUtil.returnError(error);
 			}
 
 			GenericValue examMaster = delegator.findOne("ExamMaster", false,
