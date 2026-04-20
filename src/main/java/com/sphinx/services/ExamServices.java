@@ -3,11 +3,8 @@ package com.sphinx.services;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.ws.rs.core.Response;
 
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilDateTime;
@@ -29,33 +26,8 @@ import org.apache.ofbiz.service.ServiceUtil;
 import com.sphinx.util.ServiceHelper;
 
 public class ExamServices {
-	
 	private static final String MODULE = ExamServices.class.getName();
 	private static final String UNEXPECTED_ERROR_MSG = "Unexpected Error Occured! Try Again After Sometime!";
-	
-	private static String validateExam(Map<String, ? extends Object> context) {
-		if (UtilValidate.isEmpty(context.get("partyId")))
-			return "Admin details are invalid";
-		if (UtilValidate.isEmpty(context.get("examName")))
-			return "Exam name is required";
-		if (UtilValidate.isEmpty(context.get("description")))
-			return "Exam description is required";
-		if (UtilValidate.isEmpty(context.get("noOfQuestions")))
-			return "Number of questions is required";
-		if (UtilValidate.isEmpty(context.get("duration")))
-			return "Duration is required";
-		if (UtilValidate.isEmpty(context.get("passPercentage")))
-			return "Pass percentage is required";
-		if (UtilValidate.isEmpty(context.get("questionsRandomized")))
-			return "Questions randomized preference is required";
-		if (UtilValidate.isEmpty(context.get("answersMust")))
-			return "Answers must preference is required";
-		if (UtilValidate.isEmpty(context.get("allowNegativeMarks")))
-			return "Allow negative marks preference is required";
-		if ("Y".equalsIgnoreCase((String) context.get("allowNegativeMarks")) && UtilValidate.isEmpty(context.get("negativeMarkValue")))
-			return "Negative mark value is required when negative marks are allowed";
-		return null;
-	}
 
 	public static Map<String, ? extends Object> getExam(DispatchContext dctx, Map<String, ? extends Object> context) {
 		try {
@@ -83,11 +55,6 @@ public class ExamServices {
 
 			if (UtilValidate.isEmpty(delegator)) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
-			}
-			String error = validateExam(context);
-
-			if (error != null) {
-				return ServiceUtil.returnError(error);
 			}
 
 			String examId = delegator.getNextSeqId("ExamMaster");
@@ -167,11 +134,6 @@ public class ExamServices {
 
 			if (UtilValidate.isEmpty(delegator)) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
-			}
-			
-			String error = validateExam(context);
-			if (error != null) {
-				return ServiceUtil.returnError(error);
 			}
 
 			GenericValue examMaster = delegator.findOne("ExamMaster", false,
@@ -536,84 +498,6 @@ public class ExamServices {
 
 	}
 
-	public static Map<String, ? extends Object> deleteExamWrapper(DispatchContext dctx,
-			Map<String, ? extends Object> context) {
-
-		LocalDispatcher dispatcher = (LocalDispatcher) dctx.getDispatcher();
-
-		if (UtilValidate.isEmpty(dispatcher)) {
-			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
-		}
-
-		Delegator delegator = dctx.getDelegator();
-
-		if (UtilValidate.isEmpty(delegator)) {
-			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
-		}
-		String examId = (String) context.get("examId");
-
-		if (UtilValidate.isEmpty(examId)) {
-			return ServiceUtil.returnError("examId is required to delete an exam.");
-		}
-
-		try {
-
-			EntityCondition questionBCondition = EntityCondition.makeCondition("examId", EntityOperator.EQUALS, examId);
-			// int dataRemoved = delegator.removeByCondition("QuestionBankMasterB", questionBCondition);
-
-			// delete QuestionBankMaster
-			EntityCondition qbCondition = EntityCondition.makeCondition("examId", EntityOperator.EQUALS, examId);
-			delegator.removeByCondition("QuestionBankMaster", qbCondition);
-			Debug.logInfo("Deleted all QuestionBankMaster records for examId: " + examId, MODULE);
-
-			// delete ExamTopicDetails it has a composite PK examId , topicId
-			// so we fetch all topics for this exam first then delete each.
-
-			List<GenericValue> examTopics = delegator.findByAnd("ExamTopicDetails", UtilMisc.toMap("examId", examId),
-					null, false);
-
-			if (UtilValidate.isNotEmpty(examTopics)) {
-				for (GenericValue examTopic : examTopics) {
-					Map<String, Object> deleteTopicCtx = new HashMap<>();
-					deleteTopicCtx.put("examId", examId);
-					deleteTopicCtx.put("topicId", examTopic.getString("topicId"));
-
-					Map<String, Object> deleteTopicResult = dispatcher.runSync("deleteExamTopics", deleteTopicCtx);
-
-					if (ServiceUtil.isError(deleteTopicResult)) {
-						Debug.logError("Failed to delete ExamTopicDetails for examId: " + examId + ", topicId: "
-								+ examTopic.getString("topicId"), MODULE);
-						return ServiceUtil.returnError(
-								"Failed to delete exam topic: " + ServiceUtil.getErrorMessage(deleteTopicResult));
-					}
-				}
-				Debug.logInfo("exam topics deleted", MODULE);
-			} else {
-				Debug.logInfo("No ExamTopicDetails found for examId: " + examId, MODULE);
-			}
-
-			// delete the ExamMaster record
-			Map<String, Object> deleteExamCtx = new HashMap<>();
-			deleteExamCtx.put("examId", examId);
-			Map<String, Object> deleteExamResult = dispatcher.runSync("deleteExam", deleteExamCtx);
-
-			if (ServiceUtil.isError(deleteExamResult)) {
-				Debug.logError("Failed to delete ExamMaster for examId: " + examId, MODULE);
-				return ServiceUtil
-						.returnError("Failed to delete exam: " + ServiceUtil.getErrorMessage(deleteExamResult));
-			}
-
-			Debug.logInfo("Exam deleted successfully for examId: " + examId, MODULE);
-			return ServiceUtil.returnSuccess("Exam and all related data deleted successfully.");
-
-		} catch (GenericEntityException e) {
-			Debug.logError(e, "Entity error while deleting exam: " + examId, MODULE);
-			return ServiceUtil.returnError("Database error: " + e.getMessage());
-		} catch (GenericServiceException e) {
-			return ServiceUtil.returnError("Database error: " + e.getMessage());
-		}
-
-	}
 
 
 	public static Map<String, ? extends Object> generateQuestionsForExam(DispatchContext dctx, Map<String, ? extends Object> contaxt) {
@@ -646,6 +530,11 @@ public class ExamServices {
 				return ServiceUtil.returnError("No Topics Assigend for this Exam!");
 			}
 
+			
+			GenericValue examRecord = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId).queryFirst();
+			
+			long totalQuestions = examRecord.getLong("noOfQuestions");
+
 			// Get all questions from questionMaster and put in the QuestionBankMaster
 			for (GenericValue examTopic : examTopics) {
 				String topicId = examTopic.getString("topicId");
@@ -656,13 +545,15 @@ public class ExamServices {
 				// total percentage of questions.
 				Long percentage = examTopic.getLong("percentage");
 
-				long totalRecords = delegator.findCountByCondition("QuestionMaster",
-								EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId), null, null);
+//				long totalRecords = delegator.findCountByCondition("QuestionMaster",
+//								EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId), null, null);
 
-				int totalQuestions = (int) (totalRecords * percentage) / 100;
+int totalQuestionsInTopic = (int) (totalQuestions * percentage) / 100;
+
+// totalQuestions = totalQuestions + totalQuestionsInTopic;
 
 				List<GenericValue> topicWiseQuestions = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId)
-								.maxRows(totalQuestions).queryList();
+								.maxRows(totalQuestionsInTopic).queryList();
 
 				// insert all question in the question Bank Master.
 				for (GenericValue question : topicWiseQuestions) {
@@ -692,6 +583,7 @@ public class ExamServices {
 			}
 
 			Map<String, Object> result = ServiceUtil.returnSuccess("Exam and Questions are Ready!");
+			result.put("totalQuestions", totalQuestions);
 			return result;
 
 		} catch (Exception e) {
@@ -712,25 +604,50 @@ public class ExamServices {
 
 			String examId = (String) context.get("examId");
 			if (UtilValidate.isEmpty(examId)) {
-				return ServiceUtil.returnError("Invalid Exam details!");
+				return ServiceUtil.returnError("Invalid Assessment details!");
 			}
 
 			GenericValue examRecord = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId).queryOne();
 
 			if (UtilValidate.isEmpty(examRecord)) {
-				return ServiceUtil.returnError("Exam Not Found!");
+				return ServiceUtil.returnError("Assessment Not Found!");
 			}
 
 			examRecord.set("fromDate", Timestamp.valueOf(LocalDateTime.now()));
 
 			delegator.store(examRecord);
 
+			GenericValue examSetupAlready = EntityQuery.use(delegator).from("ExamSetupDetails").where("examId", examId).queryFirst();
+
+			if (UtilValidate.isNotEmpty(examSetupAlready)) {
+				return ServiceUtil.returnError("This assessment has already started. You cannot start it again.");
+			}
+
+			List<GenericValue> assignedTopics = EntityQuery.use(delegator).from("ExamTopicDetails").where("examId", examId).queryList();
+
+			if (UtilValidate.isEmpty(assignedTopics)) {
+				return ServiceUtil.returnError(
+								"No topics have been assigned to this assessment. Please assign at least one topic to continue.");
+			}
+
 			List<GenericValue> assignedUsersList = EntityQuery.use(delegator).from("PartyExamRelationship").where("examId", examId)
 							.queryList();
 
 			if (UtilValidate.isEmpty(assignedUsersList)) {
-				return ServiceUtil.returnError("No Assigned Users were Found! Assign some Users to the Exam!");
+				return ServiceUtil.returnError(
+								"No users have been assigned to this assessment. Please assign at least one user to continue.");
 			}
+
+
+			// ExamSetupDetails
+
+			GenericValue examSetup = delegator.makeValue("ExamSetupDetails");
+
+			examSetup.set("examId", examId);
+			examSetup.set("setupType", "N/A");
+			examSetup.set("setupDetails", "Exam Setup Successfully!");
+
+			delegator.create(examSetup);
 
 			for (GenericValue assignedUser : assignedUsersList) {
 				if (UtilValidate.isNotEmpty(assignedUser)) {
@@ -761,6 +678,57 @@ public class ExamServices {
 			Debug.logError(e, MODULE);
 			return ServiceUtil.returnError("Something went wrong try again later");
 		}
+	}
+
+	public static Map<String, ? extends Object> deleteExamWrapper(DispatchContext dctx, Map<String, ? extends Object> context) {
+
+		LocalDispatcher dispatcher = (LocalDispatcher) dctx.getDispatcher();
+
+		if (UtilValidate.isEmpty(dispatcher)) {
+			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+		}
+
+		Delegator delegator = dctx.getDelegator();
+
+		if (UtilValidate.isEmpty(delegator)) {
+			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+		}
+		String examId = (String) context.get("examId");
+
+		if (UtilValidate.isEmpty(examId)) {
+			return ServiceUtil.returnError("examId is required to delete an exam.");
+		}
+
+		try {
+
+			EntityCondition condition = EntityCondition.makeCondition("examId", EntityOperator.EQUALS, examId);
+
+			delegator.removeByCondition("DetailedPartyPerformance", condition);
+			delegator.removeByCondition("PartyPerformance", condition);
+			delegator.removeByCondition("AnswerMaster", condition);
+			delegator.removeByCondition("ExamSecurityCode", condition);
+
+			delegator.removeByCondition("PartyExamRelationship", condition);
+			delegator.removeByCondition("AdminPartyExamRel", condition);
+			delegator.removeByCondition("InProgressParty", condition);
+			delegator.removeByCondition("ExamSetupDetails", condition);
+			delegator.removeByCondition("QuestionBankMaster", condition);
+
+			List<GenericValue> examTopics = delegator.findByAnd("ExamTopicDetails", UtilMisc.toMap("examId", examId), null, false);
+
+			for (GenericValue examTopic : examTopics) {
+				dispatcher.runSync("deleteExamTopics", UtilMisc.toMap("examId", examId, "topicId", examTopic.getString("topicId")));
+			}
+
+			dispatcher.runSync("deleteExam", UtilMisc.toMap("examId", examId));
+
+			return ServiceUtil.returnSuccess("Deleted successfully");
+
+		} catch (Exception e) {
+
+			return ServiceUtil.returnError(e.getMessage());
+		}
+
 	}
 
 }

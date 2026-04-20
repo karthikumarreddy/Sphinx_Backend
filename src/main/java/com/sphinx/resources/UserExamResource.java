@@ -64,21 +64,23 @@ public class UserExamResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public static Response startExamStatus(@Context HttpServletRequest request) {
+
 		HttpSession session=request.getSession(false);
-		if(UtilValidate.isEmpty(session)) {
-			return Response.status(400).entity(ServiceUtil.returnError("Session is not available")).build();
-		}
-		session.setAttribute("remningTime",(String) request.getAttribute("remainingTime"));
+		session.setAttribute("remainingTime", (Integer) request.getAttribute("remainingTime"));
 		try {
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
-			if (UtilValidate.isEmpty(dispatcher)) {
-				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
-			}
 			String partyId = (String) request.getAttribute("partyId");
+			if (UtilValidate.isEmpty(partyId)) {
+				if (UtilValidate.isNotEmpty(session)) {
+					GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
+					if (UtilValidate.isEmpty(userLogin)) {
+						partyId = userLogin.getString("partyId");
+					}
+				}
+			}
 			String examId = (String) request.getAttribute("examId");
-			String remainingTime = (String) request.getAttribute("remainingTime");
+			Integer remainingTime = (Integer) request.getAttribute("remainingTime");
 			long totalAnswered = (Integer) request.getAttribute("totalAnswered");
 			long totalRemaining = (Integer) request.getAttribute("totalRemaining");
 			long isExamActive = (Integer) request.getAttribute("isExamActive");
@@ -87,7 +89,7 @@ public class UserExamResource {
 			
 
 			Map<String, Object> input = UtilMisc.toMap("partyId", partyId, "examId", examId, "remainingTime",
-					remainingTime, "totalAnswered", totalAnswered, "totalRemaining", totalRemaining, "isExamActive",
+							remainingTime, "totalAnswered", totalAnswered, "totalRemaining", totalRemaining + "", "isExamActive",
 							isExamActive, "currentSplitAttempt", currentSplitAttempt);
 			String error = validateExamStatus(input);
 			if (UtilValidate.isNotEmpty(error)) {
@@ -317,17 +319,24 @@ public class UserExamResource {
 		try {
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
-			if (UtilValidate.isEmpty(dispatcher)) {
-				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-						.entity(ServiceUtil.returnError("Unexpected error occurred! Try again later.")).build();
-			}
+			HttpSession session = request.getSession(false);
 
 			String examId = (String) request.getAttribute("examId");
 			String partyId = (String) request.getAttribute("partyId");
 
+			GenericValue userLogin = null;
+			if (UtilValidate.isNotEmpty(session)) {
+				userLogin = (GenericValue) session.getAttribute("userLogin");
+				if (UtilValidate.isNotEmpty(userLogin)) {
+					partyId = userLogin.getString("partyId");
+				}
+			}
+
+
+
 			if (UtilValidate.isEmpty(examId)) {
 				return Response.status(Response.Status.BAD_REQUEST)
-						.entity(ServiceUtil.returnError("Exam ID is required.")).build();
+								.entity(ServiceUtil.returnError("Assement Details is invalid.")).build();
 			}
 
 			if (UtilValidate.isEmpty(partyId)) {

@@ -22,7 +22,9 @@ import javax.ws.rs.core.Response;
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
+import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericValue;
+import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
@@ -238,6 +240,16 @@ public class ExamResource {
 			input.put("topicName", topicName);
 			input.put("percentage", percentage);
 			input.put("topicPassPercentage", topicPassPercentage);
+			Delegator delegator = (Delegator) request.getAttribute("delegator");
+			GenericValue exam = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId).select("noOfQuestions").queryFirst();
+			long totalQuestions = exam.getLong("noOfQuestions");
+			int totalQuestionsInTopic = (int) (totalQuestions * Integer.valueOf(percentage)) / 100;
+			long questionCount = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId).maxRows(totalQuestionsInTopic)
+							.queryCount();
+			if (totalQuestionsInTopic != questionCount) {
+				return Response.status(400).entity(ServiceUtil.returnError(totalQuestionsInTopic - questionCount
+								+ " question needed for the Topic to add in Assessment! Please Add Questions to the Topic!")).build();
+			}
 			Map<String, Object> result = dispatcher.runSync("addExamTopics", input);
 			return Response.status(201).entity(result).build();
 		} catch (Exception e) {

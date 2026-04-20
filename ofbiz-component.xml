@@ -48,6 +48,6 @@ under the License.
         title="Sphinx"
         server="default-server"
         location="webapp/Sphinx"
-        base-permission="OFBTOOLS,SPHINX"
+        base-permission="SPHINX"
         mount-point="/Sphinx"/>
 </ofbiz-component>
