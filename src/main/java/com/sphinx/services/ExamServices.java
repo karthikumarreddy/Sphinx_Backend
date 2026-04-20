@@ -609,6 +609,11 @@ public class ExamServices {
 				return ServiceUtil.returnError("No Topics Assigend for this Exam!");
 			}
 
+			
+			GenericValue examRecord = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId).queryFirst();
+			
+			long totalQuestions = examRecord.getLong("noOfQuestions");
+
 			// Get all questions from questionMaster and put in the QuestionBankMaster
 			for (GenericValue examTopic : examTopics) {
 				String topicId = examTopic.getString("topicId");
@@ -619,13 +624,15 @@ public class ExamServices {
 				// total percentage of questions.
 				Long percentage = examTopic.getLong("percentage");
 
-				long totalRecords = delegator.findCountByCondition("QuestionMaster",
-								EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId), null, null);
+//				long totalRecords = delegator.findCountByCondition("QuestionMaster",
+//								EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId), null, null);
 
-				int totalQuestions = (int) (totalRecords * percentage) / 100;
+int totalQuestionsInTopic = (int) (totalQuestions * percentage) / 100;
+
+// totalQuestions = totalQuestions + totalQuestionsInTopic;
 
 				List<GenericValue> topicWiseQuestions = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId)
-								.maxRows(totalQuestions).queryList();
+								.maxRows(totalQuestionsInTopic).queryList();
 
 				// insert all question in the question Bank Master.
 				for (GenericValue question : topicWiseQuestions) {
@@ -655,6 +662,7 @@ public class ExamServices {
 			}
 
 			Map<String, Object> result = ServiceUtil.returnSuccess("Exam and Questions are Ready!");
+			result.put("totalQuestions", totalQuestions);
 			return result;
 
 		} catch (Exception e) {
@@ -675,25 +683,50 @@ public class ExamServices {
 
 			String examId = (String) context.get("examId");
 			if (UtilValidate.isEmpty(examId)) {
-				return ServiceUtil.returnError("Invalid Exam details!");
+				return ServiceUtil.returnError("Invalid Assessment details!");
 			}
 
 			GenericValue examRecord = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId).queryOne();
 
 			if (UtilValidate.isEmpty(examRecord)) {
-				return ServiceUtil.returnError("Exam Not Found!");
+				return ServiceUtil.returnError("Assessment Not Found!");
 			}
 
 			examRecord.set("fromDate", Timestamp.valueOf(LocalDateTime.now()));
 
 			delegator.store(examRecord);
 
+			GenericValue examSetupAlready = EntityQuery.use(delegator).from("ExamSetupDetails").where("examId", examId).queryFirst();
+
+			if (UtilValidate.isNotEmpty(examSetupAlready)) {
+				return ServiceUtil.returnError("This assessment has already started. You cannot start it again.");
+			}
+
+			List<GenericValue> assignedTopics = EntityQuery.use(delegator).from("ExamTopicDetails").where("examId", examId).queryList();
+
+			if (UtilValidate.isEmpty(assignedTopics)) {
+				return ServiceUtil.returnError(
+								"No topics have been assigned to this assessment. Please assign at least one topic to continue.");
+			}
+
 			List<GenericValue> assignedUsersList = EntityQuery.use(delegator).from("PartyExamRelationship").where("examId", examId)
 							.queryList();
 
 			if (UtilValidate.isEmpty(assignedUsersList)) {
-				return ServiceUtil.returnError("No Assigned Users were Found! Assign some Users to the Exam!");
+				return ServiceUtil.returnError(
+								"No users have been assigned to this assessment. Please assign at least one user to continue.");
 			}
+
+
+			// ExamSetupDetails
+
+			GenericValue examSetup = delegator.makeValue("ExamSetupDetails");
+
+			examSetup.set("examId", examId);
+			examSetup.set("setupType", "N/A");
+			examSetup.set("setupDetails", "Exam Setup Successfully!");
+
+			delegator.create(examSetup);
 
 			for (GenericValue assignedUser : assignedUsersList) {
 				if (UtilValidate.isNotEmpty(assignedUser)) {
@@ -724,6 +757,57 @@ public class ExamServices {
 			Debug.logError(e, MODULE);
 			return ServiceUtil.returnError("Something went wrong try again later");
 		}
+	}
+
+	public static Map<String, ? extends Object> deleteExamWrapper(DispatchContext dctx, Map<String, ? extends Object> context) {
+
+		LocalDispatcher dispatcher = (LocalDispatcher) dctx.getDispatcher();
+
+		if (UtilValidate.isEmpty(dispatcher)) {
+			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+		}
+
+		Delegator delegator = dctx.getDelegator();
+
+		if (UtilValidate.isEmpty(delegator)) {
+			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+		}
+		String examId = (String) context.get("examId");
+
+		if (UtilValidate.isEmpty(examId)) {
+			return ServiceUtil.returnError("examId is required to delete an exam.");
+		}
+
+		try {
+
+			EntityCondition condition = EntityCondition.makeCondition("examId", EntityOperator.EQUALS, examId);
+
+			delegator.removeByCondition("DetailedPartyPerformance", condition);
+			delegator.removeByCondition("PartyPerformance", condition);
+			delegator.removeByCondition("AnswerMaster", condition);
+			delegator.removeByCondition("ExamSecurityCode", condition);
+
+			delegator.removeByCondition("PartyExamRelationship", condition);
+			delegator.removeByCondition("AdminPartyExamRel", condition);
+			delegator.removeByCondition("InProgressParty", condition);
+			delegator.removeByCondition("ExamSetupDetails", condition);
+			delegator.removeByCondition("QuestionBankMaster", condition);
+
+			List<GenericValue> examTopics = delegator.findByAnd("ExamTopicDetails", UtilMisc.toMap("examId", examId), null, false);
+
+			for (GenericValue examTopic : examTopics) {
+				dispatcher.runSync("deleteExamTopics", UtilMisc.toMap("examId", examId, "topicId", examTopic.getString("topicId")));
+			}
+
+			dispatcher.runSync("deleteExam", UtilMisc.toMap("examId", examId));
+
+			return ServiceUtil.returnSuccess("Deleted successfully");
+
+		} catch (Exception e) {
+
+			return ServiceUtil.returnError(e.getMessage());
+		}
+
 	}
 
 }

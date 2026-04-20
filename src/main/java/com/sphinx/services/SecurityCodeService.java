@@ -88,9 +88,9 @@ public class SecurityCodeService {
 				return ServiceUtil.returnError("Security Code Verification Failed!, Please contact your Administrator!");
 			}
 
-			if ("Y".equalsIgnoreCase(securityCodeRecord.getString("securityCodeVerified"))) {
-				return ServiceUtil.returnError("Security Code already Verified!");
-			}
+			// if ("Y".equalsIgnoreCase(securityCodeRecord.getString("securityCodeVerified"))) {
+			// return ServiceUtil.returnError("Security Code already Verified!");
+			// }
 
 			if (!codeFromDb.equals(securityCode)) {
 				return ServiceUtil.returnError("Incorrect Security Code!");

@@ -363,6 +363,7 @@
     
     	<member-entity entity-alias="PXR" entity-name="PartyExamRelationship"/>
     	<member-entity entity-alias="EM" entity-name="ExamMaster"/>
+    	<member-entity entity-alias="ESD" entity-name="ExamSetupDetails"/>
     	
     	<alias entity-alias="EM" name="examName"/>
     	<alias entity-alias="EM" name="description"/>
@@ -378,11 +379,15 @@
     	<alias entity-alias="PXR" name="partyId"/>
     	<alias entity-alias="PXR" name="allowedAttempts"/>
     	<alias entity-alias="PXR" name="noOfAttempts"/>
-    	<alias entity-alias="PXR" name="timeoutDays"/>
-    	
-    	<view-link rel-entity-alias="PXR" entity-alias="EM">
+    	<alias entity-alias="PXR" name="timeoutDays"/> 	
+
+    	<view-link rel-entity-alias="PXR" entity-alias="ESD">
     		<key-map field-name="examId"/>
     	</view-link>
+    	
+    	<view-link rel-entity-alias="EM" entity-alias="PXR">
+    		<key-map field-name="examId"/>
+    	</view-link> 
     	
     </view-entity>
     
@@ -488,19 +493,6 @@
 		
 	</view-entity>
 	
-	<view-entity entity-name="ExamQuestionsWithAnswer" package-name="om.sphinx" >
-		<member-entity entity-alias="QBM" entity-name="QuestionBankMaster"/>
-		<member-entity entity-alias="AM" entity-name="AnswerMaster"/>
-		
-		<alias-all entity-alias="QBM"/>
-		<alias-all entity-alias="AM"/>
-		
-		<view-link rel-entity-alias="AM" entity-alias="QBM" rel-optional="true">
-			<key-map field-name="examId"/>
-			<key-map field-name="partyId"/>
-		</view-link>
-		
-	</view-entity>
 	
 	
 </entitymodel>

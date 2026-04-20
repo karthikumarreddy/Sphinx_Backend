@@ -101,6 +101,8 @@
 		<attribute name="totalRemaining" type="Integer" mode="IN" />
 		<attribute name="isExamActive" type="Integer" mode="IN" />
 		<attribute name="currentSplitAttempt" type="Integer" mode="IN" optional="true"/>
+		
+		<attribute name="totalQuestions" type="Integer" mode="OUT" optional="true"/>
 	</service>
     
     <service name="updateExamStatus" engine="entity-auto" default-entity-name="InProgressParty" invoke="create">
@@ -294,6 +296,10 @@
     <service name="deleteExam" engine="entity-auto" invoke="delete" default-entity-name="ExamMaster">
         <attribute name="examId" type="String" mode="IN"/>
     </service>
+    
+    <service name="deleteExamWrapper" engine="java"  location="com.sphinx.services.ExamServices"  invoke="deleteExamWrapper" auth="false">
+    <attribute name="examId" type="String" mode="IN" optional="false"/>
+</service>
 
     <service name="getExam" engine="java" location="com.sphinx.services.ExamServices" invoke="getExam">
     <attribute name="examList" type="List" mode="OUT" optional="false" />
@@ -384,6 +390,7 @@
 	<service name="generateQuestionsForExam" engine="java"  location="com.sphinx.services.ExamServices" invoke="generateQuestionsForExam">
 		<attribute name="partyId" mode="IN" type="String"/>
 		<attribute name="examId" mode="IN" type="String"/>
+		<attribute name="totalQuestions" mode="OUT" type="Integer"/>
 	</service>
     <!-- Exam service ended  -->
     
@@ -471,6 +478,7 @@
         <attribute name="scorePercentage" type="Double" mode="OUT"/>
         <attribute name="userPassed" type="Integer" mode="OUT"/>
         <attribute name="attemptNo" type="Long" mode="OUT"/>
+        <attribute name="topicWisePerfomance" type="List" mode="OUT" />
     </service>
 
   
@@ -496,7 +504,6 @@
  
 
     <service name="createPartyPerformance" engine="entity-auto" default-entity-name="PartyPerformance" invoke="create" >
-             
         <auto-attributes include="pk" mode="IN" optional="false"/>
         <auto-attributes include="nonpk" mode="IN" optional="true"/>
         <auto-attributes include="pk" mode="OUT"/>
