@@ -60,6 +60,44 @@ public class UserExamResource {
 		return null;
 	}
 
+	@GET
+	@Path("/getExamResult")
+	@Produces(MediaType.APPLICATION_JSON)
+	public static Response getExamResults(@Context HttpServletRequest request) {
+
+		HttpSession session=request.getSession(false);
+		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+		try {
+			String partyId = (String) request.getParameter("partyId");
+			if (UtilValidate.isEmpty(partyId)) {
+				if (UtilValidate.isNotEmpty(session)) {
+					GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
+					if (UtilValidate.isEmpty(userLogin)) {
+						partyId = userLogin.getString("partyId");
+					}
+				}
+			}
+
+			String examId = (String) request.getParameter("examId");
+			Integer attemptNo = Integer.valueOf(request.getParameter("attemptNo"));
+
+			Map<String, Object> result;
+
+			result = dispatcher.runSync("getExamResults", UtilMisc.toMap("partyId", partyId, "examId", examId, "attemptNo", attemptNo));
+
+			if (ServiceUtil.isError(result)) {
+				return Response.status(HttpStatus.SC_BAD_REQUEST).entity(result).build();
+			}
+			return Response.status(HttpStatus.SC_OK).entity(result).build();
+		} catch (Exception e) {
+			Debug.logError(e, MODULE);
+			return Response.status(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+							.entity(ServiceUtil.returnError("Something Went Wrong! Try again Later!"))
+							.build();
+		}
+	}
+
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)

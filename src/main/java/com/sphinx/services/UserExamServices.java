@@ -501,5 +501,44 @@ public class UserExamServices {
 		}
 	}
 
+	public static Map<String, ? extends Object> getExamResults(DispatchContext dctx, Map<String, ? extends Object> context) {
+		Delegator delegator = dctx.getDelegator();
+
+
+		String partyId = (String) context.get("partyId");
+		String examId = (String) context.get("examId");
+		Integer attemptNo = (Integer) context.get("attemptNo");
+		
+		if (UtilValidate.isEmpty(partyId)) {
+			return ServiceUtil.returnError("Invalid User Details!");
+		}
+
+		if (UtilValidate.isEmpty(examId)) {
+			return ServiceUtil.returnError("Invalid Exam Details!");
+		}
+		
+		try {
+			GenericValue partyPerf = EntityQuery.use(delegator).from("PartyPerformance")
+							.where("partyId", partyId, "examId", examId, "attemptNo", attemptNo)
+							.queryFirst();
+
+			if (UtilValidate.isEmpty(partyPerf)) {
+				return ServiceUtil.returnError("Seems the Report isn't Generated Yet! Try again After Sometime!");
+			}
+			
+			List<GenericValue> detailedPartyPerf = EntityQuery.use(delegator).from("DetailedPartyPerformance")
+							.where("perfomanceId", partyPerf.getLong("perfomanceId")).queryList();
+
+			Map<String, Object> result = ServiceUtil.returnSuccess("Assessment Report!");
+
+			result.put("data", UtilMisc.toMap("partyPerfomance", partyPerf, "detailedPartyPerfomance", detailedPartyPerf));
+			
+			return result;
+		} catch (GenericEntityException e) {
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError("Something went wrong try again later");
+		}
+	}
+
 
 }

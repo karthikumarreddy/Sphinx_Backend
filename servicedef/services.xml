@@ -537,6 +537,14 @@
         <attribute name="resultStatus" type="String" mode="OUT"/>
     </service>
     
+    <service engine="java" name="getExamResults" location="com.sphinx.services.UserExamServices" invoke="getExamResults">
+    	<attribute name="partyId" mode="IN" type="String"/>
+    	<attribute name="examId" mode="IN" type="String"/>
+    	<attribute name="attemptNo" mode="IN" type="Integer"/>
+    	
+    	<attribute name="data" mode="IN" type="Map"/>
+    </service>
+    
     <!-- ====================================================================== -->
     <!-- =================== SECURITY CODE SERVICES =========================== -->
     <!-- ====================================================================== -->

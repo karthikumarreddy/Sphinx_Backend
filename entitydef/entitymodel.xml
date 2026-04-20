@@ -472,12 +472,8 @@
 			<key-map field-name="performanceId" rel-field-name="performanceId" />
 		</relation>			
     </entity>
-    
-    
-    
-    
-
-
+      
+   
 	<view-entity entity-name="UserRoleWithDesc" package-name="com.sphinx">
 		<member-entity entity-alias="RT" entity-name="RoleType"/>
 		<member-entity entity-alias="PR" entity-name="PartyRole"/>
