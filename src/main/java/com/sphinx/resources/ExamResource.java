@@ -34,29 +34,7 @@ public class ExamResource {
 
 	private static final String MODULE = ExamResource.class.getName();
 
-	private String validateExam(Map<String, String> map) {
-		if (UtilValidate.isEmpty(map.get("partyId")))
-			return "Admin details are invalid";
-		if (UtilValidate.isEmpty(map.get("examName")))
-			return "Exam name is required";
-		if (UtilValidate.isEmpty(map.get("description")))
-			return "Exam description is required";
-		if (UtilValidate.isEmpty(map.get("noOfQuestions")))
-			return "Number of questions is required";
-		if (UtilValidate.isEmpty(map.get("duration")))
-			return "Duration is required";
-		if (UtilValidate.isEmpty(map.get("passPercentage")))
-			return "Pass percentage is required";
-		if (UtilValidate.isEmpty(map.get("questionsRandomized")))
-			return "Questions randomized preference is required";
-		if (UtilValidate.isEmpty(map.get("answersMust")))
-			return "Answers must preference is required";
-		if (UtilValidate.isEmpty(map.get("allowNegativeMarks")))
-			return "Allow negative marks preference is required";
-		if ("Y".equalsIgnoreCase(map.get("allowNegativeMarks")) && UtilValidate.isEmpty(map.get("negativeMarkValue")))
-			return "Negative mark value is required when negative marks are allowed";
-		return null;
-	}
+	
 
 	// exam crud
 	@GET
@@ -71,6 +49,9 @@ public class ExamResource {
 			}
 
 			Map<String, Object> result = dispatcher.runSync("getExam", UtilMisc.toMap());
+			if(ServiceUtil.isError(result)) {
+				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
+			}
 			return Response.status(201).entity(result).build();
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
@@ -89,9 +70,6 @@ public class ExamResource {
 			if (UtilValidate.isEmpty(dispatcher)) {
 				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
 						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
-			}
-			if (examId == null || examId.isEmpty()) {
-				return Response.status(400).entity(ServiceUtil.returnError("Input is empty")).build();
 			}
 
 			Map<String, Object> input = new HashMap<>();
@@ -120,7 +98,6 @@ public class ExamResource {
 			}
 			Map<String, String> map = new HashMap<>();
 
-			// map.put("partyId", (String) request.getAttribute("partyId"));
 			GenericValue userLogin = (GenericValue) request.getSession().getAttribute("userLogin");
 			if (UtilValidate.isNotEmpty(userLogin)) {
 				String partyId = (String) userLogin.get("partyId");
@@ -138,14 +115,12 @@ public class ExamResource {
 			map.put("negativeMarkValue", (String) request.getAttribute("negativeMarkValue"));
 			map.put("userLoginId", (String) request.getAttribute("userLoginId"));
 
-			String error = validateExam(map);
-
-			if (error != null) {
-				return Response.status(400).entity(ServiceUtil.returnError(error)).build();
-			}
+			
 
 			Map<String, Object> result = dispatcher.runSync("createExamWrapper", map);
-			request.getAttribute("");
+			if(ServiceUtil.isError(result)) {
+				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
+			}
 			return Response.status(201).entity(result).build();
 
 		} catch (Exception e) {
@@ -166,6 +141,7 @@ public class ExamResource {
 				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
 						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
 			}
+			
 			Map<String, String> map = new HashMap<>();
 
 			map.put("partyId", (String) request.getAttribute("partyId"));
@@ -181,10 +157,6 @@ public class ExamResource {
 			map.put("negativeMarkValue", (String) request.getAttribute("negativeMarkValue"));
 			map.put("userLoginId", (String) request.getAttribute("userLoginId"));
 
-			String error = validateExam(map);
-			if (error != null) {
-				return Response.status(400).entity(ServiceUtil.returnError(error)).build();
-			}
 
 			Map<String, Object> result = dispatcher.runSync("updateExam", map);
 			return Response.status(201).entity(result).build();

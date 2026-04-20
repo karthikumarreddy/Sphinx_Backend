@@ -700,6 +700,10 @@ int totalQuestionsInTopic = (int) (totalQuestions * percentage) / 100;
 		}
 
 		try {
+			GenericValue exam=EntityQuery.use(delegator).from("InProgressParty").where("examId",examId).queryFirst();
+			if(!UtilValidate.isEmpty(exam)) {
+				return ServiceUtil.returnError("Can not delete the exam a user is attending the exam try again later ");
+			}
 
 			EntityCondition condition = EntityCondition.makeCondition("examId", EntityOperator.EQUALS, examId);
 

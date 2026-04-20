@@ -60,11 +60,6 @@ public class TopicResource {
 						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
 			}
 
-			if (UtilValidate.isEmpty(topicId)) {
-				return Response.status(400)
-						.entity(ServiceUtil.returnError("Smething went wrong while selecting the topic ")).build();
-			}
-
 			Map<String, Object> result = dispatcher.runSync("getTopicById", UtilMisc.toMap("topicId", topicId));
 			return Response.ok(result).build();
 		} catch (Exception e) {
@@ -87,19 +82,11 @@ public class TopicResource {
 
 			String topicId = (String) request.getAttribute("topicId");
 			String topicName = (String) request.getAttribute("topicName");
-			if (topicId == null || topicId.isEmpty()) {
-				return Response.status(400)
-						.entity(ServiceUtil.returnError("Something went wrong wile fetching the topics try later "))
-						.build();
-			}
-			if (UtilValidate.isEmpty(topicId) || UtilValidate.isEmpty(topicName)) {
-				return Response.status(400).entity(ServiceUtil.returnError("topicname cannot be empty ")).build();
-			}
 			Map<String, Object> input = new HashMap<String, Object>();
 			input.put("topicId", topicId);
 			input.put("topicName", topicName);
 
-			Map<String, Object> result = dispatcher.runSync("updateTopic", input);
+			Map<String, Object> result = dispatcher.runSync("updateTopicWrapper", input);
 			return Response.status(200).entity(result).build();
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
@@ -119,17 +106,16 @@ public class TopicResource {
 						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
 			}
 			String topicId = (String) request.getAttribute("topicId");
-			if (UtilValidate.isEmpty(topicId)) {
-				return Response.status(400).entity(ServiceUtil.returnError("topicId in empty ")).build();
-			}
 			Map<String, Object> input = new HashMap<String, Object>();
 			input.put("topicId", topicId);
-			Map<String, Object> result = dispatcher.runSync("deleteTopic", input);
+			Map<String, Object> result = dispatcher.runSync("deleteTopicWrapper", input);
+			if(ServiceUtil.isError(result)) {
+				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
+			}
 			return Response.status(200).entity(ServiceUtil.returnSuccess("Topic deleted sucessfully")).build();
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
-			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build(); // TODO: handle
-																									// exception
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build(); 
 		}
 	}
 
@@ -146,9 +132,6 @@ public class TopicResource {
 			}
 
 			String topicName = (String) request.getAttribute("topicName");
-			if (UtilValidate.isEmpty(topicName)) {
-				return Response.status(400).entity(ServiceUtil.returnError("Topic name is empty ")).build();
-			}
 
 			Map<String, Object> result = dispatcher.runSync("createTopicValidator",
 					UtilMisc.toMap("topicName", topicName));
@@ -179,6 +162,9 @@ public class TopicResource {
 						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
 			}
 			Map<String, Object> result = dispatcher.runSync("getAllTopicsCount", UtilMisc.toMap());
+			if(ServiceUtil.isError(result)) {
+				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
+			}
 			return Response.ok(result).build();
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);

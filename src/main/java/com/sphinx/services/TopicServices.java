@@ -3,6 +3,8 @@ package com.sphinx.services;
 import java.util.List;
 import java.util.Map;
 
+import javax.ws.rs.core.Response;
+
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
@@ -22,19 +24,18 @@ public class TopicServices {
 	private static final String MODULE = TopicServices.class.getName();
 	private static final String UNEXPECTED_ERROR_MSG = "Unexpected Error Occured! Try Again After Sometime!";
 
-
 	public static Map<String, ? extends Object> getAllTopic(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 		try {
-			
+
 			Delegator delegator = dctx.getDelegator();
 
 			if (UtilValidate.isEmpty(delegator)) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
-			
+
 			Map<String, Object> result = ServiceUtil.returnSuccess();
-			
+
 			List<GenericValue> topics = delegator.findAll("TopicMaster", false);
 			if (UtilValidate.isEmpty(topics)) {
 				return ServiceUtil.returnError("Cannot find the data ");
@@ -46,19 +47,19 @@ public class TopicServices {
 			return ServiceUtil.returnError(e.getMessage());
 		}
 	}
-	
+
 	public static Map<String, ? extends Object> getAllTopicsCount(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 		try {
-			
+
 			Delegator delegator = dctx.getDelegator();
 
 			if (UtilValidate.isEmpty(delegator)) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
-			
+
 			Map<String, Object> result = ServiceUtil.returnSuccess();
-			
+
 			List<GenericValue> topics = delegator.findAll("TopicMaster", false);
 			if (UtilValidate.isEmpty(topics)) {
 				return ServiceUtil.returnError("Cannot find the data ");
@@ -70,11 +71,9 @@ public class TopicServices {
 			return ServiceUtil.returnError(e.getMessage());
 		}
 	}
-	
-	
 
 	public static Map<String, Object> getTopicById(DispatchContext dctx, Map<String, Object> context) {
-		
+
 		try {
 
 			Delegator delegator = dctx.getDelegator();
@@ -83,7 +82,12 @@ public class TopicServices {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 			Map<String, Object> result = ServiceUtil.returnSuccess();
-			GenericValue topic = delegator.findOne("TopicMaster", false, Map.of("topicId", context.get("topicId")));
+			String topicId = (String) context.get("topicId");
+			if (UtilValidate.isEmpty(topicId)) {
+				return ServiceUtil.returnError("Topic Id is required");
+			}
+
+			GenericValue topic = delegator.findOne("TopicMaster", false, Map.of("topicId", topicId));
 			if (UtilValidate.isEmpty(topic)) {
 				return ServiceUtil.returnError("topic is empty");
 			}
@@ -105,6 +109,9 @@ public class TopicServices {
 			}
 
 			String topicName = context.get("topicName").toString().toUpperCase();
+			if (UtilValidate.isEmpty(topicName)) {
+				return ServiceUtil.returnError("Topic details are required ");
+			}
 			GenericValue isPresent = EntityQuery.use(delegator).from("TopicMaster")
 					.where(EntityCondition.makeCondition(EntityFunction.upperField("topicName"), EntityOperator.LIKE,
 							EntityFunction.upper("%" + topicName + "%")))
@@ -123,6 +130,59 @@ public class TopicServices {
 		} catch (GenericServiceException e) {
 			Debug.logError(e, MODULE);
 			return ServiceUtil.returnError("Unexpected Error Occured! Try Again sometime!");
+		}
+
+	}
+
+	public static Map<String, ? extends Object> updateTopicWrapper(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
+		try {
+			LocalDispatcher dispatcher = dctx.getDispatcher();
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
+			String topicId = (String) context.get("topicId");
+			String topicName = (String) context.get("topicName");
+
+			if (UtilValidate.isEmpty(topicId) || UtilValidate.isEmpty(topicName)) {
+				return ServiceUtil.returnError("Topic Details are invalid ");
+			}
+			if (UtilValidate.isEmpty(topicName)) {
+				return ServiceUtil.returnError("Topic Details are invalid ");
+			}
+			Map<String, Object> result = dispatcher.runSync("updateTopic", context);
+			if (ServiceUtil.isError(result)) {
+				return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
+			}
+			return result;
+
+		} catch (Exception e) {
+			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+		}
+
+	}
+
+	public static Map<String, ? extends Object> deleteTopicWrapper(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
+		try {
+			LocalDispatcher dispatcher = dctx.getDispatcher();
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
+			String topicId = (String) context.get("topicId");
+
+			if (UtilValidate.isEmpty(topicId)) {
+				return ServiceUtil.returnError("Topic Details are invalid ");
+			}
+
+			Map<String, Object> result = dispatcher.runSync("deleteTopic", context);
+			if (ServiceUtil.isError(result)) {
+				return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
+			}
+			return result;
+
+		} catch (Exception e) {
+			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 		}
 
 	}

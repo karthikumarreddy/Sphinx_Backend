@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.ws.rs.core.Response;
+
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
@@ -40,6 +42,92 @@ public class QuestionService {
 
 	private static final String MODULE = QuestionService.class.getName();
 	private static final String UNEXPECTED_ERROR_MSG = "Unexpected Error Occured! Try Again After Sometime!";
+	
+	private String validateQuestionData(Map<String, ? extends Object> context) {
+
+		String questionDetail = (String) context.get("questionDetail");
+		String optionA = (String) context.get("optionA");
+		String optionB = (String) context.get("optionB");
+		String optionC = (String) context.get("optionC");
+		String optionD = (String) context.get("optionD");
+		String answer = (String) context.get("answer");
+		String questionType = (String) context.get("questionType");
+		String difficultyLevel = (String) context.get("difficultyLevel");
+		String answerValue = (String) context.get("answerValue");
+		String topicId = (String) context.get("topicId");
+
+		if (UtilValidate.isEmpty(questionDetail)) {
+			return "Question detail is required";
+		}
+
+		if (UtilValidate.isEmpty(questionType)) {
+			return "Question type is required";
+		}
+
+		if (UtilValidate.isEmpty(difficultyLevel)) {
+			return "Difficulty level is required";
+		}
+
+		if (UtilValidate.isEmpty(topicId)) {
+			return "Invalid Topic, Choose a Valid one.";
+		}
+
+		// here we give the question types is based on the enum type (hard coded).
+
+		// Fill Ups or True/False question type
+		if (questionType.equals("FILL_UP") || questionType.equals("TRUE_FALSE")
+				|| questionType.equals("DETAILED_ANSWER")) {
+			if (UtilValidate.isEmpty(answerValue)) {
+				return "Answer value is mandatory for Fill Ups type questions.";
+			}
+		}
+
+		// Multiple, Single choice questions
+		if (questionType.equals("MULTIPLE_CHOICE") || questionType.equals("SINGLE_CHOICE")) {
+			if (UtilValidate.isEmpty(optionA)) {
+				return "Option A is mandatory";
+			}
+
+			if (UtilValidate.isEmpty(optionB)) {
+				return "Option B is mandatory";
+			}
+
+			if (UtilValidate.isEmpty(optionC)) {
+				return "Option C is mandatory";
+			}
+
+			if (UtilValidate.isEmpty(optionD)) {
+				return "Option D is mandatory";
+			}
+
+			if (UtilValidate.isEmpty(answer)) {
+				return "Answer is mandatory";
+			}
+
+			if (UtilValidate.isEmpty(context.get("numAnswers"))) {
+				return "Number of Answer is mandatory";
+			}
+
+			int numOfAnswers;
+			try {
+				numOfAnswers = (Integer) context.get("numAnswers");
+			} catch (ClassCastException e) {
+				return "Invalid Number of Answers";
+			}
+
+			if (questionType.equals("MULTIPLE_CHOICE") && numOfAnswers <= 0) {
+				return "Invalid Number of answers.";
+			}
+
+			if (questionType.equals("MULTIPLE_CHOICE")
+					&& (answer == null || answer.split(",").length != numOfAnswers)) {
+				return "Number of answers marked is invalid.";
+			}
+
+		}
+
+		return null;
+	}
 
 	// QUESTION SERVICE
 
@@ -313,7 +401,57 @@ public class QuestionService {
 		}
 
 	}
+	
+	public Map<String ,? extends Object> updateQuestionWrapper(DispatchContext dctx,
+			Map<String, ? extends Object> context){
+		try {
+			LocalDispatcher dispatcher = dctx.getDispatcher();
 
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
+			String errorMsg = validateQuestionData(context);
+
+			if (UtilValidate.isNotEmpty(errorMsg)) {
+				return ServiceUtil.returnError(errorMsg);
+			}
+			Map<String, Object> result;
+			result = dispatcher.runSync("updateQuestion", context);
+			if(ServiceUtil.isError(result)) {
+				return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
+			}
+			return ServiceUtil.returnSuccess(result.toString());
+		}catch (Exception e) {
+			return  ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+		}
+		
+	}
+
+	public Map<String ,? extends Object> createQuestionWrapper(DispatchContext dctx,
+			Map<String, ? extends Object> context){
+		try {
+			LocalDispatcher dispatcher = dctx.getDispatcher();
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
+			String errorMsg = validateQuestionData(context);
+
+			if (UtilValidate.isNotEmpty(errorMsg)) {
+				return ServiceUtil.returnError(errorMsg);
+			}
+			Map<String, Object> result;
+			result = dispatcher.runSync("createQuestion", context);
+			if(ServiceUtil.isError(result)) {
+				return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
+			}
+			return ServiceUtil.returnSuccess(result.toString());
+		}catch (Exception e) {
+			return  ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+		}
+		
+	}
+	
 	public Map<String, ? extends Object> deleteQuestionsWrapper(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 

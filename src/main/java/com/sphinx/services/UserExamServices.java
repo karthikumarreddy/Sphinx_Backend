@@ -1,6 +1,9 @@
+
 package com.sphinx.services;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -52,6 +55,24 @@ public class UserExamServices {
 
 			GenericValue exam = EntityQuery.use(delegator).from("PartyExamRelationship")
 					.where("partyId", partyId, "examId", examId).queryOne();
+			
+			int noOfAttempts=exam.getInteger("noOfAttempts");
+			int allowedAttempts=exam.getInteger("allowedAttempts");
+			
+			if(!(noOfAttempts<=allowedAttempts)) {
+				return ServiceUtil.returnError("can not attend te exam because maximum attempts reached");
+			}
+		
+			Timestamp thruDateTs = ((GenericValue) context).getTimestamp("thruDate");
+			LocalDate now = LocalDate.now();
+
+			if (thruDateTs != null) {
+			    LocalDate thruDate = thruDateTs.toLocalDateTime().toLocalDate();
+
+			    if (now.isAfter(thruDate)) {
+			        return ServiceUtil.returnError("Exam window has closed");
+			    }
+			}
 
 			if (UtilValidate.isEmpty(exam)) {
 				return ServiceUtil.returnError("You are Not Assigned to the Exam!");
