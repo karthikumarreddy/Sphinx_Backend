@@ -18,6 +18,8 @@ import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericValue;
+import org.apache.ofbiz.entity.condition.EntityCondition;
+import org.apache.ofbiz.entity.condition.EntityOperator;
 import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
@@ -60,8 +62,11 @@ public class AuthenticationResource {
 				if(UtilValidate.isNotEmpty(session)) {
 					GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
 					if(UtilValidate.isNotEmpty(userLogin)) {
+						EntityCondition condition1 = EntityCondition.makeCondition("partyId", EntityOperator.EQUALS,
+										userLogin.getString("partyId"));
+						EntityCondition condition2 = EntityCondition.makeCondition("roleTypeId", EntityOperator.NOT_EQUAL, "_NA_");
 						GenericValue userRole = EntityQuery.use(delegator).from("UserRoleWithDesc")
-										.where("partyId", userLogin.getString("partyId")).queryFirst();
+										.where(condition1, condition2).queryFirst();
 						session.setAttribute("userRole", userRole);
 						result.put("userRole", userRole);
 					}
@@ -90,6 +95,7 @@ public class AuthenticationResource {
 	public Response signupUser(@Context HttpServletRequest request) {
 		try {
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+			HttpSession session = request.getSession(false);
 
 			if (UtilValidate.isEmpty(dispatcher)) {
 				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -126,7 +132,7 @@ public class AuthenticationResource {
 			Map<String, Object> result = dispatcher.runSync("signupUser",
 							UtilMisc.toMap("userName", userName, "firstName", firstName, "lastName", lastName, "email", email, "password",
 											password, "confirmPassword", confirmPassword, "role", role, "userLogin",
-											request.getSession().getAttribute("userLogin")));
+											session.getAttribute("userLogin")));
 			if (result.containsKey("responseMessage") && "error".equalsIgnoreCase((String) result.get("responseMessage"))) {
 				return Response.status(Response.Status.BAD_REQUEST).entity(result).build();
 			}

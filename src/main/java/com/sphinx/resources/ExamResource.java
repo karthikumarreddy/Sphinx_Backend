@@ -144,7 +144,19 @@ public class ExamResource {
 			
 			Map<String, String> map = new HashMap<>();
 
-			map.put("partyId", (String) request.getAttribute("partyId"));
+			HttpSession session = request.getSession(false);
+
+			String partyId = (String) request.getParameter("partyId");
+			if (UtilValidate.isEmpty(partyId)) {
+				if (UtilValidate.isNotEmpty(session)) {
+					GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
+					if (UtilValidate.isNotEmpty(userLogin)) {
+						partyId = userLogin.getString("partyId");
+					}
+				}
+			}
+
+			map.put("partyId", partyId);
 			map.put("examId", (String) request.getAttribute("examId"));
 			map.put("examName", (String) request.getAttribute("examName"));
 			map.put("description", (String) request.getAttribute("description"));

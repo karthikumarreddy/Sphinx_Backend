@@ -19,11 +19,12 @@
     <!-- ======================== USER SERVICES =========================== -->
     <!-- ====================================================================== -->
     
-    <!-- <service name="loginUser" engine="java" location="com.sphinx.services.UserServices" invoke="loginUser">
+    <!-- 
+    <service name="loginUser" engine="java" location="com.sphinx.services.UserServices" invoke="loginUser">
         <attribute name="userName" mode="IN" type="String" />
         <attribute name="password" mode="IN" type="String" />
         <attribute name="partyId" mode="OUT" type="String"></attribute>
-    </service>
+    </service>  -->
     
     <service name="createParty" engine="entity-auto" default-entity-name="Party" invoke="create" auth="false">
     	<attribute name="partyId" mode="INOUT" type="String" optional="false"/>
@@ -38,6 +39,7 @@
     	<attribute name="lastName" mode="IN" type="String" optional="false" />
     </service>
     
+     <!--
 	<service name="createUserLogin" engine="entity-auto" default-entity-name="UserLogin" invoke="create" auth="false">
    		<attribute name="userLoginId" mode="INOUT" type="String" optional="false" />
    		<attribute name="currentPassword" mode="IN" type="String" optional="false" />
@@ -46,11 +48,15 @@
    		<attribute name="enabled" mode="IN" type="String" optional="false"/>
    	</service> 
    	
+   	-->
+   	
    	<service name="createPartyRole" engine="entity-auto" default-entity-name="PartyRole" invoke="create" auth="false">
    		<attribute name="partyId" mode="IN" type="String" optional="false" />
    		<attribute name="roleTypeId" mode="IN" type="String" optional="false" />
    		<attribute name="statusId" mode="IN" type="String" optional="false"/>
    	</service>
+   	
+   
    	
    	<service name="createContactMech" engine="entity-auto" default-entity-name="ContactMech" invoke="create" auth="false">
    		<attribute name="contactMechId" mode="INOUT" type="String" optional="true" />
@@ -63,7 +69,7 @@
    		<attribute name="contactMechId" mode="IN" type="String" optional="false" />
    		<attribute name="fromDate" mode="IN" type="Timestamp" optional="false" />
    	</service>
-   	 -->
+   	 
     
     <service name="signupUser" engine="java" location="com.sphinx.services.UserServices" invoke="signupUser">
         <attribute name="userName" mode="IN" type="String" optional="true"/>

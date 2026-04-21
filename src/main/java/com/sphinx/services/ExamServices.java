@@ -559,13 +559,16 @@ public class ExamServices {
 				
 				List<GenericValue> topicWiseQuestions = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId).queryList();
 
+				int totalQuestionsInTopicInDb = topicWiseQuestions.size();
+
 				SecureRandom rand = new SecureRandom();
 				 // get random number.
 				int randomNumber;
 				Set<Integer> questionIdx = new HashSet<Integer>();
 				// generate unique question index with SET.
-				for (int i = 0; i > 0; i++) {
-					randomNumber = rand.nextInt(totalQuestionsInTopic);
+				for (int i = 1; i > 0; i++) {
+					// randomNumber = rand.nextInt(totalQuestionsInTopic);
+					randomNumber = (int) (Math.random() * totalQuestionsInTopicInDb) + 1; // get random number.
 					questionIdx.add(randomNumber);
 					if (questionIdx.size() == totalQuestionsInTopic) {
 						break;

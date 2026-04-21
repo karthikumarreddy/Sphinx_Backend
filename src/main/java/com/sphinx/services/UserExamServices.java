@@ -60,7 +60,7 @@ public class UserExamServices {
 			long allowedAttempts=exam.getLong("allowedAttempts");
 			
 			if(!(noOfAttempts<=allowedAttempts)) {
-				return ServiceUtil.returnError("can not attend te exam because maximum attempts reached");
+				return ServiceUtil.returnError("Maximum attempts reached! Cannot Proceed further!");
 			}
 		
 			Timestamp thruDateTs = exam.getTimestamp("thruDate");
@@ -87,17 +87,33 @@ public class UserExamServices {
 			}
 
 			GenericValue isExamLaunched = EntityQuery.use(delegator).from("InProgressParty")
-					.where("partyId", partyId, "examId", examId).queryOne();
-			if(!UtilValidate.isEmpty(isExamLaunched)) {
-				return ServiceUtil.returnError("Exam is already started can not start again");
+							.where("partyId", partyId, "examId", examId).queryOne();
+
+			if (UtilValidate.isEmpty(isExamLaunched)) {
+				isExamLaunched = delegator.makeValue("InProgressParty");
+				isExamLaunched.set("examId", examId);
+				isExamLaunched.set("partyId", partyId);
+				isExamLaunched.set("totalAnswered", totalAnswered);
+				isExamLaunched.set("totalRemaining", totalRemaining);
+				isExamLaunched.set("isExamActive", 1L);
+				isExamLaunched.set("currentSplitAttempt", 0L);
+				delegator.create(isExamLaunched);
+			} else {
+				isExamLaunched.set("isExamActive", 1L);
+				delegator.store(isExamLaunched);
 			}
 
-			Map<String, Object> result = dispatcher.runSync("startExam", context);
-			if (ServiceUtil.isError(result)) {
-				return result;
-			}
 
-			result = dispatcher.runSync("generateQuestionsForExam", context);
+			// if(!UtilValidate.isEmpty(isExamLaunched)) {
+			// return ServiceUtil.returnError("Exam is already started can not start again");
+			// }
+
+			// Map<String, Object> result = dispatcher.runSync("startExam", context);
+			// if (ServiceUtil.isError(result)) {
+			// return result;
+			// }
+
+			Map<String, Object> result = dispatcher.runSync("generateQuestionsForExam", context);
 
 			if (ServiceUtil.isError(result)) {
 				return result;
@@ -106,6 +122,7 @@ public class UserExamServices {
 			return result;
 
 		} catch (Exception e) {
+			Debug.logError(e, MODULE);
 			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 		}
 	}
