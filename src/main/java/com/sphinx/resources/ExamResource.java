@@ -34,8 +34,6 @@ public class ExamResource {
 
 	private static final String MODULE = ExamResource.class.getName();
 
-	
-
 	// exam crud
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
@@ -49,7 +47,31 @@ public class ExamResource {
 			}
 
 			Map<String, Object> result = dispatcher.runSync("getExam", UtilMisc.toMap());
-			if(ServiceUtil.isError(result)) {
+			if (ServiceUtil.isError(result)) {
+				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
+			}
+			return Response.status(201).entity(result).build();
+		} catch (Exception e) {
+			Debug.logError(e, MODULE);
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
+		}
+	}
+
+	@GET
+	@Path("/search-exam")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getExamByName(@Context HttpServletRequest request) {
+		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			}
+
+			Map<String, Object> result = dispatcher.runSync("getExamByName",
+					UtilMisc.toMap("examName", request.getParameter("examName")));
+			if (ServiceUtil.isError(result)) {
 				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
 			}
 			return Response.status(201).entity(result).build();
@@ -115,10 +137,8 @@ public class ExamResource {
 			map.put("negativeMarkValue", (String) request.getAttribute("negativeMarkValue"));
 			map.put("userLoginId", (String) request.getAttribute("userLoginId"));
 
-			
-
 			Map<String, Object> result = dispatcher.runSync("createExamWrapper", map);
-			if(ServiceUtil.isError(result)) {
+			if (ServiceUtil.isError(result)) {
 				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
 			}
 			return Response.status(201).entity(result).build();
@@ -141,7 +161,7 @@ public class ExamResource {
 				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
 						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
 			}
-			
+
 			Map<String, String> map = new HashMap<>();
 
 			map.put("partyId", (String) request.getAttribute("partyId"));
@@ -156,7 +176,6 @@ public class ExamResource {
 			map.put("allowNegativeMarks", (String) request.getAttribute("allowNegativeMarks"));
 			map.put("negativeMarkValue", (String) request.getAttribute("negativeMarkValue"));
 			map.put("userLoginId", (String) request.getAttribute("userLoginId"));
-
 
 			Map<String, Object> result = dispatcher.runSync("updateExam", map);
 			return Response.status(201).entity(result).build();
@@ -241,14 +260,16 @@ public class ExamResource {
 			input.put("percentage", percentage);
 			input.put("topicPassPercentage", topicPassPercentage);
 			Delegator delegator = (Delegator) request.getAttribute("delegator");
-			GenericValue exam = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId).select("noOfQuestions").queryFirst();
+			GenericValue exam = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId)
+					.select("noOfQuestions").queryFirst();
 			long totalQuestions = exam.getLong("noOfQuestions");
 			int totalQuestionsInTopic = (int) (totalQuestions * Integer.valueOf(percentage)) / 100;
-			long questionCount = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId).maxRows(totalQuestionsInTopic)
-							.queryCount();
+			long questionCount = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId)
+					.maxRows(totalQuestionsInTopic).queryCount();
 			if (totalQuestionsInTopic != questionCount) {
 				return Response.status(400).entity(ServiceUtil.returnError(totalQuestionsInTopic - questionCount
-								+ " question needed for the Topic to add in Assessment! Please Add Questions to the Topic!")).build();
+						+ " question needed for the Topic to add in Assessment! Please Add Questions to the Topic!"))
+						.build();
 			}
 			Map<String, Object> result = dispatcher.runSync("addExamTopics", input);
 			return Response.status(201).entity(result).build();
@@ -605,7 +626,6 @@ public class ExamResource {
 
 	}
 
-
 	@POST
 	@Path("/getAllExamsByAdmin")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -629,8 +649,8 @@ public class ExamResource {
 
 			if (UtilValidate.isEmpty(partyId)) {
 				Debug.logError("Party Id Doesn't comes from frontend, partyId => " + partyId, MODULE);
-				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError("Invalid Admin Details!"))
-						.build();
+				return Response.status(Response.Status.BAD_REQUEST)
+						.entity(ServiceUtil.returnError("Invalid Admin Details!")).build();
 			}
 			Map<String, Object> result = dispatcher.runSync("getAllExamsByAdmin", UtilMisc.toMap("partyId", partyId));
 
@@ -676,7 +696,5 @@ public class ExamResource {
 
 		}
 	}
-
-
 
 }

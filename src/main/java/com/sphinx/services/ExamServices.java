@@ -49,6 +49,33 @@ public class ExamServices {
 
 	}
 
+	public static Map<String, ? extends Object> getExamByName(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
+		try {
+			String examName = (String) context.get("examName");
+			if (UtilValidate.isEmpty(examName)) {
+				return ServiceUtil.returnError("Exam is not available ");
+			}
+			Map<String, Object> result = ServiceUtil.returnSuccess();
+			Delegator delegator = dctx.getDelegator();
+
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
+			List<GenericValue> examList = EntityQuery.use(delegator).from("ExamMaster")
+					.where(EntityCondition.makeCondition("examName", EntityOperator.LIKE, "%" + examName + "% "))
+					.queryList();
+			if (UtilValidate.isEmpty(examList)) {
+				return ServiceUtil.returnError("no exam created to display");
+			}
+			result.put("examList", examList);
+			return result;
+		} catch (Exception e) {
+			return ServiceUtil.returnError("Something went wrong try again later ");
+		}
+
+	}
+
 	public static Map<String, Object> createExam(DispatchContext dctx, Map<String, Object> context) {
 		try {
 			Delegator delegator = dctx.getDelegator();
@@ -314,7 +341,6 @@ public class ExamServices {
 
 	}
 
-
 	public static Map<String, Object> removeAssignedUserFromExam(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 
@@ -397,6 +423,7 @@ public class ExamServices {
 			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 		}
 	}
+
 	public static Map<String, ? extends Object> adminExamListCount(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 		try {
@@ -426,7 +453,7 @@ public class ExamServices {
 			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 		}
 	}
-	
+
 	public static Map<String, ? extends Object> updateAssignedUserWrapper(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 
@@ -498,9 +525,8 @@ public class ExamServices {
 
 	}
 
-
-
-	public static Map<String, ? extends Object> generateQuestionsForExam(DispatchContext dctx, Map<String, ? extends Object> contaxt) {
+	public static Map<String, ? extends Object> generateQuestionsForExam(DispatchContext dctx,
+			Map<String, ? extends Object> contaxt) {
 		try {
 			Delegator delegator = dctx.getDelegator();
 
@@ -524,22 +550,24 @@ public class ExamServices {
 			List<GenericValue> examQuestions = new ArrayList<>();
 
 			// find all topics for the exam.
-			List<GenericValue> examTopics = EntityQuery.use(delegator).from("ExamTopicDetails").where("examId", examId).queryList();
+			List<GenericValue> examTopics = EntityQuery.use(delegator).from("ExamTopicDetails").where("examId", examId)
+					.queryList();
 
 			if (UtilValidate.isEmpty(examTopics)) {
 				return ServiceUtil.returnError("No Topics Assigend for this Exam!");
 			}
 
-			
-			GenericValue examRecord = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId).queryFirst();
-			
+			GenericValue examRecord = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId)
+					.queryFirst();
+
 			long totalQuestions = examRecord.getLong("noOfQuestions");
 
 			// Get all questions from questionMaster and put in the QuestionBankMaster
 			for (GenericValue examTopic : examTopics) {
 				String topicId = examTopic.getString("topicId");
 				if (UtilValidate.isEmpty(topicId)) {
-					Debug.logError("Topic Id is Invalid from DB topicId => " + topicId + ", Exam Id => " + examId, MODULE);
+					Debug.logError("Topic Id is Invalid from DB topicId => " + topicId + ", Exam Id => " + examId,
+							MODULE);
 					continue;
 				}
 				// total percentage of questions.
@@ -548,12 +576,12 @@ public class ExamServices {
 //				long totalRecords = delegator.findCountByCondition("QuestionMaster",
 //								EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId), null, null);
 
-int totalQuestionsInTopic = (int) (totalQuestions * percentage) / 100;
+				int totalQuestionsInTopic = (int) (totalQuestions * percentage) / 100;
 
 // totalQuestions = totalQuestions + totalQuestionsInTopic;
 
-				List<GenericValue> topicWiseQuestions = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId)
-								.maxRows(totalQuestionsInTopic).queryList();
+				List<GenericValue> topicWiseQuestions = EntityQuery.use(delegator).from("QuestionMaster")
+						.where("topicId", topicId).maxRows(totalQuestionsInTopic).queryList();
 
 				// insert all question in the question Bank Master.
 				for (GenericValue question : topicWiseQuestions) {
@@ -592,7 +620,6 @@ int totalQuestionsInTopic = (int) (totalQuestions * percentage) / 100;
 		}
 	}
 
-
 	public static Map<String, ? extends Object> setupExam(DispatchContext dctx, Map<String, ? extends Object> context) {
 		try {
 			Delegator delegator = dctx.getDelegator();
@@ -617,27 +644,28 @@ int totalQuestionsInTopic = (int) (totalQuestions * percentage) / 100;
 
 			delegator.store(examRecord);
 
-			GenericValue examSetupAlready = EntityQuery.use(delegator).from("ExamSetupDetails").where("examId", examId).queryFirst();
+			GenericValue examSetupAlready = EntityQuery.use(delegator).from("ExamSetupDetails").where("examId", examId)
+					.queryFirst();
 
 			if (UtilValidate.isNotEmpty(examSetupAlready)) {
 				return ServiceUtil.returnError("This assessment has already started. You cannot start it again.");
 			}
 
-			List<GenericValue> assignedTopics = EntityQuery.use(delegator).from("ExamTopicDetails").where("examId", examId).queryList();
+			List<GenericValue> assignedTopics = EntityQuery.use(delegator).from("ExamTopicDetails")
+					.where("examId", examId).queryList();
 
 			if (UtilValidate.isEmpty(assignedTopics)) {
 				return ServiceUtil.returnError(
-								"No topics have been assigned to this assessment. Please assign at least one topic to continue.");
+						"No topics have been assigned to this assessment. Please assign at least one topic to continue.");
 			}
 
-			List<GenericValue> assignedUsersList = EntityQuery.use(delegator).from("PartyExamRelationship").where("examId", examId)
-							.queryList();
+			List<GenericValue> assignedUsersList = EntityQuery.use(delegator).from("PartyExamRelationship")
+					.where("examId", examId).queryList();
 
 			if (UtilValidate.isEmpty(assignedUsersList)) {
 				return ServiceUtil.returnError(
-								"No users have been assigned to this assessment. Please assign at least one user to continue.");
+						"No users have been assigned to this assessment. Please assign at least one user to continue.");
 			}
-
 
 			// ExamSetupDetails
 
@@ -651,26 +679,27 @@ int totalQuestionsInTopic = (int) (totalQuestions * percentage) / 100;
 
 			for (GenericValue assignedUser : assignedUsersList) {
 				if (UtilValidate.isNotEmpty(assignedUser)) {
-					
+
 					LocalDateTime now = LocalDateTime.now();
 					assignedUser.set("fromDate", Timestamp.valueOf(now));
 					long timeoutDays = assignedUser.getLong("timeoutDays");
 					int timeoutDaysInt = (int) timeoutDays;
-					if(timeoutDays < 0 ) {
+					if (timeoutDays < 0) {
 						return ServiceUtil.returnError("Invalid Timeout Days");
 					}
-					assignedUser.set("thruDate", UtilDateTime.addDaysToTimestamp(Timestamp.valueOf(now), timeoutDaysInt));
-					
+					assignedUser.set("thruDate",
+							UtilDateTime.addDaysToTimestamp(Timestamp.valueOf(now), timeoutDaysInt));
+
 					delegator.store(assignedUser);
-					
+
 					dispatcher.runSync("generateSecurityCode",
-									UtilMisc.toMap("partyId", assignedUser.getString("partyId"), "examId", examId));
+							UtilMisc.toMap("partyId", assignedUser.getString("partyId"), "examId", examId));
 
 				}
 			}
 
 			Map<String, Object> serviceResult = dctx.getDispatcher().runSync("sendExamNotification",
-							UtilMisc.toMap("examRecord", examRecord));
+					UtilMisc.toMap("examRecord", examRecord));
 
 			return serviceResult;
 
@@ -680,7 +709,8 @@ int totalQuestionsInTopic = (int) (totalQuestions * percentage) / 100;
 		}
 	}
 
-	public static Map<String, ? extends Object> deleteExamWrapper(DispatchContext dctx, Map<String, ? extends Object> context) {
+	public static Map<String, ? extends Object> deleteExamWrapper(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
 
 		LocalDispatcher dispatcher = (LocalDispatcher) dctx.getDispatcher();
 
@@ -700,8 +730,8 @@ int totalQuestionsInTopic = (int) (totalQuestions * percentage) / 100;
 		}
 
 		try {
-			GenericValue exam=EntityQuery.use(delegator).from("InProgressParty").where("examId",examId).queryFirst();
-			if(!UtilValidate.isEmpty(exam)) {
+			GenericValue exam = EntityQuery.use(delegator).from("InProgressParty").where("examId", examId).queryFirst();
+			if (!UtilValidate.isEmpty(exam)) {
 				return ServiceUtil.returnError("Can not delete the exam a user is attending the exam try again later ");
 			}
 
@@ -718,10 +748,12 @@ int totalQuestionsInTopic = (int) (totalQuestions * percentage) / 100;
 			delegator.removeByCondition("ExamSetupDetails", condition);
 			delegator.removeByCondition("QuestionBankMaster", condition);
 
-			List<GenericValue> examTopics = delegator.findByAnd("ExamTopicDetails", UtilMisc.toMap("examId", examId), null, false);
+			List<GenericValue> examTopics = delegator.findByAnd("ExamTopicDetails", UtilMisc.toMap("examId", examId),
+					null, false);
 
 			for (GenericValue examTopic : examTopics) {
-				dispatcher.runSync("deleteExamTopics", UtilMisc.toMap("examId", examId, "topicId", examTopic.getString("topicId")));
+				dispatcher.runSync("deleteExamTopics",
+						UtilMisc.toMap("examId", examId, "topicId", examTopic.getString("topicId")));
 			}
 
 			dispatcher.runSync("deleteExam", UtilMisc.toMap("examId", examId));

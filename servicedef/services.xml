@@ -314,6 +314,11 @@
     <attribute name="examList" type="List" mode="OUT" optional="false" />
     
     </service>
+    <service name="getExamByName" engine="java" location="com.sphinx.services.ExamServices" invoke="getExamByName">
+    <attribute name="examName" mode="IN" type="String"/>
+    <attribute name="examList" type="List" mode="OUT" optional="false" />
+    
+    </service>
     
 
  <service name="getExamById" engine="java"  location="com.sphinx.services.ExamTopicServices"  invoke="getExamById" >
@@ -580,6 +585,20 @@
     	<attribute name="examId" mode="IN" type="String"/>
     </service>
 
+
+<service name="downloadExamCertificate"
+         engine="java"
+         location="com.sphinx.services.CertificateServices"
+         invoke="downloadExamCertificate" >
+
+
+    <attribute name="examId" type="String" mode="IN" optional="false"/>
+    <attribute name="partyId" type="String" mode="IN" optional="false"/>
+
+    <attribute name="pdfBytes" type="byte[]" mode="OUT"/>
+    <attribute name="filename" type="String" mode="OUT"/>
+
+</service>
 
 	
 </services>
