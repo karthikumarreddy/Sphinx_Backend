@@ -246,7 +246,7 @@ public class ExamResource {
 			int totalQuestionsInTopic = (int) (totalQuestions * Integer.valueOf(percentage)) / 100;
 			long questionCount = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId).maxRows(totalQuestionsInTopic)
 							.queryCount();
-			if (totalQuestionsInTopic != questionCount) {
+			if (totalQuestionsInTopic > questionCount) {
 				return Response.status(400).entity(ServiceUtil.returnError(totalQuestionsInTopic - questionCount
 								+ " question needed for the Topic to add in Assessment! Please Add Questions to the Topic!")).build();
 			}

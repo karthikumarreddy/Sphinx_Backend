@@ -69,7 +69,7 @@ public class AuthenticationResource {
 				
 				return Response.status(200).entity(result).build();
 			}
-			Map<String, Object> result = ServiceUtil.returnError((String) request.getAttribute("_ERROR_MESSAGE_"));
+			Map<String, Object> result = ServiceUtil.returnError("Invalid Credentials!");
 			// if (ServiceUtil.isError(result)) {
 				return Response.status(400).entity(result).build();
 			// }

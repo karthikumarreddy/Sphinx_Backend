@@ -56,14 +56,14 @@ public class UserExamServices {
 			GenericValue exam = EntityQuery.use(delegator).from("PartyExamRelationship")
 					.where("partyId", partyId, "examId", examId).queryOne();
 			
-			int noOfAttempts=exam.getInteger("noOfAttempts");
-			int allowedAttempts=exam.getInteger("allowedAttempts");
+			long noOfAttempts = exam.getLong("noOfAttempts");
+			long allowedAttempts=exam.getLong("allowedAttempts");
 			
 			if(!(noOfAttempts<=allowedAttempts)) {
 				return ServiceUtil.returnError("can not attend te exam because maximum attempts reached");
 			}
 		
-			Timestamp thruDateTs = ((GenericValue) context).getTimestamp("thruDate");
+			Timestamp thruDateTs = exam.getTimestamp("thruDate");
 			LocalDate now = LocalDate.now();
 
 			if (thruDateTs != null) {
@@ -528,7 +528,7 @@ public class UserExamServices {
 
 		String partyId = (String) context.get("partyId");
 		String examId = (String) context.get("examId");
-		Integer attemptNo = (Integer) context.get("attemptNo");
+		long attemptNo = (Integer) context.get("attemptNo");
 		
 		if (UtilValidate.isEmpty(partyId)) {
 			return ServiceUtil.returnError("Invalid User Details!");
@@ -548,7 +548,7 @@ public class UserExamServices {
 			}
 			
 			List<GenericValue> detailedPartyPerf = EntityQuery.use(delegator).from("DetailedPartyPerformance")
-							.where("perfomanceId", partyPerf.getLong("perfomanceId")).queryList();
+							.where("performanceId", partyPerf.getLong("performanceId")).queryList();
 
 			Map<String, Object> result = ServiceUtil.returnSuccess("Assessment Report!");
 

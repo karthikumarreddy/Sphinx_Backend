@@ -1,10 +1,12 @@
 package com.sphinx.services;
 
+import java.security.SecureRandom;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilDateTime;
@@ -521,7 +523,7 @@ public class ExamServices {
 				return ServiceUtil.returnError("Invalid User Details!");
 			}
 
-			List<GenericValue> examQuestions = new ArrayList<>();
+//			List<GenericValue> examQuestions = new ArrayList<>();
 
 			// find all topics for the exam.
 			List<GenericValue> examTopics = EntityQuery.use(delegator).from("ExamTopicDetails").where("examId", examId).queryList();
@@ -545,18 +547,33 @@ public class ExamServices {
 				// total percentage of questions.
 				Long percentage = examTopic.getLong("percentage");
 
-//				long totalRecords = delegator.findCountByCondition("QuestionMaster",
-//								EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId), null, null);
+				//				long totalRecords = delegator.findCountByCondition("QuestionMaster",
+				//								EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId), null, null);
 
-int totalQuestionsInTopic = (int) (totalQuestions * percentage) / 100;
+				int totalQuestionsInTopic = (int) (totalQuestions * percentage) / 100;
 
-// totalQuestions = totalQuestions + totalQuestionsInTopic;
+				// totalQuestions = totalQuestions + totalQuestionsInTopic;
 
-				List<GenericValue> topicWiseQuestions = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId)
-								.maxRows(totalQuestionsInTopic).queryList();
+				//				List<GenericValue> topicWiseQuestions = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId)
+				//								.maxRows(totalQuestionsInTopic).queryList();
+				
+				List<GenericValue> topicWiseQuestions = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId).queryList();
 
-				// insert all question in the question Bank Master.
-				for (GenericValue question : topicWiseQuestions) {
+				SecureRandom rand = new SecureRandom();
+				 // get random number.
+				int randomNumber;
+				Set<Integer> questionIdx = new HashSet<Integer>();
+				// generate unique question index with SET.
+				for (int i = 0; i > 0; i++) {
+					randomNumber = rand.nextInt(totalQuestionsInTopic);
+					questionIdx.add(randomNumber);
+					if (questionIdx.size() == totalQuestionsInTopic) {
+						break;
+					}
+				}
+				// add to question bank master;
+				for (int i : questionIdx) {
+					GenericValue question = topicWiseQuestions.get(i);
 					GenericValue questionBank = delegator.makeValue("QuestionBankMaster");
 					questionBank.set("qId", question.getString("questionId"));
 					questionBank.set("examId", examId);
@@ -577,8 +594,26 @@ int totalQuestionsInTopic = (int) (totalQuestions * percentage) / 100;
 
 					delegator.create(questionBank);
 				}
-
-				examQuestions.addAll(topicWiseQuestions);
+				
+//				topicWiseQuestions
+				
+				// insert all question in the question Bank Master.
+				/*
+				 * for (GenericValue question : topicWiseQuestions) { GenericValue questionBank = delegator.makeValue("QuestionBankMaster");
+				 * questionBank.set("qId", question.getString("questionId")); questionBank.set("examId", examId);
+				 * questionBank.set("partyId", partyId); questionBank.set("topicId", question.get("topicId"));
+				 * questionBank.set("questionDetail", question.get("questionDetail")); questionBank.set("optionA", question.get("optionA"));
+				 * questionBank.set("optionB", question.get("optionB")); questionBank.set("optionC", question.get("optionC"));
+				 * questionBank.set("optionD", question.get("optionD")); questionBank.set("optionE", question.get("optionE"));
+				 * questionBank.set("answer", question.get("answer")); questionBank.set("numAnswers", (Long) question.get("numAnswers"));
+				 * questionBank.set("questionType", question.get("questionType")); questionBank.set("difficultyLevel",
+				 * question.get("difficultyLevel")); questionBank.set("answerValue", question.get("answerValue"));
+				 * questionBank.set("negativeMarkValue", 0);
+				 * 
+				 * delegator.create(questionBank); }
+				 * 
+				 * examQuestions.addAll(topicWiseQuestions);
+				 */
 
 			}
 

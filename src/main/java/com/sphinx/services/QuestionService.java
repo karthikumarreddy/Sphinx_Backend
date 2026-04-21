@@ -10,8 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.ws.rs.core.Response;
-
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
@@ -110,8 +108,9 @@ public class QuestionService {
 
 			int numOfAnswers;
 			try {
-				numOfAnswers = (Integer) context.get("numAnswers");
-			} catch (ClassCastException e) {
+				// numOfAnswers = (Integer) context.get("numAnswers");
+				numOfAnswers = Integer.valueOf((String) context.get("numAnswers"));
+			} catch (ClassCastException | NumberFormatException e) {
 				return "Invalid Number of Answers";
 			}
 

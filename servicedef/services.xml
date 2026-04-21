@@ -561,7 +561,7 @@
     	<attribute name="examId" mode="IN" type="String"/>
     	<attribute name="attemptNo" mode="IN" type="Integer"/>
     	
-    	<attribute name="data" mode="IN" type="Map"/>
+    	<attribute name="data" mode="OUT" type="Map"/>
     </service>
     
     <!-- ====================================================================== -->
