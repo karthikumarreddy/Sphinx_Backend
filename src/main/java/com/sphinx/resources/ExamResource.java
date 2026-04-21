@@ -70,7 +70,7 @@ public class ExamResource {
 			}
 
 			Map<String, Object> result = dispatcher.runSync("getExamByName",
-					UtilMisc.toMap("examName", request.getParameter("examName")));
+					UtilMisc.toMap("examName",(String) request.getParameter("examName")));
 			if (ServiceUtil.isError(result)) {
 				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
 			}
@@ -125,7 +125,6 @@ public class ExamResource {
 				String partyId = (String) userLogin.get("partyId");
 				map.put("partyId", partyId);
 			}
-
 			map.put("examName", (String) request.getAttribute("examName"));
 			map.put("description", (String) request.getAttribute("description"));
 			map.put("noOfQuestions", (String) request.getAttribute("noOfQuestions"));

@@ -65,7 +65,7 @@ public class ExamServices {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 			List<GenericValue> examList = EntityQuery.use(delegator).from("ExamMaster")
-					.where(EntityCondition.makeCondition("examName", EntityOperator.LIKE, "%" + examName + "% "))
+					.where(EntityCondition.makeCondition("examName", EntityOperator.LIKE, "%" +examName+ "%"))
 					.queryList();
 			if (UtilValidate.isEmpty(examList)) {
 				return ServiceUtil.returnError("no exam created to display");
