@@ -1,5 +1,7 @@
 package com.sphinx.services;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -16,6 +18,7 @@ import org.apache.ofbiz.entity.transaction.TransactionUtil;
 import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
+import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
 import com.sphinx.util.RandomPasswordGenerator;
@@ -136,6 +139,8 @@ public class UserServices {
 			}
 
 			Map<String, Object> result = ServiceUtil.returnSuccess();
+
+			GenericValue userLogin = (GenericValue) context.get("userLogin");
 
 			String userName = (String) context.get("userName");
 			String firstName = (String) context.get("firstName");
@@ -265,6 +270,13 @@ public class UserServices {
 				return handleError(serviceResult);
 			}
 
+			/*
+			 * // =========================== // Add user to Security Group // ===========================
+			 * 
+			 * // addUserLoginToSecurityGroup serviceResult = addUserLoginToSecurityGroup(dctx, UtilMisc.toMap("partyId", partyId,
+			 * "groupId", "SPHINX_ADMIN_GROUP", "fromDate", LocalDateTime.now())); if (isError(serviceResult)) { return
+			 * handleError(serviceResult); }
+			 */
 			// ===========================
 			// ContactMech Record Creation
 			// ===========================
@@ -388,16 +400,34 @@ public class UserServices {
 			// UtilMisc.toMap("userLoginId", username, "currentPassword", currentPassword, "partyId", partyId,
 			// "enabled", "Y", "requirePasswordChange", requirePasswordChange));
 
-			return dctx.getDispatcher().runSync("createUserLogin",
+			dctx.getDispatcher().runSync("createUserLogin",
 							UtilMisc.toMap("userLoginId", username, "currentPassword", currentPassword, "currentPasswordVerify",
 											currentPassword, "partyId", partyId,
 											"enabled", "Y", "requirePasswordChange", requirePasswordChange, "userLogin",
 											context.get("userLogin")));
+
+			return dctx.getDispatcher().runSync("addUserLoginToSecurityGroup",
+							UtilMisc.toMap("userLoginId", username, "groupId", "SPHINX_ADMIN_GROUP", "fromDate",
+											Timestamp.valueOf(LocalDateTime.now()),
+											"userLogin", context.get("userLogin")));
+
 		} catch (GenericServiceException e) {
 			Debug.logError(e, MODULE);
 			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 		}
 
+	}
+
+	private static Map<String, Object> addUserLoginToSecurityGroup(DispatchContext dctx, Map<String, ? extends Object> context) {
+		try {
+			LocalDispatcher dispatcher = dctx.getDispatcher();
+			dispatcher.runSync("addUserLoginToSecurityGroup", context);
+
+			return null;
+		} catch (GenericServiceException e) {
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError("Unexpected Error Occcured");
+		}
 	}
 
 	private static boolean isError(Map<String, Object> serviceResult) {

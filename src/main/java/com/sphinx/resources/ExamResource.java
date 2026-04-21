@@ -164,7 +164,19 @@ public class ExamResource {
 
 			Map<String, String> map = new HashMap<>();
 
-			map.put("partyId", (String) request.getAttribute("partyId"));
+			HttpSession session = request.getSession(false);
+
+			String partyId = (String) request.getParameter("partyId");
+			if (UtilValidate.isEmpty(partyId)) {
+				if (UtilValidate.isNotEmpty(session)) {
+					GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
+					if (UtilValidate.isNotEmpty(userLogin)) {
+						partyId = userLogin.getString("partyId");
+					}
+				}
+			}
+
+			map.put("partyId", partyId);
 			map.put("examId", (String) request.getAttribute("examId"));
 			map.put("examName", (String) request.getAttribute("examName"));
 			map.put("description", (String) request.getAttribute("description"));
@@ -221,7 +233,7 @@ public class ExamResource {
 	@Path("/topics")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response addExamTopics(@Context HttpServletRequest request) {
+	 public Response addExamTopics(@Context HttpServletRequest request) {
 
 		try {
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
@@ -260,16 +272,14 @@ public class ExamResource {
 			input.put("percentage", percentage);
 			input.put("topicPassPercentage", topicPassPercentage);
 			Delegator delegator = (Delegator) request.getAttribute("delegator");
-			GenericValue exam = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId)
-					.select("noOfQuestions").queryFirst();
+			GenericValue exam = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId).select("noOfQuestions").queryFirst();
 			long totalQuestions = exam.getLong("noOfQuestions");
 			int totalQuestionsInTopic = (int) (totalQuestions * Integer.valueOf(percentage)) / 100;
-			long questionCount = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId)
-					.maxRows(totalQuestionsInTopic).queryCount();
-			if (totalQuestionsInTopic != questionCount) {
+			long questionCount = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId).maxRows(totalQuestionsInTopic)
+							.queryCount();
+			if (totalQuestionsInTopic > questionCount) {
 				return Response.status(400).entity(ServiceUtil.returnError(totalQuestionsInTopic - questionCount
-						+ " question needed for the Topic to add in Assessment! Please Add Questions to the Topic!"))
-						.build();
+								+ " question needed for the Topic to add in Assessment! Please Add Questions to the Topic!")).build();
 			}
 			Map<String, Object> result = dispatcher.runSync("addExamTopics", input);
 			return Response.status(201).entity(result).build();

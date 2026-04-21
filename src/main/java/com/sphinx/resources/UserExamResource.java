@@ -73,7 +73,7 @@ public class UserExamResource {
 			if (UtilValidate.isEmpty(partyId)) {
 				if (UtilValidate.isNotEmpty(session)) {
 					GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
-					if (UtilValidate.isEmpty(userLogin)) {
+					if (UtilValidate.isNotEmpty(userLogin)) {
 						partyId = userLogin.getString("partyId");
 					}
 				}

@@ -56,14 +56,14 @@ public class UserExamServices {
 			GenericValue exam = EntityQuery.use(delegator).from("PartyExamRelationship")
 					.where("partyId", partyId, "examId", examId).queryOne();
 			
-			int noOfAttempts=exam.getInteger("noOfAttempts");
-			int allowedAttempts=exam.getInteger("allowedAttempts");
+			long noOfAttempts = exam.getLong("noOfAttempts");
+			long allowedAttempts=exam.getLong("allowedAttempts");
 			
 			if(!(noOfAttempts<=allowedAttempts)) {
-				return ServiceUtil.returnError("can not attend te exam because maximum attempts reached");
+				return ServiceUtil.returnError("Maximum attempts reached! Cannot Proceed further!");
 			}
 		
-			Timestamp thruDateTs = ((GenericValue) context).getTimestamp("thruDate");
+			Timestamp thruDateTs = exam.getTimestamp("thruDate");
 			LocalDate now = LocalDate.now();
 
 			if (thruDateTs != null) {
@@ -87,17 +87,33 @@ public class UserExamServices {
 			}
 
 			GenericValue isExamLaunched = EntityQuery.use(delegator).from("InProgressParty")
-					.where("partyId", partyId, "examId", examId).queryOne();
-			if(!UtilValidate.isEmpty(isExamLaunched)) {
-				return ServiceUtil.returnError("Exam is already started can not start again");
+							.where("partyId", partyId, "examId", examId).queryOne();
+
+			if (UtilValidate.isEmpty(isExamLaunched)) {
+				isExamLaunched = delegator.makeValue("InProgressParty");
+				isExamLaunched.set("examId", examId);
+				isExamLaunched.set("partyId", partyId);
+				isExamLaunched.set("totalAnswered", totalAnswered);
+				isExamLaunched.set("totalRemaining", totalRemaining);
+				isExamLaunched.set("isExamActive", 1L);
+				isExamLaunched.set("currentSplitAttempt", 0L);
+				delegator.create(isExamLaunched);
+			} else {
+				isExamLaunched.set("isExamActive", 1L);
+				delegator.store(isExamLaunched);
 			}
 
-			Map<String, Object> result = dispatcher.runSync("startExam", context);
-			if (ServiceUtil.isError(result)) {
-				return result;
-			}
 
-			result = dispatcher.runSync("generateQuestionsForExam", context);
+			// if(!UtilValidate.isEmpty(isExamLaunched)) {
+			// return ServiceUtil.returnError("Exam is already started can not start again");
+			// }
+
+			// Map<String, Object> result = dispatcher.runSync("startExam", context);
+			// if (ServiceUtil.isError(result)) {
+			// return result;
+			// }
+
+			Map<String, Object> result = dispatcher.runSync("generateQuestionsForExam", context);
 
 			if (ServiceUtil.isError(result)) {
 				return result;
@@ -106,6 +122,7 @@ public class UserExamServices {
 			return result;
 
 		} catch (Exception e) {
+			Debug.logError(e, MODULE);
 			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 		}
 	}
@@ -528,7 +545,7 @@ public class UserExamServices {
 
 		String partyId = (String) context.get("partyId");
 		String examId = (String) context.get("examId");
-		Integer attemptNo = (Integer) context.get("attemptNo");
+		long attemptNo = (Integer) context.get("attemptNo");
 		
 		if (UtilValidate.isEmpty(partyId)) {
 			return ServiceUtil.returnError("Invalid User Details!");
@@ -548,7 +565,7 @@ public class UserExamServices {
 			}
 			
 			List<GenericValue> detailedPartyPerf = EntityQuery.use(delegator).from("DetailedPartyPerformance")
-							.where("perfomanceId", partyPerf.getLong("perfomanceId")).queryList();
+							.where("performanceId", partyPerf.getLong("performanceId")).queryList();
 
 			Map<String, Object> result = ServiceUtil.returnSuccess("Assessment Report!");
 
