@@ -29,7 +29,7 @@ public class UserResorce {
 
 	@GET
 	@Path("/getAllUsers")
-	public Response getAllUsers(@Context HttpServletRequest request) {
+	public static Response getAllUsers(@Context HttpServletRequest request) {
 		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
 		if (UtilValidate.isEmpty(dispatcher)) {

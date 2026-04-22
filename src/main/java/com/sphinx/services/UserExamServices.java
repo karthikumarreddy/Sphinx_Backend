@@ -78,11 +78,12 @@ public class UserExamServices {
 				return ServiceUtil.returnError("You are Not Assigned to the Exam!");
 			}
 
-			GenericValue totalQuestions = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId)
+			GenericValue examRecord = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId)
 					.queryOne();
-			long noOfQuestions = totalQuestions.getLong("noOfQuestions");
 
-			if (sum > noOfQuestions) {
+			long totalQuestions = examRecord.getLong("noOfQuestions");
+
+			if (sum > totalQuestions) {
 				return ServiceUtil.returnError("Invalid Total Answered and Remaining Questions!");
 			}
 
@@ -102,16 +103,6 @@ public class UserExamServices {
 				isExamLaunched.set("isExamActive", 1L);
 				delegator.store(isExamLaunched);
 			}
-
-
-			// if(!UtilValidate.isEmpty(isExamLaunched)) {
-			// return ServiceUtil.returnError("Exam is already started can not start again");
-			// }
-
-			// Map<String, Object> result = dispatcher.runSync("startExam", context);
-			// if (ServiceUtil.isError(result)) {
-			// return result;
-			// }
 
 			Map<String, Object> result = dispatcher.runSync("generateQuestionsForExam", context);
 
