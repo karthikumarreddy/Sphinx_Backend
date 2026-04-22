@@ -321,6 +321,11 @@
     <attribute name="examList" type="List" mode="OUT" optional="false" />
     
     </service>
+    <service name="getExamByName" engine="java" location="com.sphinx.services.ExamServices" invoke="getExamByName">
+    <attribute name="examName" mode="IN" type="String"/>
+    <attribute name="examList" type="List" mode="OUT" optional="false" />
+    
+    </service>
     
 
  <service name="getExamById" engine="java"  location="com.sphinx.services.ExamTopicServices"  invoke="getExamById" >
@@ -589,12 +594,28 @@
     </service>
 
 
+<<<<<<< HEAD
 
 	<service name="sendSecurityCode" engine="java" location="com.sphinx.services.SecurityCodeService" invoke="sendSecurityCode">
 		<attribute name="examRecord" mode="IN" type="Map" optional="true"/>
     	<attribute name="examId" mode="IN" type="String" optional="true"/>
     	<attribute name="partyId" mode="IN" type="String" optional="false"/>
 	</service>
+=======
+<service name="downloadExamCertificate"
+         engine="java"
+         location="com.sphinx.services.CertificateServices"
+         invoke="downloadExamCertificate" >
+
+
+    <attribute name="examId" type="String" mode="IN" optional="false"/>
+    <attribute name="partyId" type="String" mode="IN" optional="false"/>
+
+    <attribute name="pdfBytes" type="byte[]" mode="OUT"/>
+    <attribute name="filename" type="String" mode="OUT"/>
+
+</service>
+>>>>>>> 730306b4955bf20d5c605ba37e045563fe7d0e6b
 
 	
 </services>
