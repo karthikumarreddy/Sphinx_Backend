@@ -198,6 +198,11 @@
         <auto-attributes include="pk" mode="IN" optional="false"/>
         <auto-attributes include="nonpk" mode="IN" optional="true"/>
     </service>
+    
+    <service name="addExamTopicsWrapper"  engine="java" location="com.sphinx.services.ExamTopicServices" invoke="addExamTopicsWrapper" auth="false">
+        <auto-attributes include="pk" mode="IN" optional="false"/>
+        <auto-attributes include="nonpk" mode="IN" optional="true"/>
+    </service>
 
     <service name="updateExamTopics" default-entity-name="ExamTopicDetails" engine="entity-auto" invoke="update" auth="false">
         <auto-attributes include="pk" mode="IN" optional="false"/>

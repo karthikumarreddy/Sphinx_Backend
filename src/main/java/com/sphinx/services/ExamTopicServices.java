@@ -2,8 +2,11 @@ package com.sphinx.services;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.ws.rs.core.Response;
 
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
@@ -13,17 +16,83 @@ import org.apache.ofbiz.entity.condition.EntityCondition;
 import org.apache.ofbiz.entity.condition.EntityOperator;
 import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
+import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
+
+import com.ctc.wstx.shaded.msv.org_isorelax.dispatcher.Dispatcher;
 
 public class ExamTopicServices {
 	private static final String MODULE = ExamTopicServices.class.getName();
 	private static final String UNEXPECTED_ERROR_MSG = "Unexpected Error Occured! Try Again After Sometime!";
 
+	public static Map<String,? extends Object> addExamTopicsWrapper(DispatchContext dctx,Map<String,? extends Object> context){
+		try {
+			Delegator delegator = dctx.getDelegator();
+
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
+
+			String examId = (String) context.get("examId");
+			String topicId = (String) context.get("topicId");
+			String topicName = (String) context.get("topicName");
+			String percentage = (String) context.get("percentage");
+			String topicPassPercentage = (String) context.get("topicPassPercentage");
+
+			if (UtilValidate.isEmail(examId)) {
+				return ServiceUtil.returnError("Exam id is empty ");
+			}
+			if (UtilValidate.isEmpty(topicId)) {
+				return ServiceUtil.returnError("TopicId is Required");
+			}
+			if (UtilValidate.isEmpty(topicName)) {
+				return ServiceUtil.returnError("Topic name is required ");
+			}
+			if (UtilValidate.isEmpty(percentage)) {
+				return ServiceUtil.returnError("Question percentage is required ");
+			}
+			if (UtilValidate.isEmpty(topicPassPercentage)) {
+				return ServiceUtil.returnError("Topic pass percentage is required ");
+			}
+			GenericValue exam = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId).select("noOfQuestions").queryFirst();
+			long totalQuestions = exam.getLong("noOfQuestions");
+			int totalQuestionsInTopic = (int) (totalQuestions * Integer.valueOf(percentage)) / 100;
+			long questionCount = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId).maxRows(totalQuestionsInTopic)
+							.queryCount();
+			if (totalQuestionsInTopic > questionCount) {
+				return ServiceUtil.returnError((totalQuestionsInTopic - questionCount)+ " question needed for the Topic to add in Assessment! Please Add Questions to the Topic!");
+			}
+			GenericValue topic=delegator.findOne("ExamTopicDetails", true, UtilMisc.toMap("topicId",topicName));
+			if(UtilValidate.isNotEmpty(topic)) {
+				int passper=Integer.parseInt(topicPassPercentage)+Integer.parseInt(topic.getString(topicPassPercentage));
+				topic.set(topicPassPercentage,passper);
+				delegator.store(topic);
+				
+				return ServiceUtil.returnSuccess("Topic Pass Percentage Updated");
+			}
+
+			Map<String, Object> input = new HashMap<String, Object>();
+			input.put("examId", examId);
+			input.put("topicId", topicId);
+			input.put("topicName", topicName);
+			input.put("percentage", percentage);
+			input.put("topicPassPercentage", topicPassPercentage);
+			
+			LocalDispatcher dispatcher= dctx.getDispatcher();
+			Map<String,Object> result=dispatcher.runSync("updateExamTopics", context);
+			if(ServiceUtil.isError(result)) {
+				return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
+			}
+			return result;
+			
+			
+		}catch (Exception e) {
+			return ServiceUtil.returnError("Something went wrong try again later");		}
+	}
 
 	public static Map<String, ? extends Object> getAllExamTopics(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 		try {
-
 
 			Delegator delegator = dctx.getDelegator();
 
@@ -44,40 +113,37 @@ public class ExamTopicServices {
 		}
 	}
 
-	public static Map<String, Object> getExamTopicsByExamId(DispatchContext dctx,
-	        Map<String, Object> context) {
+	public static Map<String, Object> getExamTopicsByExamId(DispatchContext dctx, Map<String, Object> context) {
 
-	    try {
-	       
+		try {
+
 			Delegator delegator = dctx.getDelegator();
 
 			if (UtilValidate.isEmpty(delegator)) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
-	        String examId = (String) context.get("examId");
+			String examId = (String) context.get("examId");
 
-	        if (UtilValidate.isEmpty(examId)) {
-	            return ServiceUtil.returnError("ExamId is required");
-	        }
+			if (UtilValidate.isEmpty(examId)) {
+				return ServiceUtil.returnError("ExamId is required");
+			}
 
-	        List<GenericValue> topics = EntityQuery.use(delegator)
-	                .from("ExamTopicDetails")
-	                .where("examId", examId)
-	                .queryList();
+			List<GenericValue> topics = EntityQuery.use(delegator).from("ExamTopicDetails").where("examId", examId)
+					.queryList();
 
-	        List<Map<String, Object>> resultList = new ArrayList<>();
+			List<Map<String, Object>> resultList = new ArrayList<>();
 
-	        for (GenericValue gv : topics) {
-	            resultList.add(gv.getAllFields());
-	        }
+			for (GenericValue gv : topics) {
+				resultList.add(gv.getAllFields());
+			}
 
-	        Map<String, Object> result = ServiceUtil.returnSuccess();
-	        result.put("examTopicList", resultList); 
-	        return result;
+			Map<String, Object> result = ServiceUtil.returnSuccess();
+			result.put("examTopicList", resultList);
+			return result;
 
-	    } catch (Exception e) {
-	        return ServiceUtil.returnError("Something went wrong: " + e.getMessage());
-	    }
+		} catch (Exception e) {
+			return ServiceUtil.returnError("Something went wrong: " + e.getMessage());
+		}
 	}
 
 	public static Map<String, ? extends Object> generateExamQuestions(DispatchContext dctx,
@@ -127,7 +193,8 @@ public class ExamTopicServices {
 				totalPercentage += topic.getLong("percentage").intValue();
 			}
 			if (totalPercentage != 100) {
-				return ServiceUtil.returnError("Topic percentages must add up to 100. Current total: " + totalPercentage);
+				return ServiceUtil
+						.returnError("Topic percentages must add up to 100. Current total: " + totalPercentage);
 			}
 
 			delegator.removeByCondition("QuestionBankMasterB", EntityCondition.makeCondition("examId", examId));
@@ -151,7 +218,7 @@ public class ExamTopicServices {
 						.limit(questionCount).queryList();
 
 				if (questions == null || questions.isEmpty()) {
-					return ServiceUtil.returnError("No questions found for topic: " );
+					return ServiceUtil.returnError("No questions found for topic: ");
 				}
 				if (questions.size() < questionCount) {
 					return ServiceUtil.returnError("Topic " + topicId + " needs " + questionCount
@@ -176,21 +243,20 @@ public class ExamTopicServices {
 					draft.set("optionD", q.get("optionD"));
 					draft.set("optionE", q.get("optionE"));
 					draft.set("answer", q.get("answer"));
-					draft.set("numAnswers", (Long)q.get("numAnswers"));
+					draft.set("numAnswers", (Long) q.get("numAnswers"));
 					draft.set("questiontype", q.get("questionType"));
 					draft.set("difficultyLevel", q.get("difficultyLevel"));
 					draft.set("answerValue", q.get("answerValue"));
-					draft.set("negativeMarkValue", (Long)exam.get("negativeMarkValue"));
+					draft.set("negativeMarkValue", (Long) exam.get("negativeMarkValue"));
 
 					delegator.create(draft);
 					totalSaved++;
 				}
 			}
-			return ServiceUtil.returnSuccess("Questions generated successfully. Total saved: " + totalSaved );
-
+			return ServiceUtil.returnSuccess("Questions generated successfully. Total saved: " + totalSaved);
 
 		} catch (Exception e) {
-			return ServiceUtil.returnError("Something went wrong try again later " );
+			return ServiceUtil.returnError("Something went wrong try again later ");
 		}
 	}
 
@@ -203,16 +269,16 @@ public class ExamTopicServices {
 			if (UtilValidate.isEmpty(delegator)) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
-			
+
 			String examId = (String) context.get("examId");
 
 			if (UtilValidate.isEmpty(examId)) {
-				return ServiceUtil.returnError("examId is required" );
+				return ServiceUtil.returnError("examId is required");
 			}
 
 			GenericValue exam = delegator.findOne("ExamMaster", false, UtilMisc.toMap("examId", examId));
 			if (UtilValidate.isEmpty(exam)) {
-				return ServiceUtil.returnError( "Exam not found" );
+				return ServiceUtil.returnError("Exam not found");
 			}
 
 			Object setupProper = exam.get("examSetupProper");
@@ -223,13 +289,13 @@ public class ExamTopicServices {
 			List<GenericValue> draftQuestions = delegator.findByAnd("QuestionBankMasterB",
 					UtilMisc.toMap("examId", examId), null, false);
 			if (UtilValidate.isEmpty(draftQuestions)) {
-				return ServiceUtil.returnError("No draft questions found. Run generateExamQuestions first" );
+				return ServiceUtil.returnError("No draft questions found. Run generateExamQuestions first");
 			}
 
 			int expectedTotal = ((Long) exam.get("noOfQuestions")).intValue();
 			if (draftQuestions.size() != expectedTotal) {
-				return ServiceUtil.returnError("Draft has " + draftQuestions.size()
-				+ " questions but exam expects " + expectedTotal + ". Please regenerate questions");
+				return ServiceUtil.returnError("Draft has " + draftQuestions.size() + " questions but exam expects "
+						+ expectedTotal + ". Please regenerate questions");
 			}
 
 			delegator.removeByCondition("QuestionBankMaster", EntityCondition.makeCondition("examId", examId));
@@ -258,9 +324,9 @@ public class ExamTopicServices {
 
 			exam.set("examSetupProper", 1);
 			delegator.store(exam);
-			
-			return ServiceUtil.returnSuccess("Exam launched successfully. " + draftQuestions.size() + " questions ready" );
 
+			return ServiceUtil
+					.returnSuccess("Exam launched successfully. " + draftQuestions.size() + " questions ready");
 
 		} catch (Exception e) {
 			return ServiceUtil.returnError("Something went wrong try again later ");
@@ -271,7 +337,6 @@ public class ExamTopicServices {
 			Map<String, ? extends Object> context) {
 
 		try {
-			
 
 			Delegator delegator = dctx.getDelegator();
 
@@ -280,7 +345,7 @@ public class ExamTopicServices {
 			}
 
 			String examId = (String) context.get("examId");
-			String partyId=(String)context.get("partyId");
+			String partyId = (String) context.get("partyId");
 
 			if (UtilValidate.isEmpty(examId)) {
 				return ServiceUtil.returnError("ExamId is required");

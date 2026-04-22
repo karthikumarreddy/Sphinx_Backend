@@ -261,8 +261,9 @@ public class ExamResource {
 				return Response.status(400).entity("Question percentage is required ").build();
 			}
 			if (UtilValidate.isEmpty(topicPassPercentage)) {
-				return Response.status(400).entity("Topic passpercentage is required ").build();
+				return Response.status(400).entity("Topic pass percentage is required ").build();
 			}
+			
 
 			Map<String, Object> input = new HashMap<String, Object>();
 			input.put("examId", examId);
@@ -327,7 +328,7 @@ public class ExamResource {
 			String percentage = (String) request.getAttribute("percentage");
 			String topicId = (String) request.getAttribute("topicId");
 			String topicName = (String) request.getAttribute("topicName");
-			String topicPassPercentage = (String) request.getAttribute("topicPassPercentage");
+			long topicPassPercentage = (Integer) request.getAttribute("topicPassPercentage");
 
 			if (UtilValidate.isEmail(examId)) {
 				return Response.status(400).entity("Exam id is empty ").build();
