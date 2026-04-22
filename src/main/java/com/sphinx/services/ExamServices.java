@@ -3,10 +3,10 @@ package com.sphinx.services;
 import java.security.SecureRandom;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilDateTime;
@@ -578,7 +578,7 @@ public class ExamServices {
 				//				long totalRecords = delegator.findCountByCondition("QuestionMaster",
 				//								EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId), null, null);
 
-				int totalQuestionsInTopic = (int) (totalQuestions * percentage) / 100;
+				int requiredQuestionsInTopic = (int) (totalQuestions * percentage) / 100;
 
 				// totalQuestions = totalQuestions + totalQuestionsInTopic;
 
@@ -590,24 +590,32 @@ public class ExamServices {
 				List<GenericValue> topicWiseQuestions = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId).queryList();
 
 
-				int totalQuestionsInTopicInDb = topicWiseQuestions.size();
+				// int totalQuestionsInTopicInDb = topicWiseQuestions.size();
 
-				SecureRandom rand = new SecureRandom();
-				 // get random number.
-				int randomNumber;
-				Set<Integer> questionIdx = new HashSet<Integer>();
-				// generate unique question index with SET.
-				for (int i = 1; i > 0; i++) {
-					// randomNumber = rand.nextInt(totalQuestionsInTopic);
-					randomNumber = (int) (Math.random() * totalQuestionsInTopicInDb) + 1; // get random number.
-					questionIdx.add(randomNumber);
-					if (questionIdx.size() == totalQuestionsInTopic) {
-						break;
-					}
-				}
+				List<GenericValue> selectedQuestions = new ArrayList<>();
+
+				Collections.shuffle(topicWiseQuestions, new SecureRandom());
+				selectedQuestions.addAll(topicWiseQuestions.subList(0, requiredQuestionsInTopic));
+
+				// SecureRandom rand = new SecureRandom();
+				// // get random number.
+				// int randomNumber = 0;
+				// Set<Integer> questionIdx = new HashSet<Integer>();
+				// // generate unique question index with SET.
+				// for (int i = 1; < ; i++) {
+				// // randomNumber = rand.nextInt(totalQuestionsInTopic);
+				// randomNumber = (int) (Math.random() * totalQuestionsInTopicInDb - 1) + 1; // get random number.
+				//
+				// // questionIdx.add(rand.nextInt(totalQuestionsInTopicInDb - 1));
+				// questionIdx.add(randomNumber);
+				// if (questionIdx.size() == totalQuestionsInTopic) {
+				// break;
+				// }
+				// }
+
 				// add to question bank master;
-				for (int i : questionIdx) {
-					GenericValue question = topicWiseQuestions.get(i);
+				for (GenericValue question : selectedQuestions) {
+					// GenericValue question = topicWiseQuestions.get(i);
 					GenericValue questionBank = delegator.makeValue("QuestionBankMaster");
 					questionBank.set("qId", question.getString("questionId"));
 					questionBank.set("examId", examId);
@@ -733,16 +741,11 @@ public class ExamServices {
 
 					delegator.store(assignedUser);
 
-					dispatcher.runSync("generateSecurityCode",
-							UtilMisc.toMap("partyId", assignedUser.getString("partyId"), "examId", examId));
-
 				}
 			}
 
-			Map<String, Object> serviceResult = dctx.getDispatcher().runSync("sendExamNotification",
-					UtilMisc.toMap("examRecord", examRecord));
 
-			return serviceResult;
+			return ServiceUtil.returnSuccess("Assesment Available to Available Users!");
 
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);

@@ -32,7 +32,7 @@ public class AuthenticationResource {
 
 	@POST
 	@Path("/login")
-	public Response loginUser(@Context HttpServletRequest request, @Context HttpServletResponse response) {
+	public static Response loginUser(@Context HttpServletRequest request, @Context HttpServletResponse response) {
 		try {
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 			Delegator delegator = (Delegator)request.getAttribute("delegator");
@@ -92,7 +92,7 @@ public class AuthenticationResource {
 
 	@POST
 	@Path("/signup")
-	public Response signupUser(@Context HttpServletRequest request) {
+	public static Response signupUser(@Context HttpServletRequest request) {
 		try {
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 			HttpSession session = request.getSession(false);
@@ -145,7 +145,7 @@ public class AuthenticationResource {
 
 	@GET
 	@Path("/logout")
-	public Response logout(@Context HttpServletRequest request) {
+	public static Response logout(@Context HttpServletRequest request) {
 		HttpSession session = request.getSession(false);
 		if (UtilValidate.isNotEmpty(session)) {
 			session.invalidate();

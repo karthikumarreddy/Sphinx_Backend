@@ -232,9 +232,9 @@
     <attribute name="examId" mode="IN" type="String" optional="false"/>
 </service> -->
 
-<service name="deleteExamWrapper" engine="java"  location="com.sphinx.services.ExamServices"  invoke="deleteExamWrapper" auth="false">
-    <attribute name="examId" type="String" mode="IN" optional="false"/>
-</service>
+	<service name="deleteExamWrapper" engine="java"  location="com.sphinx.services.ExamServices"  invoke="deleteExamWrapper" auth="false">
+	    <attribute name="examId" type="String" mode="IN" optional="false"/>
+	</service>
 
     <service name="launchExam" engine="java" location="com.sphinx.services.ExamTopicServices" invoke="launchExam" auth="false">
         <attribute name="examId" type="String" mode="IN"/>
@@ -246,6 +246,7 @@
     
     <service engine="java" name="sendExamNotification" location="com.sphinx.services.ExamEmailServices" invoke="sendExamNotification">
     	<attribute name="examRecord" mode="IN" type="Map"/>
+    	<attribute name="securityCode" mode="IN" type="Map" optional="true"/>
     </service>
        
     
@@ -594,9 +595,18 @@
     <service name="generateSecurityCode" engine="java" location="com.sphinx.services.SecurityCodeService" invoke="generateSecurityCode">
     	<attribute name="partyId" mode="IN" type="String"/>
     	<attribute name="examId" mode="IN" type="String"/>
+    	<attribute name="securityCode" mode="OUT" type="Map"/>
     </service>
 
 
+<<<<<<< HEAD
+
+	<service name="sendSecurityCode" engine="java" location="com.sphinx.services.SecurityCodeService" invoke="sendSecurityCode">
+		<attribute name="examRecord" mode="IN" type="Map" optional="true"/>
+    	<attribute name="examId" mode="IN" type="String" optional="true"/>
+    	<attribute name="partyId" mode="IN" type="String" optional="false"/>
+	</service>
+=======
 <service name="downloadExamCertificate"
          engine="java"
          location="com.sphinx.services.CertificateServices"
@@ -610,6 +620,7 @@
     <attribute name="filename" type="String" mode="OUT"/>
 
 </service>
+>>>>>>> 730306b4955bf20d5c605ba37e045563fe7d0e6b
 
 	
 </services>
