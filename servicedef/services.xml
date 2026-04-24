@@ -611,6 +611,7 @@
     	<attribute name="examId" mode="IN" type="String" optional="true"/>
     	<attribute name="partyId" mode="IN" type="String" optional="false"/>
 	</service>
+
 <service name="downloadExamCertificate"
          engine="java"
          location="com.sphinx.services.CertificateServices"
@@ -624,6 +625,7 @@
     <attribute name="filename" type="String" mode="OUT"/>
 
 </service>
+
 
 	
 </services>
