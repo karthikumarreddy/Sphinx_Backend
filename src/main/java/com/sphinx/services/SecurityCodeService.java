@@ -3,12 +3,15 @@ package com.sphinx.services;
 import java.util.Map;
 
 import org.apache.ofbiz.base.util.Debug;
+import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
+import org.apache.ofbiz.service.GenericServiceException;
+import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
 import com.sphinx.util.RandomPasswordGenerator;
@@ -18,8 +21,6 @@ public class SecurityCodeService {
 	private static final String MODULE = SecurityCodeService.class.getName();
 
 	public static Map<String, ? extends Object> generateSecurityCode(DispatchContext dctx, Map<String, ? extends Object> context) {
-		// generate security Code.
-
 		try {
 			Delegator delegator = dctx.getDelegator();
 
@@ -33,17 +34,28 @@ public class SecurityCodeService {
 				return ServiceUtil.returnError("Invalid User details!");
 			}
 
+			GenericValue secCode = EntityQuery.use(delegator).from("ExamSecurityCode").where("examId", examId, "partyId", partyId)
+							.queryFirst();
+
 			String otp = RandomPasswordGenerator.generateSecurityCode(6);
 
-			GenericValue securityCodeRecord = delegator.makeValue("ExamSecurityCode");
+			if (UtilValidate.isEmpty(secCode)) {
 
-			securityCodeRecord.set("examId", examId);
-			securityCodeRecord.set("partyId", partyId);
-			securityCodeRecord.set("securityCode", otp);
+				GenericValue securityCodeRecord = delegator.makeValue("ExamSecurityCode");
 
-			delegator.create(securityCodeRecord);
+				securityCodeRecord.set("examId", examId);
+				securityCodeRecord.set("partyId", partyId);
+				securityCodeRecord.set("securityCode", otp);
 
-			return ServiceUtil.returnSuccess("Security Code Generated Successfully!");
+				delegator.create(securityCodeRecord);
+			} else {
+				secCode.set("securityCode", otp);
+				delegator.store(secCode);
+			}
+
+			Map<String, Object> result = ServiceUtil.returnSuccess("Security Code Generated Successfully!");
+			result.put("securityCode", secCode);
+			return result;
 
 		} catch (GenericEntityException e) {
 			Debug.logError(e, MODULE);
@@ -52,9 +64,46 @@ public class SecurityCodeService {
 		
 	}
 
-	public static Map<String, ? extends Object> verifySecurityCode(DispatchContext dctx, Map<String, ? extends Object> context) {
-		// generate security Code.
+	public static Map<String, ? extends Object> sendSecurityCode(DispatchContext dctx, Map<String, ? extends Object> context) {
 
+		try {
+
+			LocalDispatcher dispatcher = dctx.getDispatcher();
+
+			String partyId = (String) context.get("partyId");
+			GenericValue examRecord = (GenericValue) context.get("examRecord");
+
+			if (UtilValidate.isEmpty(partyId)) {
+				return ServiceUtil.returnError("Invalid User Details!");
+			}
+
+			if (UtilValidate.isEmpty(examRecord)) {
+				String examId = (String) context.get("examId");
+				if (UtilValidate.isEmpty(examId)) {
+					return ServiceUtil.returnError("Invalid Assessment Details!");
+				}
+
+				examRecord = EntityQuery.use(dctx.getDelegator()).from("ExamMaster").where("examId", examId).queryOne();
+
+				if (UtilValidate.isEmpty(examRecord)) {
+					return ServiceUtil.returnError("Assessment Not Found! Contact Administrator for more details!");
+				}
+			}
+
+			Map<String, Object> result = dispatcher.runSync("generateSecurityCode",
+							UtilMisc.toMap("partyId", partyId, "examId", examRecord.get("examId")));
+
+			GenericValue securityCode = (GenericValue) result.get("securityCode");
+
+			return dispatcher.runSync("sendExamNotification", UtilMisc.toMap("examRecord", examRecord, "securityCode", securityCode));
+
+		} catch (GenericServiceException | GenericEntityException e) {
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError("Something went wrong try again later");
+		}
+	}
+
+	public static Map<String, ? extends Object> verifySecurityCode(DispatchContext dctx, Map<String, ? extends Object> context) {
 		try {
 			Delegator delegator = dctx.getDelegator();
 
@@ -88,9 +137,9 @@ public class SecurityCodeService {
 				return ServiceUtil.returnError("Security Code Verification Failed!, Please contact your Administrator!");
 			}
 
-			// if ("Y".equalsIgnoreCase(securityCodeRecord.getString("securityCodeVerified"))) {
-			// return ServiceUtil.returnError("Security Code already Verified!");
-			// }
+			if ("Y".equalsIgnoreCase(securityCodeRecord.getString("securityCodeVerified"))) {
+				return ServiceUtil.returnSuccess("Security Code already Verified!");
+			}
 
 			if (!codeFromDb.equals(securityCode)) {
 				return ServiceUtil.returnError("Incorrect Security Code!");

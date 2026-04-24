@@ -249,19 +249,20 @@ public class ExamResource {
 			String topicPassPercentage = (String) request.getAttribute("topicPassPercentage");
 
 			if (UtilValidate.isEmail(examId)) {
-				return Response.status(400).entity("Exam id is empty ").build();
+				return Response.status(400).entity(ServiceUtil.returnError("Exam id is empty")).build();
 			}
 			if (UtilValidate.isEmpty(topicId)) {
-				return Response.status(400).entity("TopicId is Required").build();
+				return Response.status(400).entity(ServiceUtil.returnError("Topic is Required")).build();
 			}
 			if (UtilValidate.isEmpty(topicName)) {
-				return Response.status(400).entity("Topic name is required ").build();
+				return Response.status(400).entity(ServiceUtil.returnError("Topic name is required")).build();
 			}
 			if (UtilValidate.isEmpty(percentage)) {
-				return Response.status(400).entity("Question percentage is required ").build();
+				return Response.status(400).entity(ServiceUtil.returnError("Question percentage is required")).build();
 			}
 			if (UtilValidate.isEmpty(topicPassPercentage)) {
-				return Response.status(400).entity("Topic pass percentage is required ").build();
+
+				return Response.status(400).entity(ServiceUtil.returnError("Topic passpercentage is required")).build();
 			}
 			
 
@@ -440,11 +441,13 @@ public class ExamResource {
 			}
 
 			String examId = (String) request.getAttribute("examId");
+			String partyId=(String) request.getAttribute("partyId");
 			if (UtilValidate.isEmpty(examId)) {
 				return Response.status(400).entity(ServiceUtil.returnError("exami id is null")).build();
 			}
 			Map<String, Object> input = new HashMap<String, Object>();
 			input.put("examId", examId);
+			input.put("partyId", partyId);
 			Map<String, Object> result = dispatcher.runSync("generateExamQuestions", input);
 			return Response.status(201).entity(result).build();
 		} catch (Exception e) {

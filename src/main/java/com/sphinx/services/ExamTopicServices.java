@@ -25,7 +25,8 @@ public class ExamTopicServices {
 	private static final String MODULE = ExamTopicServices.class.getName();
 	private static final String UNEXPECTED_ERROR_MSG = "Unexpected Error Occured! Try Again After Sometime!";
 
-	public static Map<String,? extends Object> addExamTopicsWrapper(DispatchContext dctx,Map<String,? extends Object> context){
+	public static Map<String, ? extends Object> addExamTopicsWrapper(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
 		try {
 			Delegator delegator = dctx.getDelegator();
 
@@ -54,20 +55,23 @@ public class ExamTopicServices {
 			if (UtilValidate.isEmpty(topicPassPercentage)) {
 				return ServiceUtil.returnError("Topic pass percentage is required ");
 			}
-			GenericValue exam = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId).select("noOfQuestions").queryFirst();
+			GenericValue exam = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId)
+					.select("noOfQuestions").queryFirst();
 			long totalQuestions = exam.getLong("noOfQuestions");
 			int totalQuestionsInTopic = (int) (totalQuestions * Integer.valueOf(percentage)) / 100;
-			long questionCount = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId).maxRows(totalQuestionsInTopic)
-							.queryCount();
+			long questionCount = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId)
+					.maxRows(totalQuestionsInTopic).queryCount();
 			if (totalQuestionsInTopic > questionCount) {
-				return ServiceUtil.returnError((totalQuestionsInTopic - questionCount)+ " question needed for the Topic to add in Assessment! Please Add Questions to the Topic!");
+				return ServiceUtil.returnError((totalQuestionsInTopic - questionCount)
+						+ " question needed for the Topic to add in Assessment! Please Add Questions to the Topic!");
 			}
-			GenericValue topic=delegator.findOne("ExamTopicDetails", true, UtilMisc.toMap("topicId",topicName));
-			if(UtilValidate.isNotEmpty(topic)) {
-				int passper=Integer.parseInt(topicPassPercentage)+Integer.parseInt(topic.getString(topicPassPercentage));
-				topic.set(topicPassPercentage,passper);
+			GenericValue topic = delegator.findOne("ExamTopicDetails", true, UtilMisc.toMap("topicId", topicName));
+			if (UtilValidate.isNotEmpty(topic)) {
+				int passper = Integer.parseInt(topicPassPercentage)
+						+ Integer.parseInt(topic.getString(topicPassPercentage));
+				topic.set(topicPassPercentage, passper);
 				delegator.store(topic);
-				
+
 				return ServiceUtil.returnSuccess("Topic Pass Percentage Updated");
 			}
 
@@ -77,17 +81,17 @@ public class ExamTopicServices {
 			input.put("topicName", topicName);
 			input.put("percentage", percentage);
 			input.put("topicPassPercentage", topicPassPercentage);
-			
-			LocalDispatcher dispatcher= dctx.getDispatcher();
-			Map<String,Object> result=dispatcher.runSync("updateExamTopics", context);
-			if(ServiceUtil.isError(result)) {
+
+			LocalDispatcher dispatcher = dctx.getDispatcher();
+			Map<String, Object> result = dispatcher.runSync("updateExamTopics", context);
+			if (ServiceUtil.isError(result)) {
 				return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
 			}
 			return result;
-			
-			
-		}catch (Exception e) {
-			return ServiceUtil.returnError("Something went wrong try again later");		}
+
+		} catch (Exception e) {
+			return ServiceUtil.returnError("Something went wrong try again later");
+		}
 	}
 
 	public static Map<String, ? extends Object> getAllExamTopics(DispatchContext dctx,
@@ -147,119 +151,173 @@ public class ExamTopicServices {
 	}
 
 	public static Map<String, ? extends Object> generateExamQuestions(DispatchContext dctx,
-			Map<String, ? extends Object> context) {
-		try {
+	        Map<String, ? extends Object> context) {
+	    
+	    Delegator delegator = dctx.getDelegator();
+	    try {
+	        if (UtilValidate.isEmpty(delegator)) {
+	            return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+	        }
 
-			Delegator delegator = dctx.getDelegator();
+	        String examId  = (String) context.get("examId");
+	        String partyId = (String) context.get("partyId");
 
-			if (UtilValidate.isEmpty(delegator)) {
-				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
-			}
-			String examId = (String) context.get("examId");
+	        if (UtilValidate.isEmpty(examId)) {
+	            return ServiceUtil.returnError("examId is required");
+	        }
+	        if (UtilValidate.isEmpty(partyId)) {
+	            return ServiceUtil.returnError("partyId is required");
+	        }
 
-			if (UtilValidate.isEmpty(examId)) {
-				return ServiceUtil.returnError("examId is required");
-			}
+	        // ── Exam validation ───────────────────────────────────────────────
+	        GenericValue exam = delegator.findOne("ExamMaster", false, UtilMisc.toMap("examId", examId));
+	        if (UtilValidate.isEmpty(exam)) {
+	            return ServiceUtil.returnError("Exam not found for examId: " + examId);
+	        }
 
-			GenericValue exam = delegator.findOne("ExamMaster", false, UtilMisc.toMap("examId", examId));
-			if (UtilValidate.isEmpty(exam)) {
-				return ServiceUtil.returnError("Exam not found");
-			}
+	        Long setupProper = exam.getLong("examSetupProper");
+	        if (setupProper != null && setupProper.equals(1L)) {
+	            return ServiceUtil.returnError("Exam already launched. Cannot regenerate questions");
+	        }
 
-			Long setupProper = exam.getLong("examSetupProper");
-			if (setupProper != null && setupProper == 1) {
-				return ServiceUtil.returnError("Exam already launched. Cannot regenerate questions");
-			}
+	        if (exam.get("noOfQuestions") == null) {
+	            return ServiceUtil.returnError("Exam has no question count set");
+	        }
 
-			if (exam.get("noOfQuestions") == null) {
-				return ServiceUtil.returnError("Exam has no question count set");
-			}
-			int totalQuestions = exam.getLong("noOfQuestions").intValue();
-			if (totalQuestions <= 0) {
-				return ServiceUtil.returnError("Exam question count must be greater than 0");
-			}
+	        int totalQuestions = exam.getLong("noOfQuestions").intValue();
+	        if (totalQuestions <= 0) {
+	            return ServiceUtil.returnError("Exam question count must be greater than 0");
+	        }
 
-			List<GenericValue> topics = delegator.findByAnd("ExamTopicDetails", UtilMisc.toMap("examId", examId), null,
-					false);
-			if (topics == null || topics.isEmpty()) {
-				return ServiceUtil.returnError("No topics found. Add topics before generating questions");
-			}
+	        List<GenericValue> topics = delegator.findByAnd("ExamTopicDetails",
+	                UtilMisc.toMap("examId", examId, "partyId", partyId), null, false);
 
-			int totalPercentage = 0;
-			for (GenericValue topic : topics) {
-				if (topic.get("percentage") == null) {
-					return ServiceUtil.returnError("Topic " + topic.getString("topicId"));
-				}
-				totalPercentage += topic.getLong("percentage").intValue();
-			}
-			if (totalPercentage != 100) {
-				return ServiceUtil
-						.returnError("Topic percentages must add up to 100. Current total: " + totalPercentage);
-			}
+	        if (UtilValidate.isEmpty(topics)) {
+	            return ServiceUtil.returnError("No topics found. Add topics before generating questions");
+	        }
 
-			delegator.removeByCondition("QuestionBankMasterB", EntityCondition.makeCondition("examId", examId));
+	        int totalPercentage = 0;
+	        for (GenericValue topic : topics) {
+	            if (topic.get("percentage") == null) {
+	                return ServiceUtil.returnError(
+	                    "Topic " + topic.getString("topicId") + " has no percentage set");
+	            }
+	            totalPercentage += topic.getLong("percentage").intValue();
+	        }
 
-			Long questionsRandomized = exam.getLong("questionsRandomized");
-			boolean shouldShuffle = questionsRandomized != null && questionsRandomized == 1;
+	        if (totalPercentage != 100) {
+	            return ServiceUtil.returnError(
+	                "Topic percentages must add up to 100. Current total: " + totalPercentage);
+	        }
 
-			int totalSaved = 0;
+	        Long questionsRandomized = exam.getLong("questionsRandomized");
+	        boolean shouldShuffle = questionsRandomized != null && questionsRandomized.equals(1L);
 
-			for (GenericValue topic : topics) {
-				String topicId = topic.getString("topicId");
-				int percentage = topic.getLong("percentage").intValue();
-				int questionCount = (totalQuestions * percentage) / 100;
+	        
+	        for (GenericValue topic : topics) {
+	            String topicId    = topic.getString("topicId");
+	            int percentage    = topic.getLong("percentage").intValue();
+	            int questionCount = (totalQuestions * percentage) / 100;
 
-				if (questionCount <= 0) {
-					return ServiceUtil.returnError("Topic " + topicId + " percentage too low — results in 0 questions");
-				}
+	            if (questionCount <= 0) {
+	                return ServiceUtil.returnError(
+	                    "Topic " + topicId + " percentage too low — results in 0 questions");
+	            }
 
-				EntityCondition condition = EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId);
-				List<GenericValue> questions = EntityQuery.use(delegator).from("QuestionMaster").where(condition)
-						.limit(questionCount).queryList();
+	            EntityCondition condition = EntityCondition.makeCondition(
+	                EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId),
+	                EntityOperator.AND,
+	                EntityCondition.makeCondition("partyId", EntityOperator.EQUALS, partyId)
+	            );
 
-				if (questions == null || questions.isEmpty()) {
-					return ServiceUtil.returnError("No questions found for topic: ");
-				}
-				if (questions.size() < questionCount) {
-					return ServiceUtil.returnError("Topic " + topicId + " needs " + questionCount
-							+ " questions but only " + questions.size() + " available");
-				}
+	            long availableCount = EntityQuery.use(delegator)
+	                    .from("QuestionMaster")
+	                    .where(condition)
+	                    .queryCount();
 
-				if (shouldShuffle) {
-					Collections.shuffle(questions);
-				}
+	            if (availableCount == 0) {
+	                return ServiceUtil.returnError(
+	                    "No questions found for topic: " + topicId);
+	            }
+	            if (availableCount < questionCount) {
+	                return ServiceUtil.returnError(
+	                    "Topic " + topicId + " needs " + questionCount
+	                    + " questions but only " + availableCount + " available");
+	            }
+	        }
 
-				for (GenericValue q : questions) {
-					String newQid = delegator.getNextSeqId("QuestionBankMasterB");
-					GenericValue draft = delegator.makeValue("QuestionBankMasterB");
+	        
 
-					draft.set("qId", newQid);
-					draft.set("examId", examId);
-					draft.set("topicId", q.get("topicId"));
-					draft.set("questionDetail", q.get("questionDetail"));
-					draft.set("optionA", q.get("optionA"));
-					draft.set("optionB", q.get("optionB"));
-					draft.set("optionC", q.get("optionC"));
-					draft.set("optionD", q.get("optionD"));
-					draft.set("optionE", q.get("optionE"));
-					draft.set("answer", q.get("answer"));
-					draft.set("numAnswers", (Long) q.get("numAnswers"));
-					draft.set("questiontype", q.get("questionType"));
-					draft.set("difficultyLevel", q.get("difficultyLevel"));
-					draft.set("answerValue", q.get("answerValue"));
-					draft.set("negativeMarkValue", (Long) exam.get("negativeMarkValue"));
+	        // Remove existing generated questions for this exam + party
+	        delegator.removeByCondition("QuestionBankMasterB",
+	            EntityCondition.makeCondition(
+	                EntityCondition.makeCondition("examId",  EntityOperator.EQUALS, examId),
+	                EntityOperator.AND,
+	                EntityCondition.makeCondition("partyId", EntityOperator.EQUALS, partyId)
+	            )
+	        );
 
-					delegator.create(draft);
-					totalSaved++;
-				}
-			}
-			return ServiceUtil.returnSuccess("Questions generated successfully. Total saved: " + totalSaved);
+	        int totalSaved = 0;
 
-		} catch (Exception e) {
-			return ServiceUtil.returnError("Something went wrong try again later ");
-		}
+	        for (GenericValue topic : topics) {
+	            String topicId    = topic.getString("topicId");
+	            int percentage    = topic.getLong("percentage").intValue();
+	            int questionCount = (totalQuestions * percentage) / 100;
+
+	            EntityCondition condition = EntityCondition.makeCondition(
+	                EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId),
+	                EntityOperator.AND,
+	                EntityCondition.makeCondition("partyId", EntityOperator.EQUALS, partyId)
+	            );
+
+	            List<GenericValue> allQuestions = EntityQuery.use(delegator)
+	                    .from("QuestionMaster")
+	                    .where(condition)
+	                    .queryList();
+
+	            if (shouldShuffle) {
+	                Collections.shuffle(allQuestions);
+	            }
+
+	            List<GenericValue> selectedQuestions = allQuestions.subList(0, questionCount);
+
+	            for (GenericValue q : selectedQuestions) {
+	                String newQid = delegator.getNextSeqId("QuestionBankMasterB");
+	                GenericValue draft = delegator.makeValue("QuestionBankMasterB");
+
+	                draft.set("qId",              newQid);
+	                draft.set("examId",           examId);
+	                draft.set("partyId",          partyId);
+	                draft.set("topicId",          q.get("topicId"));
+	                draft.set("questionDetail",   q.get("questionDetail"));
+	                draft.set("optionA",          q.get("optionA"));
+	                draft.set("optionB",          q.get("optionB"));
+	                draft.set("optionC",          q.get("optionC"));
+	                draft.set("optionD",          q.get("optionD"));
+	                draft.set("optionE",          q.get("optionE"));
+	                draft.set("answer",           q.get("answer"));
+	                draft.set("numAnswers",        q.getLong("numAnswers"));
+	                draft.set("questionType",     q.get("questionType"));  // fixed case
+	                draft.set("difficultyLevel",  q.get("difficultyLevel"));
+	                draft.set("answerValue",      q.get("answerValue"));
+	                draft.set("negativeMarkValue", exam.getLong("negativeMarkValue"));
+
+	                delegator.create(draft);
+	                totalSaved++;
+	            }
+	        }
+
+	    
+
+	        return ServiceUtil.returnSuccess(
+	            "Questions generated successfully. Total saved: " + totalSaved);
+
+	    } catch (Exception e) {
+	        return ServiceUtil.returnError(
+	            "Failed to generate questions: " + e.getMessage());
+	    }
 	}
-
+	
 	public static Map<String, ? extends Object> launchExam(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 		try {

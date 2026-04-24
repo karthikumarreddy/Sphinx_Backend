@@ -34,35 +34,42 @@
 	<entity entity-name="TopicMaster" package-name="">
 		<field name="topicId" type="id" />
 		<field name="topicName" type="short-varchar" />
-
-		<prim-key field="topicId" />
-	</entity>
-	<entity entity-name="QuestionMaster" package-name="">
-		<field name="questionId" type="id" />
-		<field name="questionDetail" type="description" />
-		<field name="optionA" type="name" />
-		<field name="optionB" type="name" />
-		<field name="optionC" type="name" />
-		<field name="optionD" type="name" />
-		<field name="optionE" type="name"/>
-		<field name="answer" type="long-answer" />
-		<field name="numAnswers" type="numeric" />
-		<field name="questionType" type="name" />
-		<field name="difficultyLevel" type="name" />
-		<field name="answerValue" type="very-long" />
-		<field name="topicId" type="id" />
-
-		<prim-key field="questionId" />
-		<relation rel-entity-name="TopicMaster" fk-name="topic_id"
+		<field name="partyId" type="id"/>
+		<prim-key field="partyId"/>
+		<relation rel-entity-name="Party" fk-name="party_Id"
 			type="one">
-			<key-map field-name="topicId" rel-field-name="topicId" />
-		</relation>
-		
-		<relation rel-entity-name="Enumeration" fk-name="fk_question_type"
-			type="one">
-			<key-map field-name="questionType" rel-field-name="enumId" />
+			<key-map field-name="party_Id" rel-field-name="partyId" />
 		</relation>
 	</entity>
+	
+	<entity entity-name="QuestionMaster" package-name="com.sphinx.entity">
+    <field name="questionId"     type="id" />
+    <field name="questionDetail" type="description" />
+    <field name="optionA"        type="name" />
+    <field name="optionB"        type="name" />
+    <field name="optionC"        type="name" />
+    <field name="optionD"        type="name" />
+    <field name="optionE"        type="name" />
+    <field name="answer"         type="very-long" />
+    <field name="numAnswers"     type="numeric" />
+    <field name="questionType"   type="name" />
+    <field name="difficultyLevel" type="name" />
+    <field name="answerValue"    type="very-long" />
+    <field name="topicId"        type="id" />
+    <field name="partyId"        type="id" />
+
+    <prim-key field="questionId" />
+
+    <relation rel-entity-name="Party" fk-name="fk_qm_party_id" type="one">
+        <key-map field-name="partyId" rel-field-name="partyId" />
+    </relation>
+    <relation rel-entity-name="TopicMaster" fk-name="fk_qm_topic_id" type="one">
+        <key-map field-name="topicId" rel-field-name="topicId" />
+    </relation>
+    <relation rel-entity-name="Enumeration" fk-name="fk_qm_question_type" type="one">
+        <key-map field-name="questionType" rel-field-name="enumId" />
+    </relation>
+</entity>
 	
 
 	 <entity entity-name="QuestionBankMasterB" package-name="com.sphinx">
