@@ -589,7 +589,6 @@ public class ExamServices {
 				
 				List<GenericValue> topicWiseQuestions = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId).queryList();
 
-
 				// int totalQuestionsInTopicInDb = topicWiseQuestions.size();
 
 				List<GenericValue> selectedQuestions = new ArrayList<>();
@@ -612,6 +611,8 @@ public class ExamServices {
 				// break;
 				// }
 				// }
+
+				int totalQuestionsInTopicInDb = topicWiseQuestions.size();
 
 				// add to question bank master;
 				for (GenericValue question : selectedQuestions) {
@@ -740,10 +741,8 @@ public class ExamServices {
 							UtilDateTime.addDaysToTimestamp(Timestamp.valueOf(now), timeoutDaysInt));
 
 					delegator.store(assignedUser);
-
 				}
 			}
-
 
 			return ServiceUtil.returnSuccess("Assesment Available to Available Users!");
 
@@ -774,7 +773,8 @@ public class ExamServices {
 		}
 
 		try {
-			GenericValue exam = EntityQuery.use(delegator).from("InProgressParty").where("examId", examId).queryFirst();
+			GenericValue exam = EntityQuery.use(delegator).from("InProgressParty").where("examId", examId, "isExamActive", 1L).queryFirst();
+
 			if (!UtilValidate.isEmpty(exam)) {
 				return ServiceUtil.returnError("Can not delete the exam a user is attending the exam try again later ");
 			}

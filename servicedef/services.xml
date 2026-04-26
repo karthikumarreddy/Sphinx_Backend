@@ -594,15 +594,13 @@
     </service>
 
 
-<<<<<<< HEAD
-
 	<service name="sendSecurityCode" engine="java" location="com.sphinx.services.SecurityCodeService" invoke="sendSecurityCode">
 		<attribute name="examRecord" mode="IN" type="Map" optional="true"/>
     	<attribute name="examId" mode="IN" type="String" optional="true"/>
     	<attribute name="partyId" mode="IN" type="String" optional="false"/>
 	</service>
-=======
-<service name="downloadExamCertificate"
+	
+	<service name="downloadExamCertificate"
          engine="java"
          location="com.sphinx.services.CertificateServices"
          invoke="downloadExamCertificate" >
@@ -615,7 +613,6 @@
     <attribute name="filename" type="String" mode="OUT"/>
 
 </service>
->>>>>>> 730306b4955bf20d5c605ba37e045563fe7d0e6b
 
 	
 </services>

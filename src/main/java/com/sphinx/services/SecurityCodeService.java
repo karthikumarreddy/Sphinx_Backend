@@ -41,13 +41,13 @@ public class SecurityCodeService {
 
 			if (UtilValidate.isEmpty(secCode)) {
 
-				GenericValue securityCodeRecord = delegator.makeValue("ExamSecurityCode");
+				secCode = delegator.makeValue("ExamSecurityCode");
 
-				securityCodeRecord.set("examId", examId);
-				securityCodeRecord.set("partyId", partyId);
-				securityCodeRecord.set("securityCode", otp);
+				secCode.set("examId", examId);
+				secCode.set("partyId", partyId);
+				secCode.set("securityCode", otp);
 
-				delegator.create(securityCodeRecord);
+				delegator.create(secCode);
 			} else {
 				secCode.set("securityCode", otp);
 				delegator.store(secCode);
