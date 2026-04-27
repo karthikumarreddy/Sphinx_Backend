@@ -22,9 +22,7 @@ import javax.ws.rs.core.Response;
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
-import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericValue;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
@@ -261,8 +259,10 @@ public class ExamResource {
 				return Response.status(400).entity(ServiceUtil.returnError("Question percentage is required")).build();
 			}
 			if (UtilValidate.isEmpty(topicPassPercentage)) {
+
 				return Response.status(400).entity(ServiceUtil.returnError("Topic passpercentage is required")).build();
 			}
+			
 
 			Map<String, Object> input = new HashMap<String, Object>();
 			input.put("examId", examId);
@@ -270,16 +270,19 @@ public class ExamResource {
 			input.put("topicName", topicName);
 			input.put("percentage", percentage);
 			input.put("topicPassPercentage", topicPassPercentage);
-			Delegator delegator = (Delegator) request.getAttribute("delegator");
-			GenericValue exam = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId).select("noOfQuestions").queryFirst();
-			long totalQuestions = exam.getLong("noOfQuestions");
-			int totalQuestionsInTopic = (int) (totalQuestions * Integer.valueOf(percentage)) / 100;
-			long questionCount = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId).maxRows(totalQuestionsInTopic)
-							.queryCount();
-			if (totalQuestionsInTopic > questionCount) {
-				return Response.status(400).entity(ServiceUtil.returnError(totalQuestionsInTopic - questionCount
-								+ " question needed for the Topic to add in Assessment! Please Add Questions to the Topic!")).build();
-			}
+			// Skip Validation for now.
+			// Delegator delegator = (Delegator) request.getAttribute("delegator");
+			// GenericValue exam = EntityQuery.use(delegator).from("ExamMaster").where("examId",
+			// examId).select("noOfQuestions").queryFirst();
+			// long totalQuestions = exam.getLong("noOfQuestions");
+			// int totalQuestionsInTopic = (int) (totalQuestions * Integer.valueOf(percentage)) / 100;
+			// long questionCount = EntityQuery.use(delegator).from("QuestionMaster").where("topicId",
+			// topicId).maxRows(totalQuestionsInTopic)
+			// .queryCount();
+			// if (totalQuestionsInTopic > questionCount) {
+			// return Response.status(400).entity(ServiceUtil.returnError(totalQuestionsInTopic - questionCount
+			// + " question needed for the Topic to add in Assessment! Please Add Questions to the Topic!")).build();
+			// }
 			Map<String, Object> result = dispatcher.runSync("addExamTopics", input);
 			return Response.status(201).entity(result).build();
 		} catch (Exception e) {
@@ -327,7 +330,7 @@ public class ExamResource {
 			String percentage = (String) request.getAttribute("percentage");
 			String topicId = (String) request.getAttribute("topicId");
 			String topicName = (String) request.getAttribute("topicName");
-			String topicPassPercentage = (String) request.getAttribute("topicPassPercentage");
+			long topicPassPercentage = (Integer) request.getAttribute("topicPassPercentage");
 
 			if (UtilValidate.isEmail(examId)) {
 				return Response.status(400).entity("Exam id is empty ").build();
@@ -439,11 +442,13 @@ public class ExamResource {
 			}
 
 			String examId = (String) request.getAttribute("examId");
+			String partyId=(String) request.getAttribute("partyId");
 			if (UtilValidate.isEmpty(examId)) {
 				return Response.status(400).entity(ServiceUtil.returnError("exami id is null")).build();
 			}
 			Map<String, Object> input = new HashMap<String, Object>();
 			input.put("examId", examId);
+			input.put("partyId", partyId);
 			Map<String, Object> result = dispatcher.runSync("generateExamQuestions", input);
 			return Response.status(201).entity(result).build();
 		} catch (Exception e) {

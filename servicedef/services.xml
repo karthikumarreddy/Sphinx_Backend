@@ -158,24 +158,29 @@
     </service>
 
     <service name="updateTopic" engine="entity-auto" invoke="update" default-entity-name="TopicMaster">
+    	<attribute name="partyId" mode="IN" type="String"/>
         <attribute name="topicId" type="String" mode="IN" />
         <attribute name="topicName" type="String" mode="IN" />
     </service>
     
     <service name="updateTopicWrapper" engine="java" location="com.sphinx.services.TopicServices" invoke="updateTopicWrapper">
+    	<attribute name="partyId" mode="IN" type="String"/>
         <attribute name="topicId" type="String" mode="IN" />
         <attribute name="topicName" type="String" mode="IN" />
     </service>
 
     <service name="deleteTopic" engine="entity-auto" invoke="delete" default-entity-name="TopicMaster">
+    	<attribute name="partyId" mode="IN" type="String"/>
         <attribute name="topicId" type="String" mode="IN" />
     </service>
     
      <service name="deleteTopicWrapper" engine="java" location="com.sphinx.services.TopicServices" invoke="deleteTopicWrapper">
+     	<attribute name="partyId" mode="IN" type="String"/>
         <attribute name="topicId" type="String" mode="IN" />
     </service>
 
     <service name="getAllTopics" engine="java" location="com.sphinx.services.TopicServices" invoke="getAllTopic">
+    	<attribute name="partyId" mode="IN" type="String"/>
         <attribute name="topicList" type="List" mode="OUT" optional="true" />
     </service>
 
@@ -195,6 +200,11 @@
     
     
     <service name="addExamTopics" default-entity-name="ExamTopicDetails" engine="entity-auto" invoke="create" auth="false">
+        <auto-attributes include="pk" mode="IN" optional="false"/>
+        <auto-attributes include="nonpk" mode="IN" optional="true"/>
+    </service>
+    
+    <service name="addExamTopicsWrapper"  engine="java" location="com.sphinx.services.ExamTopicServices" invoke="addExamTopicsWrapper" auth="false">
         <auto-attributes include="pk" mode="IN" optional="false"/>
         <auto-attributes include="nonpk" mode="IN" optional="true"/>
     </service>
@@ -220,6 +230,7 @@
     </service>
 
     <service name="generateExamQuestions" engine="java" location="com.sphinx.services.ExamTopicServices" invoke="generateExamQuestions" auth="false">
+    	<attribute name="partyId" mode="IN" type="String"/>
         <attribute name="examId" type="String" mode="IN"/>
     </service>
     
@@ -599,20 +610,19 @@
     	<attribute name="examId" mode="IN" type="String" optional="true"/>
     	<attribute name="partyId" mode="IN" type="String" optional="false"/>
 	</service>
-	
+
+
 	<service name="downloadExamCertificate"
          engine="java"
          location="com.sphinx.services.CertificateServices"
          invoke="downloadExamCertificate" >
+         
+	    <attribute name="examId" type="String" mode="IN" optional="false"/>
+	    <attribute name="partyId" type="String" mode="IN" optional="false"/>
 
-
-    <attribute name="examId" type="String" mode="IN" optional="false"/>
-    <attribute name="partyId" type="String" mode="IN" optional="false"/>
-
-    <attribute name="pdfBytes" type="byte[]" mode="OUT"/>
-    <attribute name="filename" type="String" mode="OUT"/>
-
-</service>
+	    <attribute name="pdfBytes" type="byte[]" mode="OUT"/>
+	    <attribute name="filename" type="String" mode="OUT"/>
+	</service>
 
 	
 </services>

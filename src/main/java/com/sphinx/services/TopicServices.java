@@ -33,10 +33,15 @@ public class TopicServices {
 			if (UtilValidate.isEmpty(delegator)) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
+			String partyId=(String) context.get("partyId");
+			if (UtilValidate.isEmpty(partyId)) {
+				return ServiceUtil.returnError("Invalid details can not fetch the count");
+			}
 
 			Map<String, Object> result = ServiceUtil.returnSuccess();
+			
 
-			List<GenericValue> topics = delegator.findAll("TopicMaster", false);
+			List<GenericValue> topics = EntityQuery.use(delegator).from("TopicMaster").where("partyId",partyId).queryList();
 			if (UtilValidate.isEmpty(topics)) {
 				return ServiceUtil.returnError("Cannot find the data ");
 			}
@@ -59,8 +64,13 @@ public class TopicServices {
 			}
 
 			Map<String, Object> result = ServiceUtil.returnSuccess();
+			String partyId = (String) context.get("partyId");
+			if (UtilValidate.isEmpty(partyId)) {
+				return ServiceUtil.returnError("Invalid details can not fetch the count");
+			}
 
-			List<GenericValue> topics = delegator.findAll("TopicMaster", false);
+			List<GenericValue> topics = EntityQuery.use(delegator).from("TopicMaster").where("partyId", partyId)
+					.queryList();
 			if (UtilValidate.isEmpty(topics)) {
 				return ServiceUtil.returnError("Cannot find the data ");
 			}
@@ -109,17 +119,22 @@ public class TopicServices {
 			}
 
 			String topicName = context.get("topicName").toString().toUpperCase();
+			String partyId = (String) context.get("partyId");
+
 			if (UtilValidate.isEmpty(topicName)) {
 				return ServiceUtil.returnError("Topic details are required ");
 			}
 			GenericValue isPresent = EntityQuery.use(delegator).from("TopicMaster")
-					.where(EntityCondition.makeCondition(EntityFunction.upperField("topicName"), EntityOperator.LIKE,
-							EntityFunction.upper("%" + topicName + "%")))
+					.where(EntityCondition
+							.makeCondition(EntityCondition.makeCondition("partyId", EntityOperator.EQUALS, partyId),
+									EntityOperator.AND,
+									EntityCondition.makeCondition(EntityFunction.upperField("topicName"),
+											EntityOperator.LIKE, EntityFunction.upper("%" + topicName + "%"))))
 					.queryFirst();
 
 			if (UtilValidate.isEmpty(isPresent)) {
 				return dctx.getDispatcher().runSync("createTopic",
-						UtilMisc.toMap("topicId", topicName, "topicName", topicName));
+						UtilMisc.toMap("topicId", topicName, "topicName", topicName,"partyId",partyId));
 			} else {
 				return ServiceUtil.returnError("Given Topic is Already Present!");
 			}
@@ -141,8 +156,13 @@ public class TopicServices {
 			if (UtilValidate.isEmpty(dispatcher)) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
+			String partyId = (String) context.get("partyId");
 			String topicId = (String) context.get("topicId");
 			String topicName = (String) context.get("topicName");
+
+			if (UtilValidate.isEmpty(partyId)) {
+				return ServiceUtil.returnError("Requiresd Details are invalid ");
+			}
 
 			if (UtilValidate.isEmpty(topicId) || UtilValidate.isEmpty(topicName)) {
 				return ServiceUtil.returnError("Topic Details are invalid ");
@@ -170,6 +190,7 @@ public class TopicServices {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 			String topicId = (String) context.get("topicId");
+			String partyId = (String) context.get("partyId");
 
 			if (UtilValidate.isEmpty(topicId)) {
 				return ServiceUtil.returnError("Topic Details are invalid ");

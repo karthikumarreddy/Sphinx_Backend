@@ -88,7 +88,12 @@ public class ExamServices {
 
 			String examId = delegator.getNextSeqId("ExamMaster");
 			String partyId = (String) context.get("partyId");
-
+			String description=(String) context.get("description");
+			
+			if(description.length()>500) {
+				ServiceUtil.returnError("Description should be less than 500 letters");
+			}
+			
 			GenericValue examMaster = delegator.makeValue("ExamMaster");
 			examMaster.set("examId", examId);
 			examMaster.set("examName", context.get("examName"));
