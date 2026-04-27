@@ -55,31 +55,30 @@ public class UserExamServices {
 
 			GenericValue exam = EntityQuery.use(delegator).from("PartyExamRelationship")
 					.where("partyId", partyId, "examId", examId).queryOne();
-			
+
 			long noOfAttempts = exam.getLong("noOfAttempts");
-			long allowedAttempts=exam.getLong("allowedAttempts");
-			
-			if(!(noOfAttempts<=allowedAttempts)) {
+			long allowedAttempts = exam.getLong("allowedAttempts");
+
+			if (!(noOfAttempts <= allowedAttempts)) {
 				return ServiceUtil.returnError("Maximum attempts reached! Cannot Proceed further!");
 			}
-		
+
 			Timestamp thruDateTs = exam.getTimestamp("thruDate");
 			LocalDate now = LocalDate.now();
 
 			if (thruDateTs != null) {
-			    LocalDate thruDate = thruDateTs.toLocalDateTime().toLocalDate();
+				LocalDate thruDate = thruDateTs.toLocalDateTime().toLocalDate();
 
-			    if (now.isAfter(thruDate)) {
-			        return ServiceUtil.returnError("Exam window has closed");
-			    }
+				if (now.isAfter(thruDate)) {
+					return ServiceUtil.returnError("Exam window has closed");
+				}
 			}
 
 			if (UtilValidate.isEmpty(exam)) {
 				return ServiceUtil.returnError("You are Not Assigned to the Exam!");
 			}
 
-			GenericValue examRecord = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId)
-					.queryOne();
+			GenericValue examRecord = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId).queryOne();
 
 			long totalQuestions = examRecord.getLong("noOfQuestions");
 
@@ -88,7 +87,7 @@ public class UserExamServices {
 			}
 
 			GenericValue isExamLaunched = EntityQuery.use(delegator).from("InProgressParty")
-							.where("partyId", partyId, "examId", examId).queryOne();
+					.where("partyId", partyId, "examId", examId).queryOne();
 
 			if (UtilValidate.isEmpty(isExamLaunched)) {
 				isExamLaunched = delegator.makeValue("InProgressParty");
@@ -118,7 +117,6 @@ public class UserExamServices {
 		}
 	}
 
-
 	public static Map<String, Object> getAllExamAssignedForUser(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 		try {
@@ -139,12 +137,12 @@ public class UserExamServices {
 			for (GenericValue assignedExam : assignedExamsList) {
 				// get exam topics
 				List<GenericValue> assignedTopics = EntityQuery.use(delegator).from("ExamTopicDetails")
-								.where("examId", assignedExam.getString("examId")).queryList();
+						.where("examId", assignedExam.getString("examId")).queryList();
 				Map<String, Object> fields = assignedExam.getAllFields();
 				fields.put("topics", assignedTopics);
 				// get exam status
 				GenericValue ippStatus = EntityQuery.use(delegator).from("InProgressParty")
-								.where("examId", assignedExam.getString("examId"), "partyId", partyId).queryFirst();
+						.where("examId", assignedExam.getString("examId"), "partyId", partyId).queryFirst();
 				long isExamActive = 1;
 				if (UtilValidate.isNotEmpty(ippStatus)) {
 					isExamActive = ippStatus.getLong("isExamActive");
@@ -205,112 +203,114 @@ public class UserExamServices {
 
 	public static Map<String, Object> submitExam(DispatchContext dctx, Map<String, Object> context) {
 
-	    Delegator delegator = dctx.getDelegator();
-	    LocalDispatcher dispatcher = dctx.getDispatcher();
+		try {
+			Delegator delegator = dctx.getDelegator();
+			LocalDispatcher dispatcher = dctx.getDispatcher();
 
-		String examId = (String) context.get("examId");
-		String partyId = (String) context.get("partyId");
+			String examId = (String) context.get("examId");
+			String partyId = (String) context.get("partyId");
 
-		if (UtilValidate.isEmpty(examId) || UtilValidate.isEmpty(partyId)) {
-			return ServiceUtil.returnError("examId and partyId are required");
-		}
+			if (UtilValidate.isEmpty(examId) || UtilValidate.isEmpty(partyId)) {
+				return ServiceUtil.returnError("examId and partyId are required");
+			}
 
-	    try {
-			GenericValue exam = EntityQuery.use(delegator)
-	                .from("ExamMaster")
-	                .where("examId", examId)
-	                .queryOne();
+			GenericValue exam = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId).queryOne();
 
-			if (exam == null) {
+			if (UtilValidate.isEmpty(exam)) {
 				TransactionUtil.rollback();
 				return ServiceUtil.returnError("Assessment not found");
-	        }
+			}
+			List<GenericValue> answer = EntityQuery.use(delegator).from("AnswerMaster")
+					.where("examId", examId, "partyId", partyId).queryList();
+			if (UtilValidate.isEmpty(answer)) {
+				return ServiceUtil.returnError("Exam is not available ");
+			}
+			if (answer.size() < exam.getInteger("answersMust")) {
+				return ServiceUtil.returnError("must attend atleast " + exam.getInteger("answersMust") + "questions");
+			}
 
 			long passPercentage = exam.getLong("passPercentage") != null ? exam.getLong("passPercentage") : 50L;
-			boolean negativeEnabled = exam.getLong("allowNegativeMarks") != null && exam.getLong("allowNegativeMarks") == 1L;
+			boolean negativeEnabled = exam.getLong("allowNegativeMarks") != null
+					&& exam.getLong("allowNegativeMarks") == 1L;
 			long negativeMarkValue = exam.getLong("negativeMarkValue") != null ? exam.getLong("negativeMarkValue") : 0L;
 
 			// Fetch Questions
-	        List<GenericValue> questions = EntityQuery.use(delegator)
-	                .from("QuestionBankMaster")
-	                .where("examId", examId)
-	                .queryList();
+			List<GenericValue> questions = EntityQuery.use(delegator).from("QuestionBankMaster").where("examId", examId)
+					.queryList();
 
 			if (UtilValidate.isEmpty(questions)) {
 				TransactionUtil.rollback();
 				return ServiceUtil.returnError("No questions found for Assessment!");
 			}
 
-	        Map<String, GenericValue> questionMap = new HashMap<>();
-	        for (GenericValue q : questions) {
-	            questionMap.put(String.valueOf(q.get("qId")), q);
-	        }
+			Map<String, GenericValue> questionMap = new HashMap<>();
+			for (GenericValue q : questions) {
+				questionMap.put(String.valueOf(q.get("qId")), q);
+			}
 
-	        double totalMaxMarks = questions.size();
+			double totalMaxMarks = questions.size();
 
 			// Fetch Answers
-	        List<GenericValue> answers = EntityQuery.use(delegator)
-	                .from("AnswerMaster")
-	                .where("examId", examId, "partyId", partyId)
-	                .queryList();
+			List<GenericValue> answers = EntityQuery.use(delegator).from("AnswerMaster")
+					.where("examId", examId, "partyId", partyId).queryList();
 
-	        int totalCorrect = 0;
-	        int totalWrong = 0;
-	        double totalScore = 0.0;
+			int totalCorrect = 0;
+			int totalWrong = 0;
+			double totalScore = 0.0;
 
-	        Map<String, int[]> topicStats = new HashMap<>();
-	        Map<String, Double> topicScores = new HashMap<>();
-	        Map<String, Double> topicMaxMarks = new HashMap<>();
+			Map<String, int[]> topicStats = new HashMap<>();
+			Map<String, Double> topicScores = new HashMap<>();
+			Map<String, Double> topicMaxMarks = new HashMap<>();
 
-	        for (GenericValue ans : answers) {
+			for (GenericValue ans : answers) {
 
-	            String qId = String.valueOf(ans.get("qId"));
-	            String submitted = ans.getString("submittedAnswer");
+				String qId = String.valueOf(ans.get("qId"));
+				String submitted = ans.getString("submittedAnswer");
 
-	            GenericValue question = questionMap.get(qId);
-	            if (question == null) continue;
+				GenericValue question = questionMap.get(qId);
+				if (question == null)
+					continue;
 
-	            String correct = question.getString("answer");
-	            String topicId = question.getString("topicId");
+				String correct = question.getString("answer");
+				String topicId = question.getString("topicId");
 
-	            double marks = 1.0;
+				double marks = 1.0;
 
-	            topicStats.putIfAbsent(topicId, new int[]{0, 0});
-	            topicScores.putIfAbsent(topicId, 0.0);
-	            topicMaxMarks.putIfAbsent(topicId, 0.0);
+				topicStats.putIfAbsent(topicId, new int[] { 0, 0 });
+				topicScores.putIfAbsent(topicId, 0.0);
+				topicMaxMarks.putIfAbsent(topicId, 0.0);
 
-	            topicStats.get(topicId)[1]++;
-	            topicMaxMarks.put(topicId, topicMaxMarks.get(topicId) + marks);
+				topicStats.get(topicId)[1]++;
+				topicMaxMarks.put(topicId, topicMaxMarks.get(topicId) + marks);
 
-	            if (UtilValidate.isEmpty(submitted)) continue;
+				if (UtilValidate.isEmpty(submitted))
+					continue;
 
-	            boolean isCorrect = submitted.trim().equalsIgnoreCase(correct.trim());
+				boolean isCorrect = submitted.trim().equalsIgnoreCase(correct.trim());
 
-	            if (isCorrect) {
-	                totalCorrect++;
-	                totalScore += marks;
-	                topicStats.get(topicId)[0]++;
-	                topicScores.put(topicId, topicScores.get(topicId) + marks);
-	            } else {
-	                totalWrong++;
-	                if (negativeEnabled) {
-	                    totalScore -= negativeMarkValue;
-	                    topicScores.put(topicId, topicScores.get(topicId) - negativeMarkValue);
-	                }
-	            }
-	        }
+				if (isCorrect) {
+					totalCorrect++;
+					totalScore += marks;
+					topicStats.get(topicId)[0]++;
+					topicScores.put(topicId, topicScores.get(topicId) + marks);
+				} else {
+					totalWrong++;
+					if (negativeEnabled) {
+						totalScore -= negativeMarkValue;
+						topicScores.put(topicId, topicScores.get(topicId) - negativeMarkValue);
+					}
+				}
+			}
 
-	        double percentage = totalMaxMarks > 0 ? (totalScore / totalMaxMarks) * 100.0 : 0.0;
-	        int userPassed = percentage >= passPercentage ? 1 : 0;
+			double percentage = totalMaxMarks > 0 ? (totalScore / totalMaxMarks) * 100.0 : 0.0;
+			int userPassed = percentage >= passPercentage ? 1 : 0;
 
 			// Attempts
-	        GenericValue rel = EntityQuery.use(delegator)
-	                .from("PartyExamRelationship")
-	                .where("examId", examId, "partyId", partyId)
-	                .queryOne();
+			GenericValue rel = EntityQuery.use(delegator).from("PartyExamRelationship")
+					.where("examId", examId, "partyId", partyId).queryOne();
 
-	        long attempts = (rel != null && rel.getLong("noOfAttempts") != null)
-	                ? rel.getLong("noOfAttempts") + 1L : 1L;
+			long attempts = (rel != null && rel.getLong("noOfAttempts") != null) ? rel.getLong("noOfAttempts") + 1L
+					: 1L;
 
 			// create PartyPerformance
 			GenericValue partyPerf = delegator.makeValue("PartyPerformance");
@@ -329,7 +329,8 @@ public class UserExamServices {
 			partyPerf.put("attemptNo", attempts);
 
 			delegator.create(partyPerf);
-			// Map<String, Object> perfResult = dispatcher.runSync("createPartyPerformance", perfCtx);
+			// Map<String, Object> perfResult = dispatcher.runSync("createPartyPerformance",
+			// perfCtx);
 			//
 			// if (ServiceUtil.isError(perfResult)) {
 			// TransactionUtil.rollback();
@@ -340,67 +341,65 @@ public class UserExamServices {
 
 			List<Map<String, Object>> topicWisePerfomance = new ArrayList<>();
 			// Create DetailedPartyPerformance
-	        for (Map.Entry<String, int[]> entry : topicStats.entrySet()) {
+			for (Map.Entry<String, int[]> entry : topicStats.entrySet()) {
 
-	            String topicId = entry.getKey();
-	            double topicScore = topicScores.get(topicId);
-	            double topicMax = topicMaxMarks.get(topicId);
+				String topicId = entry.getKey();
+				double topicScore = topicScores.get(topicId);
+				double topicMax = topicMaxMarks.get(topicId);
 
-	            double topicPct = topicMax > 0 ? (topicScore / topicMax) * 100.0 : 0.0;
+				double topicPct = topicMax > 0 ? (topicScore / topicMax) * 100.0 : 0.0;
 
 				Long detailId = Long.valueOf(delegator.getNextSeqId("DetailedPartyPerformance"));
 
-	            Map<String, Object> topicCtx = new HashMap<>();
-	            topicCtx.put("detailedPerformanceId", detailId);
+				Map<String, Object> topicCtx = new HashMap<>();
+				topicCtx.put("detailedPerformanceId", detailId);
 				topicCtx.put("performanceId", performanceId);
-	            topicCtx.put("examId", examId);
-	            topicCtx.put("partyId", partyId);
-	            topicCtx.put("topicId", topicId);
+				topicCtx.put("examId", examId);
+				topicCtx.put("partyId", partyId);
+				topicCtx.put("topicId", topicId);
 				topicCtx.put("userTopicPercentage", BigDecimal.valueOf(topicPct));
-	            topicCtx.put("correctQuestionsInthisTopic", (long) entry.getValue()[0]);
-	            topicCtx.put("totalQuestionsInThisTopic", (long) entry.getValue()[1]);
-	            topicCtx.put("userPassedThisTopic", topicPct >= passPercentage ? 1L : 0L);
+				topicCtx.put("correctQuestionsInthisTopic", (long) entry.getValue()[0]);
+				topicCtx.put("totalQuestionsInThisTopic", (long) entry.getValue()[1]);
+				topicCtx.put("userPassedThisTopic", topicPct >= passPercentage ? 1L : 0L);
 
 				topicWisePerfomance.add(topicCtx);
 
-	            Map<String, Object> topicResult = dispatcher.runSync("createDetailedPartyPerformance", topicCtx);
+				Map<String, Object> topicResult = dispatcher.runSync("createDetailedPartyPerformance", topicCtx);
 
-	            if (ServiceUtil.isError(topicResult)) {
+				if (ServiceUtil.isError(topicResult)) {
 					TransactionUtil.rollback();
-	                return topicResult;
-	            }
-	        }
+					return topicResult;
+				}
+			}
 
-	        // Update attempts
-	        if (rel != null) {
-				dispatcher.runSync("updatePartyExamRelationship", UtilMisc.toMap("examId", examId, "partyId", partyId, "noOfAttempts",
-								attempts, "lastPerformanceDate", UtilDateTime.nowTimestamp()));
-	        }
+			// Update attempts
+			if (rel != null) {
+				dispatcher.runSync("updatePartyExamRelationship", UtilMisc.toMap("examId", examId, "partyId", partyId,
+						"noOfAttempts", attempts, "lastPerformanceDate", UtilDateTime.nowTimestamp()));
+			}
 
-	        // deactivate exam
-			dispatcher.runSync("updateInProgressParty", UtilMisc.toMap("examId", examId, "partyId", partyId, "isExamActive", 0L));
-
-
+			// deactivate exam
+			dispatcher.runSync("updateInProgressParty",
+					UtilMisc.toMap("examId", examId, "partyId", partyId, "isExamActive", 0L));
 
 			Map<String, Object> result = ServiceUtil.returnSuccess("Exam submitted successfully");
-	        result.put("performanceId", performanceId);
-	        result.put("score", totalScore);
+			result.put("performanceId", performanceId);
+			result.put("score", totalScore);
 			result.put("scorePercentage", percentage);
-	        result.put("userPassed", userPassed);
+			result.put("userPassed", userPassed);
 			result.put("totalCorrect", totalCorrect);
 			result.put("totalWrong", totalWrong);
 			result.put("userPassed", userPassed);
 			result.put("attemptNo", attempts);
 			result.put("topicWisePerfomance", topicWisePerfomance);
-	        return result;
+			return result;
 
-	    } catch (Exception e) {
+		} catch (Exception e) {
 
-	        Debug.logError(e, "Error in submitExam", MODULE);
-	        return ServiceUtil.returnError(e.getMessage());
-	    }
+			Debug.logError(e, "Error in submitExam", MODULE);
+			return ServiceUtil.returnError(e.getMessage());
+		}
 	}
-
 
 	public static Map<String, Object> getExamResult(DispatchContext dctx, Map<String, Object> context) {
 
@@ -470,11 +469,11 @@ public class UserExamServices {
 	}
 
 	// oldname - getAllExamQuestions
-	public static Map<String, ? extends Object> getUserExamQuestion(DispatchContext dctx, Map<String, ? extends Object> context) {
+	public static Map<String, ? extends Object> getUserExamQuestion(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
 		try {
 
 			Delegator delegator = dctx.getDelegator();
-
 
 			String partyId = (String) context.get("partyId");
 			String examId = (String) context.get("examId");
@@ -488,11 +487,13 @@ public class UserExamServices {
 				return ServiceUtil.returnError("Invalid Exam Details!");
 			}
 
-			// EntityCondition examMatchingContion = EntityCondition.makeCondition("examId", EntityOperator.EQUALS, examId);
-			// EntityCondition partyMatchingCondition = EntityCondition.makeCondition("partyId", EntityOperator.EQUALS, partyId);
+			// EntityCondition examMatchingContion = EntityCondition.makeCondition("examId",
+			// EntityOperator.EQUALS, examId);
+			// EntityCondition partyMatchingCondition =
+			// EntityCondition.makeCondition("partyId", EntityOperator.EQUALS, partyId);
 
-			EntityQuery baseCondition = EntityQuery.use(delegator).from("QuestionBankMaster")
-							.where("examId", examId, "partyId", partyId);
+			EntityQuery baseCondition = EntityQuery.use(delegator).from("QuestionBankMaster").where("examId", examId,
+					"partyId", partyId);
 
 			long totalRecords = baseCondition.queryCount();
 
@@ -507,7 +508,7 @@ public class UserExamServices {
 			GenericValue question = baseCondition.orderBy("qId").limit(1).offset(questionNumber - 1).queryOne();
 
 			GenericValue answer = EntityQuery.use(delegator).from("AnswerMaster")
-							.where("examId", examId, "partyId", partyId, "qId", question.getString("qId")).queryFirst();
+					.where("examId", examId, "partyId", partyId, "qId", question.getString("qId")).queryFirst();
 
 			Map<String, Object> result = ServiceUtil.returnSuccess();
 
@@ -530,14 +531,14 @@ public class UserExamServices {
 		}
 	}
 
-	public static Map<String, ? extends Object> getExamResults(DispatchContext dctx, Map<String, ? extends Object> context) {
+	public static Map<String, ? extends Object> getExamResults(DispatchContext dctx,
+		Map<String, ? extends Object> context) {
 		Delegator delegator = dctx.getDelegator();
-
-
+ 
 		String partyId = (String) context.get("partyId");
 		String examId = (String) context.get("examId");
 		long attemptNo = (Integer) context.get("attemptNo");
-		
+
 		if (UtilValidate.isEmpty(partyId)) {
 			return ServiceUtil.returnError("Invalid User Details!");
 		}
@@ -545,29 +546,28 @@ public class UserExamServices {
 		if (UtilValidate.isEmpty(examId)) {
 			return ServiceUtil.returnError("Invalid Exam Details!");
 		}
-		
+
 		try {
 			GenericValue partyPerf = EntityQuery.use(delegator).from("PartyPerformance")
-							.where("partyId", partyId, "examId", examId, "attemptNo", attemptNo)
-							.queryFirst();
+					.where("partyId", partyId, "examId", examId, "attemptNo", attemptNo).queryFirst();
 
 			if (UtilValidate.isEmpty(partyPerf)) {
 				return ServiceUtil.returnError("Seems the Report isn't Generated Yet! Try again After Sometime!");
 			}
-			
+
 			List<GenericValue> detailedPartyPerf = EntityQuery.use(delegator).from("DetailedPartyPerformance")
-							.where("performanceId", partyPerf.getLong("performanceId")).queryList();
+					.where("performanceId", partyPerf.getLong("performanceId")).queryList();
 
 			Map<String, Object> result = ServiceUtil.returnSuccess("Assessment Report!");
 
-			result.put("data", UtilMisc.toMap("partyPerfomance", partyPerf, "detailedPartyPerfomance", detailedPartyPerf));
-			
+			result.put("data",
+					UtilMisc.toMap("partyPerfomance", partyPerf, "detailedPartyPerfomance", detailedPartyPerf));
+
 			return result;
 		} catch (GenericEntityException e) {
 			Debug.logError(e, MODULE);
 			return ServiceUtil.returnError("Something went wrong try again later");
 		}
 	}
-
 
 }

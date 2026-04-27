@@ -278,10 +278,10 @@ public class ExamResource {
 			int totalQuestionsInTopic = (int) (totalQuestions * Integer.valueOf(percentage)) / 100;
 			long questionCount = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId).maxRows(totalQuestionsInTopic)
 							.queryCount();
-			if (totalQuestionsInTopic > questionCount) {
-				return Response.status(400).entity(ServiceUtil.returnError(totalQuestionsInTopic - questionCount
-								+ " question needed for the Topic to add in Assessment! Please Add Questions to the Topic!")).build();
-			}
+//			if (totalQuestionsInTopic > questionCount) {
+//				return Response.status(400).entity(ServiceUtil.returnError(totalQuestionsInTopic - questionCount
+//								+ " question needed for the Topic to add in Assessment! Please Add Questions to the Topic!")).build();
+//			}
 			Map<String, Object> result = dispatcher.runSync("addExamTopics", input);
 			return Response.status(201).entity(result).build();
 		} catch (Exception e) {
@@ -708,6 +708,45 @@ public class ExamResource {
 					.entity(ServiceUtil.returnError("Something went wrong try later")).build();
 
 		}
+	}
+	
+	@GET
+	@Path("/report")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response generateReport(@Context HttpServletRequest request) {
+	    try {
+	        LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+	        if (UtilValidate.isEmpty(dispatcher)) {
+	            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+	                    .entity(ServiceUtil.returnError("Unexpected Error Occurred! Try again after Sometime!")).build();
+	        }
+
+	        GenericValue userLogin = (GenericValue) request.getSession().getAttribute("userLogin");
+	        String partyId = null;
+
+	        if (UtilValidate.isNotEmpty(userLogin)) {
+	            partyId = userLogin.getString("partyId");
+	        }
+
+	        if (UtilValidate.isEmpty(partyId)) {
+	            return Response.status(400)
+	                    .entity(ServiceUtil.returnError("partyId is required")).build();
+	        }
+
+	        Map<String, Object> result = dispatcher.runSync("generateReport",
+	                UtilMisc.toMap("partyId", partyId, "userLogin", userLogin));
+
+	        if (ServiceUtil.isError(result)) {
+	            return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
+	        }
+
+	        return Response.status(200).entity(result).build();
+
+	    } catch (Exception e) {
+	        Debug.logError(e, MODULE);
+	        return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
+	    }
 	}
 
 }
