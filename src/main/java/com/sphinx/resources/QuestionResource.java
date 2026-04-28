@@ -216,6 +216,15 @@ public class QuestionResource {
 			GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
 
 			input.put("userLogin", userLogin);
+			String partyId = (String) request.getParameter("partyId");
+			if (UtilValidate.isEmpty(partyId)) {
+				if (UtilValidate.isNotEmpty(session)) {
+					if (UtilValidate.isNotEmpty(userLogin)) {
+						partyId = userLogin.getString("partyId");
+						input.put("partyId", partyId);
+					}
+				}
+			}
 
 			Map<String, Object> result = dispatcher.runSync("createQuestionWrapper", input);
 

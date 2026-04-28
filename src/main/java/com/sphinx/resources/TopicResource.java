@@ -171,6 +171,7 @@ public class TopicResource {
 						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
 			}
 			String partyId=(String) request.getAttribute("partyId");
+			
 			Map<String, Object> result = dispatcher.runSync("getAllTopicsCount", UtilMisc.toMap("partyId",partyId));
 			if(ServiceUtil.isError(result)) {
 				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();

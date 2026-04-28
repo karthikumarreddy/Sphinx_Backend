@@ -61,24 +61,26 @@ public class ExamResource {
 	@Path("/search-exam")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getExamByName(@Context HttpServletRequest request) {
-		try {
-			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+	    try {
+	        LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
-			if (UtilValidate.isEmpty(dispatcher)) {
-				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
-			}
+	        if (UtilValidate.isEmpty(dispatcher)) {
+	            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+	                    .entity(ServiceUtil.returnError("Unexpected Error Occurred! Try again after Sometime!")).build();
+	        }
 
-			Map<String, Object> result = dispatcher.runSync("getExamByName",
-					UtilMisc.toMap("examName",(String) request.getParameter("examName")));
-			if (ServiceUtil.isError(result)) {
-				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
-			}
-			return Response.status(201).entity(result).build();
-		} catch (Exception e) {
-			Debug.logError(e, MODULE);
-			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
-		}
+	        Map<String, Object> result = dispatcher.runSync("getExamByName",
+	                UtilMisc.toMap("examName", request.getParameter("examName")));
+
+	        if (ServiceUtil.isError(result)) {
+	            return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
+	        }
+	        return Response.status(200).entity(result).build();
+
+	    } catch (Exception e) {
+	        Debug.logError(e, MODULE);
+	        return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
+	    }
 	}
 
 	@GET
@@ -398,7 +400,7 @@ public class ExamResource {
 	}
 
 	@GET
-	@Path("/topics/{examId}")
+	@Path("/examtopics/{examId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getExamTopicsByExamId(@PathParam("examId") String examId, @Context HttpServletRequest request) {
 
