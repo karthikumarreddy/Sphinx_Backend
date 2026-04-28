@@ -5,8 +5,11 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilDateTime;
@@ -65,7 +68,7 @@ public class ExamServices {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 			List<GenericValue> examList = EntityQuery.use(delegator).from("ExamMaster")
-					.where(EntityCondition.makeCondition("examName", EntityOperator.LIKE, "%" +examName+ "%"))
+					.where(EntityCondition.makeCondition("examName", EntityOperator.LIKE, "%" + examName + "%"))
 					.queryList();
 			if (UtilValidate.isEmpty(examList)) {
 				return ServiceUtil.returnError("no exam created to display");
@@ -88,12 +91,12 @@ public class ExamServices {
 
 			String examId = delegator.getNextSeqId("ExamMaster");
 			String partyId = (String) context.get("partyId");
-			String description=(String) context.get("description");
-			
-			if(description.length()>500) {
-				ServiceUtil.returnError("Description should be less than 500 letters");
+			String description = (String) context.get("description");
+
+			if (description.length() > 500) {
+				return ServiceUtil.returnError("Description should be less than 500 letters");
 			}
-			
+
 			GenericValue examMaster = delegator.makeValue("ExamMaster");
 			examMaster.set("examId", examId);
 			examMaster.set("examName", context.get("examName"));
@@ -580,19 +583,27 @@ public class ExamServices {
 				// total percentage of questions.
 				Long percentage = examTopic.getLong("percentage");
 
-				//				long totalRecords = delegator.findCountByCondition("QuestionMaster",
-				//								EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId), null, null);
+				// long totalRecords = delegator.findCountByCondition("QuestionMaster",
+				// EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId),
+				// null, null);
 
 				int requiredQuestionsInTopic = (int) (totalQuestions * percentage) / 100;
 
 				// totalQuestions = totalQuestions + totalQuestionsInTopic;
+
+				// List<GenericValue> topicWiseQuestions =
+				// EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId)
+				// .maxRows(totalQuestionsInTopic).queryList();
 
 
 
 				//				List<GenericValue> topicWiseQuestions = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId)
 				//								.maxRows(totalQuestionsInTopic).queryList();
 				
-				List<GenericValue> topicWiseQuestions = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId).queryList();
+
+				List<GenericValue> topicWiseQuestions = EntityQuery.use(delegator).from("QuestionMaster")
+						.where("topicId", topicId).queryList();
+
 
 				// int totalQuestionsInTopicInDb = topicWiseQuestions.size();
 
@@ -608,7 +619,8 @@ public class ExamServices {
 				// // generate unique question index with SET.
 				// for (int i = 1; < ; i++) {
 				// // randomNumber = rand.nextInt(totalQuestionsInTopic);
-				// randomNumber = (int) (Math.random() * totalQuestionsInTopicInDb - 1) + 1; // get random number.
+				// randomNumber = (int) (Math.random() * totalQuestionsInTopicInDb - 1) + 1; //
+				// get random number.
 				//
 				// // questionIdx.add(rand.nextInt(totalQuestionsInTopicInDb - 1));
 				// questionIdx.add(randomNumber);
@@ -642,20 +654,26 @@ public class ExamServices {
 
 					delegator.create(questionBank);
 				}
-				
+
 //				topicWiseQuestions
-				
+
 				// insert all question in the question Bank Master.
 				/*
-				 * for (GenericValue question : topicWiseQuestions) { GenericValue questionBank = delegator.makeValue("QuestionBankMaster");
-				 * questionBank.set("qId", question.getString("questionId")); questionBank.set("examId", examId);
-				 * questionBank.set("partyId", partyId); questionBank.set("topicId", question.get("topicId"));
-				 * questionBank.set("questionDetail", question.get("questionDetail")); questionBank.set("optionA", question.get("optionA"));
-				 * questionBank.set("optionB", question.get("optionB")); questionBank.set("optionC", question.get("optionC"));
-				 * questionBank.set("optionD", question.get("optionD")); questionBank.set("optionE", question.get("optionE"));
-				 * questionBank.set("answer", question.get("answer")); questionBank.set("numAnswers", (Long) question.get("numAnswers"));
-				 * questionBank.set("questionType", question.get("questionType")); questionBank.set("difficultyLevel",
-				 * question.get("difficultyLevel")); questionBank.set("answerValue", question.get("answerValue"));
+				 * for (GenericValue question : topicWiseQuestions) { GenericValue questionBank
+				 * = delegator.makeValue("QuestionBankMaster"); questionBank.set("qId",
+				 * question.getString("questionId")); questionBank.set("examId", examId);
+				 * questionBank.set("partyId", partyId); questionBank.set("topicId",
+				 * question.get("topicId")); questionBank.set("questionDetail",
+				 * question.get("questionDetail")); questionBank.set("optionA",
+				 * question.get("optionA")); questionBank.set("optionB",
+				 * question.get("optionB")); questionBank.set("optionC",
+				 * question.get("optionC")); questionBank.set("optionD",
+				 * question.get("optionD")); questionBank.set("optionE",
+				 * question.get("optionE")); questionBank.set("answer", question.get("answer"));
+				 * questionBank.set("numAnswers", (Long) question.get("numAnswers"));
+				 * questionBank.set("questionType", question.get("questionType"));
+				 * questionBank.set("difficultyLevel", question.get("difficultyLevel"));
+				 * questionBank.set("answerValue", question.get("answerValue"));
 				 * questionBank.set("negativeMarkValue", 0);
 				 * 
 				 * delegator.create(questionBank); }
@@ -816,4 +834,106 @@ public class ExamServices {
 
 	}
 
+	public static Map<String, Object> generateReport(DispatchContext dctx, Map<String, ? extends Object> context) {
+		try {
+			Delegator delegator = dctx.getDelegator();
+			LocalDispatcher dispatcher = dctx.getDispatcher();
+
+			String partyId = (String) context.get("partyId");
+			if (UtilValidate.isEmpty(partyId)) {
+				return ServiceUtil.returnError("Required details are missing: partyId");
+			}
+
+			List<GenericValue> partyExamRels = EntityQuery.use(delegator).from("PartyExamRelationship")
+					.where("partyId", partyId).queryList();
+
+			if (UtilValidate.isEmpty(partyExamRels)) {
+				return ServiceUtil.returnError("No assessments assigned to this user");
+			}
+			
+			Set<String> assignedExamIds = new HashSet<>();
+			for (GenericValue rel : partyExamRels) {
+				assignedExamIds.add(rel.getString("examId"));
+			}
+
+			List<GenericValue> allAssignedExams = EntityQuery.use(delegator).from("ExamMaster")
+					.where(EntityCondition.makeCondition("examId", EntityOperator.IN, assignedExamIds)).queryList();
+
+
+			List<GenericValue> performances = EntityQuery.use(delegator).from("PartyPerformance")
+					.where("partyId", partyId).orderBy("-attemptNo")
+					.queryList();
+
+			Map<String, GenericValue> attendedExamMap = new HashMap<>();
+			for (GenericValue perf : performances) {
+				String examId = perf.getString("examId");
+				if (!attendedExamMap.containsKey(examId)) {
+					attendedExamMap.put(examId, perf);
+				}
+			}
+
+			List<Map<String, Object>> assignedNotAttended = new ArrayList<>();
+
+			List<Map<String, Object>> attendedWithResults = new ArrayList<>();
+
+			for (GenericValue exam : allAssignedExams) {
+				String examId = exam.getString("examId");
+
+				Map<String, Object> examInfo = new HashMap<>();
+				examInfo.put("examId", examId);
+				examInfo.put("examName", exam.getString("examName"));
+				examInfo.put("description", exam.getString("description"));
+				examInfo.put("noOfQuestions", exam.getLong("noOfQuestions"));
+				examInfo.put("duration", exam.getLong("duration"));
+				examInfo.put("passPercentage", exam.getLong("passPercentage"));
+
+				if (attendedExamMap.containsKey(examId)) {
+					GenericValue perf = attendedExamMap.get(examId);
+
+					examInfo.put("score", perf.getBigDecimal("score"));
+					examInfo.put("totalCorrect", perf.getLong("totalCorrect"));
+					examInfo.put("totalWrong", perf.getLong("totalWrong"));
+					examInfo.put("attemptNo", perf.getLong("attemptNo"));
+					examInfo.put("date", perf.getTimestamp("date"));
+					examInfo.put("performanceId", perf.getLong("performanceId"));
+
+					Long userPassed = perf.getLong("userPassed");
+					examInfo.put("userPassed", userPassed);
+					examInfo.put("status", (userPassed != null && userPassed == 1L) ? "PASSED" : "FAILED");
+
+					Long noOfQuestions = perf.getLong("noOfQuestions");
+					if (noOfQuestions != null && noOfQuestions > 0) {
+						double scoreVal = perf.getBigDecimal("score") != null
+								? perf.getBigDecimal("score").doubleValue()
+								: 0.0;
+						double scorePct = (scoreVal / noOfQuestions) * 100.0;
+						examInfo.put("scorePercentage", Math.round(scorePct * 100.0) / 100.0);
+					} else {
+						examInfo.put("scorePercentage", 0.0);
+					}
+
+					attendedWithResults.add(examInfo);
+
+				} else {
+					examInfo.put("status", "PENDING");
+					assignedNotAttended.add(examInfo);
+				}
+			}
+
+			Map<String, Object> result = ServiceUtil.returnSuccess("Report generated successfully");
+			result.put("partyId", partyId);
+			result.put("assignedExams", assignedNotAttended); 
+			result.put("attendedExams", attendedWithResults); 
+			result.put("totalAssigned", allAssignedExams.size());
+			result.put("totalAttended", attendedWithResults.size());
+			result.put("totalPending", assignedNotAttended.size());
+			return result;
+
+		} catch (Exception e) {
+			Debug.logError(e, "Error in generateReport", MODULE);
+			return ServiceUtil.returnError("Error generating report: " + e.getMessage());
+		}
+	}
+	
+	
 }

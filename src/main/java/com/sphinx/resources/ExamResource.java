@@ -22,7 +22,9 @@ import javax.ws.rs.core.Response;
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
+import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericValue;
+import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
@@ -235,10 +237,14 @@ public class ExamResource {
 		try {
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
-			if (UtilValidate.isEmpty(dispatcher)) {
-				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			HttpSession session = request.getSession(false);
+			GenericValue userLogin = null;
+
+			if (UtilValidate.isNotEmpty(session) && UtilValidate.isNotEmpty(session.getAttribute("userLogin"))) {
+				userLogin = (GenericValue) session.getAttribute("userLogin");
 			}
+
+			String partyId = userLogin.getString("partyId");
 
 			String examId = (String) request.getAttribute("examId");
 			String topicId = (String) request.getAttribute("topicId");
@@ -270,8 +276,14 @@ public class ExamResource {
 			input.put("topicName", topicName);
 			input.put("percentage", percentage);
 			input.put("topicPassPercentage", topicPassPercentage);
+
 			// Skip Validation for now.
-			// Delegator delegator = (Delegator) request.getAttribute("delegator");
+			Delegator delegator = (Delegator) request.getAttribute("delegator");
+			GenericValue topic = EntityQuery.use(delegator).from("ExamTopicDetails").where("examId", examId, "topicId", topicId)
+							.queryFirst();
+			if (UtilValidate.isNotEmpty(topic)) {
+				return Response.status(400).entity(ServiceUtil.returnError("Topic already Assigned to the Assessment")).build();
+			}
 			// GenericValue exam = EntityQuery.use(delegator).from("ExamMaster").where("examId",
 			// examId).select("noOfQuestions").queryFirst();
 			// long totalQuestions = exam.getLong("noOfQuestions");
@@ -283,6 +295,11 @@ public class ExamResource {
 			// return Response.status(400).entity(ServiceUtil.returnError(totalQuestionsInTopic - questionCount
 			// + " question needed for the Topic to add in Assessment! Please Add Questions to the Topic!")).build();
 			// }
+
+//			if (totalQuestionsInTopic > questionCount) {
+//				return Response.status(400).entity(ServiceUtil.returnError(totalQuestionsInTopic - questionCount
+//								+ " question needed for the Topic to add in Assessment! Please Add Questions to the Topic!")).build();
+//			}
 			Map<String, Object> result = dispatcher.runSync("addExamTopics", input);
 			return Response.status(201).entity(result).build();
 		} catch (Exception e) {
@@ -709,6 +726,45 @@ public class ExamResource {
 					.entity(ServiceUtil.returnError("Something went wrong try later")).build();
 
 		}
+	}
+	
+	@GET
+	@Path("/report")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response generateReport(@Context HttpServletRequest request) {
+	    try {
+	        LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+	        if (UtilValidate.isEmpty(dispatcher)) {
+	            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+	                    .entity(ServiceUtil.returnError("Unexpected Error Occurred! Try again after Sometime!")).build();
+	        }
+
+	        GenericValue userLogin = (GenericValue) request.getSession().getAttribute("userLogin");
+	        String partyId = null;
+
+	        if (UtilValidate.isNotEmpty(userLogin)) {
+	            partyId = userLogin.getString("partyId");
+	        }
+
+	        if (UtilValidate.isEmpty(partyId)) {
+	            return Response.status(400)
+	                    .entity(ServiceUtil.returnError("partyId is required")).build();
+	        }
+
+	        Map<String, Object> result = dispatcher.runSync("generateReport",
+	                UtilMisc.toMap("partyId", partyId, "userLogin", userLogin));
+
+	        if (ServiceUtil.isError(result)) {
+	            return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
+	        }
+
+	        return Response.status(200).entity(result).build();
+
+	    } catch (Exception e) {
+	        Debug.logError(e, MODULE);
+	        return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
+	    }
 	}
 
 }

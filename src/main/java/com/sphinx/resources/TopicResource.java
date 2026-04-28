@@ -35,12 +35,21 @@ public class TopicResource {
 		try {
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
-			if (UtilValidate.isEmpty(dispatcher)) {
-				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			HttpSession session = request.getSession(false);
+			GenericValue userLogin = null;
+
+			if (UtilValidate.isNotEmpty(session) && UtilValidate.isNotEmpty(session.getAttribute("userLogin"))) {
+				userLogin = (GenericValue) session.getAttribute("userLogin");
 			}
-			Map<String, Object> result = dispatcher.runSync("getAllTopics", UtilMisc.toMap("partyId",request.getAttribute("partyId")));
-			return Response.ok(result).build();
+
+			String partyId = (String) request.getAttribute("partyId");
+			if (UtilValidate.isEmpty(partyId)) {
+				partyId = userLogin.getString("partyId");
+			}
+
+			Map<String, Object> result = dispatcher.runSync("getAllTopics", UtilMisc.toMap("partyId", partyId));
+			return Response.ok().entity(result).build();
+
 		} catch (Exception e) {
 			Debug.log(MODULE);
 			e.printStackTrace();

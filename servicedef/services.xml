@@ -624,5 +624,17 @@
 	    <attribute name="filename" type="String" mode="OUT"/>
 	</service>
 
+
+<service name="generateReport" engine="java" location="com.sphinx.services.ExamServices" invoke="generateReport" transaction-timeout="60">
+
+    <attribute name="partyId"    type="String" mode="IN" optional="false"/>
+    <attribute name="userLogin"  type="org.apache.ofbiz.entity.GenericValue" mode="IN" optional="true"/>
+
+    <attribute name="assignedExams"   type="List"    mode="OUT" optional="true"/>
+    <attribute name="attendedExams"   type="List"    mode="OUT" optional="true"/>
+    <attribute name="totalAssigned"   type="Integer" mode="OUT" optional="true"/>
+    <attribute name="totalAttended"   type="Integer" mode="OUT" optional="true"/>
+    <attribute name="totalPending"    type="Integer" mode="OUT" optional="true"/>
+</service>
 	
 </services>

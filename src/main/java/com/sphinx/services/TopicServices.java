@@ -3,8 +3,6 @@ package com.sphinx.services;
 import java.util.List;
 import java.util.Map;
 
-import javax.ws.rs.core.Response;
-
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
@@ -41,7 +39,8 @@ public class TopicServices {
 			Map<String, Object> result = ServiceUtil.returnSuccess();
 			
 
-			List<GenericValue> topics = EntityQuery.use(delegator).from("TopicMaster").where("partyId",partyId).queryList();
+			List<GenericValue> topics = EntityQuery.use(delegator).from("TopicMaster").where("partyId", partyId).select("topicId")
+							.queryList();
 			if (UtilValidate.isEmpty(topics)) {
 				return ServiceUtil.returnError("Cannot find the data ");
 			}
