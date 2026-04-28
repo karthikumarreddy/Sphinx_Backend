@@ -43,9 +43,9 @@ public class UserServices {
 		}
 
 		try {
-			List<GenericValue> users = EntityQuery.use(delegator).from("PartyPersonalInfo")
-							.where("partyTypeId", "PERSON", "statusId", "PARTY_ENABLED", "roleTypeId", "SphinxUser", "contactMechTypeId",
-											"EMAIL_ADDRESS")
+			List<GenericValue> users = EntityQuery
+					.use(delegator).from("PartyPersonalInfo").where("partyTypeId", "PERSON", "statusId",
+							"PARTY_ENABLED", "roleTypeId", "SphinxUser", "contactMechTypeId", "EMAIL_ADDRESS")
 					.queryList();
 
 			Map<String, Object> result = ServiceUtil.returnSuccess("List of User");
@@ -58,7 +58,7 @@ public class UserServices {
 		}
 
 	}
-	
+
 	public static Map<String, ? extends Object> getAllUsersCount(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 
@@ -83,7 +83,6 @@ public class UserServices {
 		}
 
 	}
-
 
 	public static Map<String, ? extends Object> loginUser(DispatchContext dctx, Map<String, ? extends Object> context) {
 		try {
@@ -182,11 +181,12 @@ public class UserServices {
 				return ServiceUtil.returnError("Firstname is required!");
 			}
 			// if (!Pattern.matches(" ", firstName)) {
-			// return ServiceUtil.returnError("Invalid first name. No White space are allowed!.");
+			// return ServiceUtil.returnError("Invalid first name. No White space are
+			// allowed!.");
 			// }
 			if (!Pattern.matches("^[A-Za-z]{2,20}$", firstName))
-				return ServiceUtil
-								.returnError("Invalid first name. It must be 2–20 characters and contain only letters and no space.");
+				return ServiceUtil.returnError(
+						"Invalid first name. It must be 2–20 characters and contain only letters and no space.");
 
 			firstName = firstName.strip();
 
@@ -194,10 +194,12 @@ public class UserServices {
 				return ServiceUtil.returnError("Lastname is required!");
 			}
 			// if (!Pattern.matches(" ", lastName)) {
-			// return ServiceUtil.returnError("Invalid last name. No White space are allowed!.");
+			// return ServiceUtil.returnError("Invalid last name. No White space are
+			// allowed!.");
 			// }
 			if (!Pattern.matches("^[A-Za-z]{1,20}$", lastName)) {
-				return ServiceUtil.returnError("Invalid last name. It must be 2–20 characters and contain only letters and no space.");
+				return ServiceUtil.returnError(
+						"Invalid last name. It must be 2–20 characters and contain only letters and no space.");
 			}
 
 			lastName = lastName.strip();
@@ -265,17 +267,20 @@ public class UserServices {
 			// =========================
 
 			serviceResult = createUserLogin(dctx, UtilMisc.toMap("userName", userName, "partyId", partyId,
-							"currentPassword", password, "firstName", firstName, "userLogin", context.get("userLogin")), isAdmin);
+					"currentPassword", password, "firstName", firstName, "userLogin", context.get("userLogin")),
+					isAdmin);
 			if (isError(serviceResult)) {
 				return handleError(serviceResult);
 			}
 
 			/*
-			 * // =========================== // Add user to Security Group // ===========================
+			 * // =========================== // Add user to Security Group //
+			 * ===========================
 			 * 
-			 * // addUserLoginToSecurityGroup serviceResult = addUserLoginToSecurityGroup(dctx, UtilMisc.toMap("partyId", partyId,
-			 * "groupId", "SPHINX_ADMIN_GROUP", "fromDate", LocalDateTime.now())); if (isError(serviceResult)) { return
-			 * handleError(serviceResult); }
+			 * // addUserLoginToSecurityGroup serviceResult =
+			 * addUserLoginToSecurityGroup(dctx, UtilMisc.toMap("partyId", partyId,
+			 * "groupId", "SPHINX_ADMIN_GROUP", "fromDate", LocalDateTime.now())); if
+			 * (isError(serviceResult)) { return handleError(serviceResult); }
 			 */
 			// ===========================
 			// ContactMech Record Creation
@@ -367,7 +372,6 @@ public class UserServices {
 		String currentPassword;
 		String requirePasswordChange;
 
-
 		// if not admin generate password dynamically.
 		if (isAdmin) {
 			currentPassword = (String) context.get("currentPassword");
@@ -381,35 +385,38 @@ public class UserServices {
 			firstName = firstName.strip();
 			username = (String) context.get("firstName") + "-" + partyId;
 			currentPassword = "" + RandomPasswordGenerator.generatePassword(USER_PASSWORD_LEN); // Random generation
-			System.out.println("============================================================================================");
+			System.out.println(
+					"============================================================================================");
 			System.out.println("Generated Password for " + username + " is " + currentPassword);
-			System.out.println("============================================================================================");
+			System.out.println(
+					"============================================================================================");
 			requirePasswordChange = "Y"; // password valid for only one session. hence this flag.
 		}
 		// <attribute name="userLoginId" type="String" mode="IN" optional="false"/>
 		// <attribute name="enabled" type="String" mode="IN" optional="true"/>
 		// <attribute name="currentPassword" type="String" mode="IN" optional="false"/>
-		// <attribute name="currentPasswordVerify" type="String" mode="IN" optional="false"/>
+		// <attribute name="currentPasswordVerify" type="String" mode="IN"
+		// optional="false"/>
 		// <attribute name="passwordHint" type="String" mode="IN" optional="true"/>
-		// <attribute name="requirePasswordChange" type="String" mode="IN" optional="true"/>
+		// <attribute name="requirePasswordChange" type="String" mode="IN"
+		// optional="true"/>
 		// <attribute name="externalAuthId" type="String" mode="IN" optional="true"/>
 		// <attribute name="partyId" type="String" mode="IN" optional="true"/>
 
 		try {
 			// return dctx.getDispatcher().runSync("createUserLogin",
-			// UtilMisc.toMap("userLoginId", username, "currentPassword", currentPassword, "partyId", partyId,
+			// UtilMisc.toMap("userLoginId", username, "currentPassword", currentPassword,
+			// "partyId", partyId,
 			// "enabled", "Y", "requirePasswordChange", requirePasswordChange));
 
 			dctx.getDispatcher().runSync("createUserLogin",
-							UtilMisc.toMap("userLoginId", username, "currentPassword", currentPassword, "currentPasswordVerify",
-											currentPassword, "partyId", partyId,
-											"enabled", "Y", "requirePasswordChange", requirePasswordChange, "userLogin",
-											context.get("userLogin")));
+					UtilMisc.toMap("userLoginId", username, "currentPassword", currentPassword, "currentPasswordVerify",
+							currentPassword, "partyId", partyId, "enabled", "Y", "requirePasswordChange",
+							requirePasswordChange, "userLogin", context.get("userLogin")));
 
 			return dctx.getDispatcher().runSync("addUserLoginToSecurityGroup",
-							UtilMisc.toMap("userLoginId", username, "groupId", "SPHINX_ADMIN_GROUP", "fromDate",
-											Timestamp.valueOf(LocalDateTime.now()),
-											"userLogin", context.get("userLogin")));
+					UtilMisc.toMap("userLoginId", username, "groupId", "SPHINX_ADMIN_GROUP", "fromDate",
+							Timestamp.valueOf(LocalDateTime.now()), "userLogin", context.get("userLogin")));
 
 		} catch (GenericServiceException e) {
 			Debug.logError(e, MODULE);
@@ -418,7 +425,8 @@ public class UserServices {
 
 	}
 
-	private static Map<String, Object> addUserLoginToSecurityGroup(DispatchContext dctx, Map<String, ? extends Object> context) {
+	private static Map<String, Object> addUserLoginToSecurityGroup(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
 		try {
 			LocalDispatcher dispatcher = dctx.getDispatcher();
 			dispatcher.runSync("addUserLoginToSecurityGroup", context);
@@ -489,6 +497,5 @@ public class UserServices {
 			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 		}
 	}
-	
-	
+
 }

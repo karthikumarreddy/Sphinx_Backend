@@ -54,33 +54,38 @@ public class ExamServices {
 
 	}
 
-	public static Map<String, ? extends Object> getExamByName(DispatchContext dctx,
-			Map<String, ? extends Object> context) {
-		try {
-			String examName = (String) context.get("examName");
-			if (UtilValidate.isEmpty(examName)) {
-				return ServiceUtil.returnError("Exam is not available ");
-			}
-			Map<String, Object> result = ServiceUtil.returnSuccess();
-			Delegator delegator = dctx.getDelegator();
+	public static Map<String, Object> getExamByName(DispatchContext dctx,
+	        Map<String, ? extends Object> context) {
+	    try {
+	        Delegator delegator = dctx.getDelegator();
 
-			if (UtilValidate.isEmpty(delegator)) {
-				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
-			}
-			List<GenericValue> examList = EntityQuery.use(delegator).from("ExamMaster")
-					.where(EntityCondition.makeCondition("examName", EntityOperator.LIKE, "%" + examName + "%"))
-					.queryList();
-			if (UtilValidate.isEmpty(examList)) {
-				return ServiceUtil.returnError("no exam created to display");
-			}
-			result.put("examList", examList);
-			return result;
-		} catch (Exception e) {
-			return ServiceUtil.returnError("Something went wrong try again later ");
-		}
+	        if (UtilValidate.isEmpty(delegator)) {
+	            return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+	        }
 
+	        String examName = (String) context.get("examName");
+
+	        List<GenericValue> examList;
+	        if (UtilValidate.isEmpty(examName)) {
+	            examList = EntityQuery.use(delegator).from("ExamMaster").queryList();
+	        } else {
+	            examList = EntityQuery.use(delegator).from("ExamMaster")
+	                    .where(EntityCondition.makeCondition("examName", EntityOperator.LIKE, "%" + examName + "%"))
+	                    .queryList();
+	        }
+
+	        if (UtilValidate.isEmpty(examList)) {
+	            return ServiceUtil.returnError("No exams found");
+	        }
+
+	        Map<String, Object> result = ServiceUtil.returnSuccess();
+	        result.put("examList", examList);
+	        return result;
+
+	    } catch (Exception e) {
+	        return ServiceUtil.returnError("Something went wrong: " + e.getMessage());
+	    }
 	}
-
 	public static Map<String, Object> createExam(DispatchContext dctx, Map<String, Object> context) {
 		try {
 			Delegator delegator = dctx.getDelegator();
@@ -269,7 +274,7 @@ public class ExamServices {
 					}
 				}
 
-				if (allowedAttempts <= 0 && allowedAttempts > 5) {
+				if (allowedAttempts < 0 && allowedAttempts > 5) {
 					return ServiceUtil.returnError("Invalid Allowed Attempts! Should in between 0 and 5");
 				}
 
