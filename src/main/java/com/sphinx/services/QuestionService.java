@@ -445,9 +445,11 @@ public class QuestionService {
 
 			// new flow, add the question directly to the question bank master.
 			Delegator delegator = dctx.getDelegator();
-			GenericValue question = delegator.makeValue("QuestionBankMaster");
-			question.setAllFields(context, false, errorMsg, null);
+			GenericValue question = delegator.makeValue("QuestionMaster");
+			question.set("questionId", delegator.getNextSeqId("QuestionMaster"));
+			question.setNonPKFields(context);
 
+			delegator.create(question);
 			// if(ServiceUtil.isError(result)) {
 			// return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
 			// }

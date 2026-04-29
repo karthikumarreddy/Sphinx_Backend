@@ -41,9 +41,9 @@ public class TopicServices {
 
 			List<GenericValue> topics = EntityQuery.use(delegator).from("TopicMaster").where("partyId", partyId).select("topicId")
 							.queryList();
-			if (UtilValidate.isEmpty(topics)) {
-				return ServiceUtil.returnError("Cannot find the data ");
-			}
+			// if (UtilValidate.isEmpty(topics)) {
+			// return ServiceUtil.returnError("Cannot find the data ");
+			// }
 			result.put("topicList", topics);
 			return result;
 		} catch (Exception e) {

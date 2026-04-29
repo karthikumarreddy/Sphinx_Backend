@@ -444,6 +444,7 @@
         <attribute name="answerValue" mode="IN" type="String" optional="true" allow-html="any" />
         <attribute name="topicId" mode="IN" type="String" optional="false"/>
         <attribute name="partyId" mode="IN" type="String"/>
+        <attribute name="examId" mode="IN" type="String"/>
     </service>
 
     <service name="createQuestion" default-entity-name="QuestionMaster" engine="entity-auto" invoke="create">

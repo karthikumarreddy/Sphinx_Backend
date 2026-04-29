@@ -634,12 +634,12 @@ public class ExamServices {
 				// }
 				// }
 
-				int totalQuestionsInTopicInDb = topicWiseQuestions.size();
+				// int totalQuestionsInTopicInDb = topicWiseQuestions.size();
 
 				// add to question bank master;
 				for (GenericValue question : selectedQuestions) {
 					// GenericValue question = topicWiseQuestions.get(i);
-					GenericValue questionBank = delegator.makeValue("QuestionBankMaster");
+					GenericValue questionBank = delegator.makeValue("QuestionBankMasterB");
 					questionBank.set("qId", question.getString("questionId"));
 					questionBank.set("examId", examId);
 					questionBank.set("partyId", partyId);
@@ -652,7 +652,7 @@ public class ExamServices {
 					questionBank.set("optionE", question.get("optionE"));
 					questionBank.set("answer", question.get("answer"));
 					questionBank.set("numAnswers", (Long) question.get("numAnswers"));
-					questionBank.set("questionType", question.get("questionType"));
+					questionBank.set("questiontype", question.get("questionType"));
 					questionBank.set("difficultyLevel", question.get("difficultyLevel"));
 					questionBank.set("answerValue", question.get("answerValue"));
 					questionBank.set("negativeMarkValue", 0);
