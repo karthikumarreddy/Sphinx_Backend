@@ -492,7 +492,7 @@ public class UserExamServices {
 			// EntityCondition partyMatchingCondition =
 			// EntityCondition.makeCondition("partyId", EntityOperator.EQUALS, partyId);
 
-			EntityQuery baseCondition = EntityQuery.use(delegator).from("QuestionBankMaster").where("examId", examId,
+			EntityQuery baseCondition = EntityQuery.use(delegator).from("QuestionBankMasterB").where("examId", examId,
 					"partyId", partyId);
 
 			long totalRecords = baseCondition.queryCount();

@@ -600,8 +600,15 @@ public class ExamServices {
 				// EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId)
 				// .maxRows(totalQuestionsInTopic).queryList();
 
+
+
+				//				List<GenericValue> topicWiseQuestions = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId)
+				//								.maxRows(totalQuestionsInTopic).queryList();
+				
+
 				List<GenericValue> topicWiseQuestions = EntityQuery.use(delegator).from("QuestionMaster")
 						.where("topicId", topicId).queryList();
+
 
 				// int totalQuestionsInTopicInDb = topicWiseQuestions.size();
 
@@ -627,10 +634,12 @@ public class ExamServices {
 				// }
 				// }
 
+				// int totalQuestionsInTopicInDb = topicWiseQuestions.size();
+
 				// add to question bank master;
 				for (GenericValue question : selectedQuestions) {
 					// GenericValue question = topicWiseQuestions.get(i);
-					GenericValue questionBank = delegator.makeValue("QuestionBankMaster");
+					GenericValue questionBank = delegator.makeValue("QuestionBankMasterB");
 					questionBank.set("qId", question.getString("questionId"));
 					questionBank.set("examId", examId);
 					questionBank.set("partyId", partyId);
@@ -643,7 +652,7 @@ public class ExamServices {
 					questionBank.set("optionE", question.get("optionE"));
 					questionBank.set("answer", question.get("answer"));
 					questionBank.set("numAnswers", (Long) question.get("numAnswers"));
-					questionBank.set("questionType", question.get("questionType"));
+					questionBank.set("questiontype", question.get("questionType"));
 					questionBank.set("difficultyLevel", question.get("difficultyLevel"));
 					questionBank.set("answerValue", question.get("answerValue"));
 					questionBank.set("negativeMarkValue", 0);
@@ -760,7 +769,6 @@ public class ExamServices {
 							UtilDateTime.addDaysToTimestamp(Timestamp.valueOf(now), timeoutDaysInt));
 
 					delegator.store(assignedUser);
-
 				}
 			}
 
@@ -793,7 +801,8 @@ public class ExamServices {
 		}
 
 		try {
-			GenericValue exam = EntityQuery.use(delegator).from("InProgressParty").where("examId", examId).queryFirst();
+			GenericValue exam = EntityQuery.use(delegator).from("InProgressParty").where("examId", examId, "isExamActive", 1L).queryFirst();
+
 			if (!UtilValidate.isEmpty(exam)) {
 				return ServiceUtil.returnError("Can not delete the exam a user is attending the exam try again later ");
 			}

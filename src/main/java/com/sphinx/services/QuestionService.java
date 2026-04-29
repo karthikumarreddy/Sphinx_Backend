@@ -427,7 +427,7 @@ public class QuestionService {
 	}
 
 	public Map<String ,? extends Object> createQuestionWrapper(DispatchContext dctx,
-			Map<String, ? extends Object> context){
+					Map<String, Object> context) {
 		try {
 			LocalDispatcher dispatcher = dctx.getDispatcher();
 
@@ -435,16 +435,27 @@ public class QuestionService {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 			String errorMsg = validateQuestionData(context);
+			context.put("partyId", ((GenericValue) context.get("userLogin")).getString("partyId"));
 
 			if (UtilValidate.isNotEmpty(errorMsg)) {
 				return ServiceUtil.returnError(errorMsg);
 			}
-			Map<String, Object> result;
-			result = dispatcher.runSync("createQuestion", context);
-			if(ServiceUtil.isError(result)) {
-				return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
-			}
-			return ServiceUtil.returnSuccess(result.toString());
+			// Map<String, Object> result;
+			// result = dispatcher.runSync("createQuestion", context);
+
+			// new flow, add the question directly to the question bank master.
+			Delegator delegator = dctx.getDelegator();
+			GenericValue question = delegator.makeValue("QuestionMaster");
+			question.set("questionId", delegator.getNextSeqId("QuestionMaster"));
+			question.setNonPKFields(context);
+
+			delegator.create(question);
+			// if(ServiceUtil.isError(result)) {
+			// return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
+			// }
+			// return ServiceUtil.returnSuccess(result.toString());
+			return ServiceUtil.returnSuccess("Question Added to the Topic!");
+
 		}catch (Exception e) {
 			return  ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 		}

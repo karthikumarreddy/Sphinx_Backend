@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -19,6 +20,7 @@ import javax.ws.rs.core.Response;
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
+import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
@@ -33,12 +35,21 @@ public class TopicResource {
 		try {
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
-			if (UtilValidate.isEmpty(dispatcher)) {
-				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			HttpSession session = request.getSession(false);
+			GenericValue userLogin = null;
+
+			if (UtilValidate.isNotEmpty(session) && UtilValidate.isNotEmpty(session.getAttribute("userLogin"))) {
+				userLogin = (GenericValue) session.getAttribute("userLogin");
 			}
-			Map<String, Object> result = dispatcher.runSync("getAllTopics", UtilMisc.toMap("partyId",request.getAttribute("partyId")));
-			return Response.ok(result).build();
+
+			String partyId = (String) request.getAttribute("partyId");
+			if (UtilValidate.isEmpty(partyId)) {
+				partyId = userLogin.getString("partyId");
+			}
+
+			Map<String, Object> result = dispatcher.runSync("getAllTopics", UtilMisc.toMap("partyId", partyId));
+			return Response.ok().entity(result).build();
+
 		} catch (Exception e) {
 			Debug.log(MODULE);
 			e.printStackTrace();
@@ -132,6 +143,7 @@ public class TopicResource {
 	public Response createTopic(@Context HttpServletRequest request) {
 		try {
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+			GenericValue userLogin = null;
 
 			if (UtilValidate.isEmpty(dispatcher)) {
 				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -141,6 +153,13 @@ public class TopicResource {
 			String topicName = (String) request.getAttribute("topicName");
 			String topicId=topicName;
 			String partyId=(String) request.getAttribute("partyId");
+			if (UtilValidate.isEmpty(partyId)) {
+				HttpSession session = request.getSession(false);
+				if (UtilValidate.isNotEmpty(session) && UtilValidate.isNotEmpty(session.getAttribute("userLogin"))) {
+					userLogin = (GenericValue) session.getAttribute("userLogin");
+					partyId = userLogin.getString("partyId");
+				}
+			}
 
 			Map<String, Object> result = dispatcher.runSync("createTopicValidator",
 					UtilMisc.toMap("partyId",partyId,"topicId",topicId,"topicName", topicName));

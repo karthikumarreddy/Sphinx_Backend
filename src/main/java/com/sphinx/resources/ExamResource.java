@@ -239,10 +239,14 @@ public class ExamResource {
 		try {
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
-			if (UtilValidate.isEmpty(dispatcher)) {
-				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+			HttpSession session = request.getSession(false);
+			GenericValue userLogin = null;
+
+			if (UtilValidate.isNotEmpty(session) && UtilValidate.isNotEmpty(session.getAttribute("userLogin"))) {
+				userLogin = (GenericValue) session.getAttribute("userLogin");
 			}
+
+			String partyId = userLogin.getString("partyId");
 
 			String examId = (String) request.getAttribute("examId");
 			String topicId = (String) request.getAttribute("topicId");
@@ -274,12 +278,26 @@ public class ExamResource {
 			input.put("topicName", topicName);
 			input.put("percentage", percentage);
 			input.put("topicPassPercentage", topicPassPercentage);
+
+			// Skip Validation for now.
 			Delegator delegator = (Delegator) request.getAttribute("delegator");
-			GenericValue exam = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId).select("noOfQuestions").queryFirst();
-			long totalQuestions = exam.getLong("noOfQuestions");
-			int totalQuestionsInTopic = (int) (totalQuestions * Integer.valueOf(percentage)) / 100;
-			long questionCount = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId).maxRows(totalQuestionsInTopic)
-							.queryCount();
+			GenericValue topic = EntityQuery.use(delegator).from("ExamTopicDetails").where("examId", examId, "topicId", topicId)
+							.queryFirst();
+			if (UtilValidate.isNotEmpty(topic)) {
+				return Response.status(400).entity(ServiceUtil.returnError("Topic already Assigned to the Assessment")).build();
+			}
+			// GenericValue exam = EntityQuery.use(delegator).from("ExamMaster").where("examId",
+			// examId).select("noOfQuestions").queryFirst();
+			// long totalQuestions = exam.getLong("noOfQuestions");
+			// int totalQuestionsInTopic = (int) (totalQuestions * Integer.valueOf(percentage)) / 100;
+			// long questionCount = EntityQuery.use(delegator).from("QuestionMaster").where("topicId",
+			// topicId).maxRows(totalQuestionsInTopic)
+			// .queryCount();
+			// if (totalQuestionsInTopic > questionCount) {
+			// return Response.status(400).entity(ServiceUtil.returnError(totalQuestionsInTopic - questionCount
+			// + " question needed for the Topic to add in Assessment! Please Add Questions to the Topic!")).build();
+			// }
+
 //			if (totalQuestionsInTopic > questionCount) {
 //				return Response.status(400).entity(ServiceUtil.returnError(totalQuestionsInTopic - questionCount
 //								+ " question needed for the Topic to add in Assessment! Please Add Questions to the Topic!")).build();

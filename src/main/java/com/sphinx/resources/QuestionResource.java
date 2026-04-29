@@ -205,7 +205,8 @@ public class QuestionResource {
 					"optionA", request.getAttribute("optionA"), "optionB", request.getAttribute("optionB"), "optionC",
 					request.getAttribute("optionC"), "optionD", request.getAttribute("optionD"), "answer",
 					request.getAttribute("answer"), "numAnswers", request.getAttribute("numAnswers"), "difficultyLevel",
-					request.getAttribute("difficultyLevel"), "answerValue", request.getAttribute("answerValue"));
+							request.getAttribute("difficultyLevel"), "answerValue", request.getAttribute("answerValue"), "examId",
+							request.getAttribute("examId"));
 
 
 			HttpSession session = request.getSession(false);
