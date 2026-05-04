@@ -983,11 +983,15 @@ public class ExamServices {
 			Map<String, ? extends Object> context) {
 		try {
 			Delegator delegator = dctx.getDelegator();
-			List<GenericValue> examUsers = EntityQuery.use(delegator).from("PartyExamRelationship").queryList();
+			String examId=(String) context.get("examId");
+			if(UtilValidate.isEmpty(examId)) {
+				return ServiceUtil.returnError("Required details are missing ");
+			}
+			List<GenericValue> examUsers = EntityQuery.use(delegator).from("PartyExamRelationship").where("examId",examId).queryList();
 			List<GenericValue> users = EntityQuery
 					.use(delegator).from("PartyPersonalInfo").where("partyTypeId", "PERSON", "statusId",
 							"PARTY_ENABLED", "roleTypeId", "SphinxUser", "contactMechTypeId", "EMAIL_ADDRESS")
-					.queryList();
+					.queryList();		
 			Set<String> examUserPartyIds = new HashSet<>();
 
 			for (GenericValue examUser : examUsers) {
@@ -1000,7 +1004,6 @@ public class ExamServices {
 					iterator.remove();
 				}
 			}
-
 			Map<String, Object> result = ServiceUtil.returnSuccess("Un Assigned Users List");
 			result.put("data", users);
 			return result;

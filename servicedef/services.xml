@@ -669,6 +669,7 @@
 </service>
 	
 	<service  name="getUsersNotAssignedToExam" engine="java" location="com.sphinx.services.ExamServices" invoke="getUsersNotAssignedToExam">
+	<attribute name="examId" mode="IN" type="String"/>
 <attribute name="data" mode="OUT" type="List"/>
  </service>
 </services>
