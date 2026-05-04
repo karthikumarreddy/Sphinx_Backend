@@ -883,8 +883,7 @@ public class ExamServices {
 	public static Map<String, Object> generateReport(DispatchContext dctx, Map<String, ? extends Object> context) {
 		try {
 			Delegator delegator = dctx.getDelegator();
-			LocalDispatcher dispatcher = dctx.getDispatcher();
-
+			
 			String partyId = (String) context.get("partyId");
 			if (UtilValidate.isEmpty(partyId)) {
 				return ServiceUtil.returnError("Required details are missing: partyId");
