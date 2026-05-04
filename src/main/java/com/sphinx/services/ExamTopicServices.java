@@ -29,13 +29,19 @@ public class ExamTopicServices {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 
+			GenericValue userLogin = (GenericValue) context.get("userLogin");
+			if (UtilValidate.isEmpty(userLogin)) {
+				return ServiceUtil.returnError("User Login Not Found!");
+			}
+
 			String examId = (String) context.get("examId");
 			String topicId = (String) context.get("topicId");
 			String topicName = (String) context.get("topicName");
 			String percentage = (String) context.get("percentage");
 			String topicPassPercentage = (String) context.get("topicPassPercentage");
+			Boolean savePermanently = (Boolean) context.get("savePermanently");
 
-			if (UtilValidate.isEmail(examId)) {
+			if (UtilValidate.isEmpty(examId)) {
 				return ServiceUtil.returnError("Exam id is empty ");
 			}
 			if (UtilValidate.isEmpty(topicId)) {
@@ -50,41 +56,86 @@ public class ExamTopicServices {
 			if (UtilValidate.isEmpty(topicPassPercentage)) {
 				return ServiceUtil.returnError("Topic pass percentage is required ");
 			}
-			GenericValue exam = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId)
-					.select("noOfQuestions").queryFirst();
-			long totalQuestions = exam.getLong("noOfQuestions");
-			int totalQuestionsInTopic = (int) (totalQuestions * Integer.valueOf(percentage)) / 100;
-			long questionCount = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId)
-					.maxRows(totalQuestionsInTopic).queryCount();
-			if (totalQuestionsInTopic > questionCount) {
-				return ServiceUtil.returnError((totalQuestionsInTopic - questionCount)
-						+ " question needed for the Topic to add in Assessment! Please Add Questions to the Topic!");
+			if (UtilValidate.isEmpty(savePermanently)) {
+				return ServiceUtil.returnError("Save Permanently is required ");
 			}
-			GenericValue topic = delegator.findOne("ExamTopicDetails", true, UtilMisc.toMap("topicId", topicName));
-			if (UtilValidate.isNotEmpty(topic)) {
-				int passper = Integer.parseInt(topicPassPercentage)
-						+ Integer.parseInt(topic.getString(topicPassPercentage));
-				topic.set(topicPassPercentage, passper);
+
+			String existingMsg = "";
+
+			if (savePermanently) {
+				GenericValue topicMasterRecord = EntityQuery.use(delegator).from("TopicMaster").where("topicId", topicId).queryFirst();
+				if (UtilValidate.isEmpty(topicMasterRecord)) {
+					Map<String, Object> result = dctx.getDispatcher().runSync("createTopic",
+									UtilMisc.toMap("topicId", topicId, "topicName", topicName, "partyId", userLogin.getString("partyId")));
+					if (ServiceUtil.isError(result)) {
+						return ServiceUtil.returnError("Failed to Save the topic Permanently!");
+					}
+
+					existingMsg = "Topic Saved Permanently";
+				} else {
+					existingMsg = "Topic Already Saved Permanently";
+				}
+			}
+
+			// GenericValue exam = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId)
+			// .select("noOfQuestions").queryFirst();
+
+			GenericValue exam = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId).queryFirst();
+
+			if (UtilValidate.isEmpty(exam)) {
+				return ServiceUtil.returnError("Assessment Not found On Records!");
+			}
+
+			// long totalQuestions = exam.getLong("noOfQuestions");
+			// int totalQuestionsInTopic = (int) (totalQuestions * Integer.valueOf(percentage)) / 100;
+			// long questionCount = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId)
+			// .maxRows(totalQuestionsInTopic).queryCount();
+			// if (totalQuestionsInTopic > questionCount) {
+			// return ServiceUtil.returnError((totalQuestionsInTopic - questionCount)
+			// + " question needed for the Topic to add in Assessment! Please Add Questions to the Topic!");
+			// }
+
+			GenericValue topic = delegator.findOne("ExamTopicDetails", true, UtilMisc.toMap("topicId", topicId));
+
+
+			if (UtilValidate.isEmpty(topic)) {
+
+				Map<String, Object> input = new HashMap<String, Object>();
+				input.put("examId", examId);
+				input.put("topicId", topicId);
+				input.put("topicName", topicName);
+				input.put("percentage", percentage);
+				input.put("topicPassPercentage", topicPassPercentage);
+
+				LocalDispatcher dispatcher = dctx.getDispatcher();
+				Map<String, Object> result = dispatcher.runSync("updateExamTopics", context);
+				if (ServiceUtil.isError(result)) {
+					return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
+				}
+				result.put("successMessage", existingMsg + " " + "Topic Assigned to the Assessment !");
+				return result;
+
+			} else {
+				long existingPercentage = topic.getLong("percentage");
+				double existingPassPercentage = topic.getDouble("topicPassPercentage");
+				if (Long.valueOf(percentage) + existingPercentage > 100) {
+					return ServiceUtil.returnError("Topic Already Exists, Cannot Update further, Cummulative Percentage exceeds 100%");
+				}
+				if (Double.valueOf(topicPassPercentage) + existingPassPercentage > 100) {
+					return ServiceUtil.returnError(
+									"Topic Already Exists, Cannot Update further, Cummulative Topic Pass Percentage exceeds 100%");
+				}
+
+				topic.set("percentage", Long.valueOf(percentage) + existingPercentage);
+				topic.set("topicPassPercentage", Double.valueOf(topicPassPercentage) + existingPassPercentage);
+
 				delegator.store(topic);
 
-				return ServiceUtil.returnSuccess("Topic Pass Percentage Updated");
+				return ServiceUtil.returnSuccess(existingMsg + " " + "Topic Updated Successfully!");
 			}
-
-			Map<String, Object> input = new HashMap<String, Object>();
-			input.put("examId", examId);
-			input.put("topicId", topicId);
-			input.put("topicName", topicName);
-			input.put("percentage", percentage);
-			input.put("topicPassPercentage", topicPassPercentage);
-
-			LocalDispatcher dispatcher = dctx.getDispatcher();
-			Map<String, Object> result = dispatcher.runSync("updateExamTopics", context);
-			if (ServiceUtil.isError(result)) {
-				return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
-			}
-			return result;
 
 		} catch (Exception e) {
+			Debug.logError(e, MODULE);
 			return ServiceUtil.returnError("Something went wrong try again later");
 		}
 	}
