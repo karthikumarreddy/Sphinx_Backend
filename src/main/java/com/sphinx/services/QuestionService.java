@@ -128,7 +128,6 @@ public class QuestionService {
 		return null;
 	}
 
-	// QUESTION SERVICE
 
 	public Map<String, ? extends Object> getAllQuestionByTopic(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
@@ -143,13 +142,14 @@ public class QuestionService {
 		try {
 
 			String topicId = (String) context.get("topicId");
+
 			if (UtilValidate.isEmpty(topicId)) {
-				return ServiceUtil.returnError("Invalid topic id.");
+				return ServiceUtil.returnError("Invalid Topic.");
 			}
 
 			List<GenericValue> questionsByCategory = EntityQuery.use(delegator).from("QuestionMaster")
 					.where("topicId", topicId).queryList();
-			result.put("questions", questionsByCategory);
+			result.put("data", questionsByCategory);
 			return result;
 
 		} catch (GenericEntityException e) {
@@ -183,53 +183,58 @@ public class QuestionService {
 	}
 
 	public Map<String, ? extends Object> uploadBulkQuestion(DispatchContext dctx,
-			Map<String, ? extends Object> context) {
-
-		// process the excel file
+					Map<String, ? extends Object> context) {
 
 		try {
 
+			GenericValue userLogin = (GenericValue) context.get("userLogin");
+			String partyId = null;
+			if (UtilValidate.isNotEmpty(userLogin)) {
+				partyId = userLogin.getString("partyId");
+			}
+			if (UtilValidate.isEmpty(partyId)) {
+				return ServiceUtil.returnError("Party Id Required!");
+			}
+
+
 			ByteBuffer buffer = (ByteBuffer) context.get("file");
-
 			byte[] bytes = new byte[buffer.remaining()];
-
 			buffer.get(bytes);
-
 			InputStream is = new ByteArrayInputStream(bytes);
-
-			// InputStream file = (InputStream) context.get("file");
-
-			Map<String, Object> result = ServiceUtil.returnSuccess();
 
 			Workbook workbook = WorkbookFactory.create(is);
 			Sheet sheet = workbook.getSheetAt(0);
-
-			// list of questions map
-			List<Map<String, Object>> questions = new ArrayList<>();
-
 			int totalRows = sheet.getLastRowNum();
 
-			// first row considered as Header
 			if (totalRows <= 1) {
 				return ServiceUtil.returnError("Please fill the details and upload the file");
 			}
 
+
+			List<Map<String, Object>> successRows = new ArrayList<>();
+			List<Map<String, Object>> errorRows = new ArrayList<>();
+
+
 			for (int i = 1; i <= sheet.getPhysicalNumberOfRows(); i++) {
-
 				Row row = sheet.getRow(i);
-
 				if (row == null)
 					continue;
 
 				Map<String, Object> question = new HashMap<>();
 				List<ColumnConfig> columns = QuestionColumnConfigUtil.getColumnConfigs();
 
+
+				boolean rowHasError = false;
+				String rowErrorMessage = null;
+
 				for (ColumnConfig col : columns) {
 					Cell cell = row.getCell(col.index);
 
+
 					if (col.required && (cell == null || cell.getCellType() == CellType.BLANK)) {
-						return ServiceUtil
-								.returnError("Row " + i + ", Column " + col.index + " " + col.label + " is required");
+						rowHasError = true;
+						rowErrorMessage = "Row " + i + ", Column " + col.index + " " + col.label + " is required";
+						break;
 					}
 
 					if (cell == null) {
@@ -238,63 +243,101 @@ public class QuestionService {
 					}
 
 					switch (cell.getCellType()) {
-
 					case NUMERIC:
-						double numVal = cell.getNumericCellValue();
-						question.put(col.field, numVal);
+						question.put(col.field, cell.getNumericCellValue());
 						break;
-
 					case STRING:
 						String strVal = cell.getStringCellValue();
-						question.put(col.field, strVal != null ? strVal.trim() : null);
+						if (col.field.equals("topicId")) {
+							question.put(col.field, strVal != null ? strVal.trim().toUpperCase() : null);
+						} else {
+							question.put(col.field, strVal != null ? strVal.trim() : null);
+						}
 						break;
-
 					case BOOLEAN:
 						question.put(col.field, cell.getBooleanCellValue());
 						break;
-
-					case BLANK:
-						question.put(col.field, null);
-						break;
 					default:
 						question.put(col.field, null);
-						break;
 					}
 				}
-				questions.add(question);
-			}
 
-			// Transaction BEGIN
-			TransactionUtil.begin();
 
-			for (Map<String, ? extends Object> question : questions) {
-				Map<String, Object> serviceResult = dctx.getDispatcher().runSync("createQuestion", question);
-				if (serviceResult.get("responseMessage") != null
-						&& serviceResult.get("responseMessage").equals("error")) {
-					Map<String, Object> errorResult = ServiceUtil
-							.returnError((String) serviceResult.get("errorMessage"));
+				if (rowHasError) {
+					Map<String, Object> errDetail = new HashMap<>();
+					errDetail.put("rowNumber", i);
+					errDetail.put("questionData", question); // actual parsed data
+					errDetail.put("errorMessage", rowErrorMessage);
+					errorRows.add(errDetail);
+					continue;
+				}
 
-					// Transaction ROLL BACK
 
-					TransactionUtil.rollback(); // Here we rolled back, because the service returns error;
-					return errorResult;
+				boolean rowSaved = false;
+				String errorMsg = null;
+				String createdQuestionId = null;
 
+				try {
+					TransactionUtil.begin();
+
+					question.put("partyId", partyId);
+					Map<String, Object> serviceResult = dctx.getDispatcher().runSync("createQuestion", question);
+
+					if (serviceResult.get("responseMessage") != null && serviceResult.get("responseMessage").equals("error")) {
+						errorMsg = (String) serviceResult.get("errorMessage");
+						TransactionUtil.rollback();
+					} else {
+						createdQuestionId = (String) serviceResult.get("questionId");
+						TransactionUtil.commit();
+						rowSaved = true;
+					}
+				} catch (GenericServiceException | GenericTransactionException e) {
+					errorMsg = "Transaction/service error: " + e.getMessage();
+					try {
+						TransactionUtil.rollback();
+					} catch (GenericTransactionException te) {
+						Debug.logError(te, MODULE);
+					}
+				}
+
+
+				Map<String, Object> rowDetail = new HashMap<>();
+				rowDetail.put("rowNumber", i);
+				rowDetail.put("questionData", question);
+
+				if (rowSaved) {
+					rowDetail.put("questionId", createdQuestionId);
+					successRows.add(rowDetail);
+				} else {
+					rowDetail.put("errorMessage", errorMsg != null ? errorMsg : "Unknown error while creating question");
+					errorRows.add(rowDetail);
 				}
 			}
 
-			// Transaction COMMIT
-			TransactionUtil.commit();
 
-			result.put("successMessage", "Questions uploaded successfully");
+			Map<String, Object> result = ServiceUtil.returnSuccess();
+			result.put("successRows", successRows);
+			result.put("errorRows", errorRows);
+			result.put("totalRowsProcessed", successRows.size() + errorRows.size());
+			result.put("successCount", successRows.size());
+			result.put("errorCount", errorRows.size());
+
+			if (errorRows.isEmpty()) {
+				result.put("successMessage", "All questions uploaded successfully");
+			} else {
+				result.put("successMessage", "Upload completed with " + errorRows.size() + " error(s). Successful rows saved.");
+			}
 
 			return result;
 
-		} catch (EncryptedDocumentException | IOException | GenericServiceException | GenericTransactionException e) {
+		} catch (EncryptedDocumentException | IOException e) {
 			Debug.logError(e, MODULE);
-			return ServiceUtil.returnError("Unexpected error occured, try again after sometime!");
+			return ServiceUtil.returnError("Error reading Excel file: " + e.getMessage());
+		} catch (Exception e) {
+			Debug.logError(e, MODULE);
+			return ServiceUtil.returnError("Unexpected error occurred, try again later!");
 		}
-
-	}
+			}
 
 	public Map<String, ? extends Object> getAllQuestions(DispatchContext dctx, Map<String, ? extends Object> context) {
 

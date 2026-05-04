@@ -62,11 +62,10 @@ public class QuestionResource {
 						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
 			}
 
-			String topicIdStr = request.getQueryString();
-			String topicId = topicIdStr.split("=")[1];
+			String topicId = request.getParameter("topicId");
 
 			if (topicId == null) {
-				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError("Invalid topic Id"))
+				return Response.status(Response.Status.BAD_REQUEST).entity(ServiceUtil.returnError("Invalid Topic!"))
 						.build();
 			}
 
@@ -324,13 +323,14 @@ public class QuestionResource {
 		}
 
 		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
-		if (UtilValidate.isEmpty(dispatcher)) {
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-					.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+		GenericValue userLogin = null;
+		HttpSession session = request.getSession(false);
+		if (UtilValidate.isNotEmpty(session)) {
+			userLogin = (GenericValue) session.getAttribute("userLogin");
 		}
 
 		try {
-			Map<String, Object> result = dispatcher.runSync("uploadBulkQuestion", UtilMisc.toMap("file", buffer));
+			Map<String, Object> result = dispatcher.runSync("uploadBulkQuestion", UtilMisc.toMap("file", buffer, "userLogin", userLogin));
 			if (result.get("responseMessage") != null && result.get("responseMessage").equals("error")) {
 				return Response.status(Response.Status.BAD_REQUEST).entity(result).build();
 			} else {

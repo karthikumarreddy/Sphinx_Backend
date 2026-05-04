@@ -57,6 +57,8 @@ public class TopicResource {
 		}
 	}
 
+
+
 	@GET
 	@Path("/{topicId}")
 	@Produces(MediaType.APPLICATION_JSON)

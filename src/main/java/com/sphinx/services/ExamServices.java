@@ -4,6 +4,7 @@ import java.security.SecureRandom;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -373,36 +374,46 @@ public class ExamServices {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 			}
 
-			String partyId = (String) context.get("partyId");
+			List<String> partyIds = (List<String>) context.get("partyId");
 			String examId = (String) context.get("examId");
 
-			if (UtilValidate.isEmpty(partyId)) {
-				return ServiceUtil.returnError("Invalid User!");
+			if (UtilValidate.isEmpty(partyIds)) {
+				return ServiceUtil.returnError("Invalid Users!");
 			}
 
 			if (UtilValidate.isEmpty(examId)) {
-				return ServiceUtil.returnError("Invalid User!");
+				return ServiceUtil.returnError("Invalid Assessment Information!");
 			}
 
-			GenericValue assignedUserRecord = EntityQuery.use(delegator).from("PartyExamRelationship")
-					.where("partyId", partyId, "examId", examId).queryFirst();
+			// GenericValue assignedUserRecord = EntityQuery.use(delegator).from("PartyExamRelationship")
+			// .where("partyId", partyId, "examId", examId).queryFirst();
+
+			List<GenericValue> assignedUserRecord = EntityQuery.use(delegator).from("PartyExamRelationship")
+							.where(EntityCondition.makeCondition("partyId", EntityOperator.IN, partyIds),
+											EntityCondition.makeCondition("examId", EntityOperator.EQUALS, examId))
+							.queryList();
 
 			if (assignedUserRecord == null) {
-				return ServiceUtil.returnSuccess("User already Removed!");
+				return ServiceUtil.returnSuccess("Users already Removed!");
 			}
 
-			Map<String, Object> result = dispatcher.runSync("removeAssignedUserFromExam",
-					UtilMisc.toMap("partyId", partyId, "examId", examId));
+			int count = assignedUserRecord.size();
+			delegator.removeAll(assignedUserRecord);
 
-			if (result.containsKey("responseMessage") && result.get("responseMessage").equals("success")) {
-				result.put("successMessage", "User removed from Exam Successfully!");
-			}
-			return result;
+			// Map<String, Object> result = dispatcher.runSync("removeAssignedUserFromExam",
+			// UtilMisc.toMap("partyId", partyId, "examId", examId));
+
+			// if (result.containsKey("responseMessage") && result.get("responseMessage").equals("success")) {
+			// result.put("successMessage", "User removed from Exam Successfully!");
+			// }
+			// return result;
+
+			return ServiceUtil.returnSuccess(count + " Users Removed from Assessment!");
 
 		} catch (ClassCastException e) {
 			Debug.logError(e, MODULE);
 			return ServiceUtil.returnError("Invalid Input values!");
-		} catch (GenericEntityException | GenericServiceException e) {
+		} catch (GenericEntityException e) {
 			Debug.logError(e, MODULE);
 			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 		}
@@ -569,11 +580,15 @@ public class ExamServices {
 					.queryList();
 
 			if (UtilValidate.isEmpty(examTopics)) {
-				return ServiceUtil.returnError("No Topics Assigend for this Exam!");
+				return ServiceUtil.returnError("No Topics Assigend for this Assessment!");
 			}
 
 			GenericValue examRecord = EntityQuery.use(delegator).from("ExamMaster").where("examId", examId)
 					.queryFirst();
+
+			if (UtilValidate.isEmpty(examRecord)) {
+				return ServiceUtil.returnError("Assessment not found!");
+			}
 
 			long totalQuestions = examRecord.getLong("noOfQuestions");
 
@@ -585,6 +600,14 @@ public class ExamServices {
 							MODULE);
 					continue;
 				}
+				String mandatoryQuestionsIds = examTopic.getString("mandatoryQuestionIds");
+
+				List<String> mandatoryQuestions = Collections.emptyList();
+
+				if (UtilValidate.isNotEmpty(mandatoryQuestionsIds)) {
+					mandatoryQuestions = Arrays.asList(mandatoryQuestionsIds.split(","));
+				}
+
 				// total percentage of questions.
 				Long percentage = examTopic.getLong("percentage");
 
@@ -607,15 +630,33 @@ public class ExamServices {
 				
 
 				List<GenericValue> topicWiseQuestions = EntityQuery.use(delegator).from("QuestionMaster")
-						.where("topicId", topicId).queryList();
+								.where(EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId),
+												EntityCondition.makeCondition("questionId", EntityOperator.NOT_IN, mandatoryQuestions))
+								.queryList();
 
 
+				if (UtilValidate.isEmpty(topicWiseQuestions) || topicWiseQuestions.size() < requiredQuestionsInTopic) {
+					return ServiceUtil.returnError("Required Questions Not Found in Question Bank");
+				}
 				// int totalQuestionsInTopicInDb = topicWiseQuestions.size();
 
 				List<GenericValue> selectedQuestions = new ArrayList<>();
 
+
 				Collections.shuffle(topicWiseQuestions, new SecureRandom());
-				selectedQuestions.addAll(topicWiseQuestions.subList(0, requiredQuestionsInTopic));
+
+				if (topicWiseQuestions.size() < (requiredQuestionsInTopic - mandatoryQuestions.size())) {
+					return ServiceUtil.returnError("Required Questions was Not found in Records!");
+				}
+
+				selectedQuestions.addAll(topicWiseQuestions.subList(0, requiredQuestionsInTopic - mandatoryQuestions.size()));
+
+				topicWiseQuestions = EntityQuery.use(delegator).from("QuestionMaster")
+								.where(EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId),
+												EntityCondition.makeCondition("questionId", EntityOperator.IN, mandatoryQuestions))
+								.queryList();
+
+				selectedQuestions.addAll(topicWiseQuestions);
 
 				// SecureRandom rand = new SecureRandom();
 				// // get random number.
@@ -652,7 +693,7 @@ public class ExamServices {
 					questionBank.set("optionE", question.get("optionE"));
 					questionBank.set("answer", question.get("answer"));
 					questionBank.set("numAnswers", (Long) question.get("numAnswers"));
-					questionBank.set("questiontype", question.get("questionType"));
+					questionBank.set("questionType", question.get("questionType"));
 					questionBank.set("difficultyLevel", question.get("difficultyLevel"));
 					questionBank.set("answerValue", question.get("answerValue"));
 					questionBank.set("negativeMarkValue", 0);

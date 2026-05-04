@@ -183,6 +183,9 @@
     	<attribute name="partyId" mode="IN" type="String"/>
         <attribute name="topicList" type="List" mode="OUT" optional="true" />
     </service>
+    
+
+    
 
     <service name="getTopicById" engine="java" location="com.sphinx.services.TopicServices" invoke="getTopicById">
         <attribute name="topicId" type="String" mode="IN" optional="false" />
@@ -371,7 +374,7 @@
     </service>
      
     <service name="removeAssignedUserFromExamWrapper" engine="java" location="com.sphinx.services.ExamServices" invoke="removeAssignedUserFromExam" auth="false">
-    	<attribute name="partyId" mode="IN" type="String" />
+    	<attribute name="partyId" mode="IN" type="List" />
     	<attribute name="examId" mode="IN" type="String" />
     </service>
     
@@ -394,7 +397,7 @@
     	<attribute name="timeoutDays" mode="IN" type="Integer"/>
     </service>
 
-<service name="getAllAssignedUsersForExam" engine="java" location="com.sphinx.services.ExamServices"  invoke="getAllAssignedUsersForExam" auth="false">
+	<service name="getAllAssignedUsersForExam" engine="java" location="com.sphinx.services.ExamServices"  invoke="getAllAssignedUsersForExam" auth="false">
     	<attribute name="examId" mode="IN" type="String"></attribute>
     	<attribute name="data" mode="OUT" type="List"></attribute>
     </service>
@@ -444,7 +447,7 @@
         <attribute name="answerValue" mode="IN" type="String" optional="true" allow-html="any" />
         <attribute name="topicId" mode="IN" type="String" optional="false"/>
         <attribute name="partyId" mode="IN" type="String"/>
-        <attribute name="examId" mode="IN" type="String"/>
+        <!-- <attribute name="examId" mode="IN" type="String"/> -->
     </service>
 
     <service name="createQuestion" default-entity-name="QuestionMaster" engine="entity-auto" invoke="create">
@@ -474,10 +477,6 @@
     	<attribute name="questionIds" mode="IN" type="List" optional="false"/>
     </service>
 
-    <service name="getAllQuestionByTopic" engine="java" location="com.sphinx.services.QuestionService" invoke="getAllQuestionByTopic">
-        <attribute name="topicId" type="String" mode="IN" />
-    </service>
-    
 	<service name="getAllQuestionTypes" engine="java"
 	    location="com.sphinx.services.QuestionService" invoke="getAllQuestionTypes">
 	    <attribute name="data" type="List" mode="OUT" optional="true" />
@@ -485,6 +484,11 @@
 
     <service name="uploadBulkQuestion" engine="java" location="com.sphinx.services.QuestionService" invoke="uploadBulkQuestion">
         <attribute name="file" mode="IN" type="java.nio.ByteBuffer" optional="true" />
+        <attribute name="successRows" mode="OUT" optional="true" type="List"/>
+        <attribute name="errorRows" mode="OUT" optional="true" type="List"/>
+        <attribute name="totalRowsProcessed" mode="OUT" optional="true" type="Long"/>
+        <attribute name="successCount" mode="OUT" optional="true" type="Long"/>
+        <attribute name="errorCount" mode="OUT" optional="true" type="Long"/>
     </service>
     
     
@@ -505,8 +509,33 @@
 	
 	
 	
+	<service name="getAllQuestionByTopic" engine="java" location="com.sphinx.services.QuestionService" invoke="getAllQuestionByTopic">
+	
+		<attribute name="topicId" mode="IN" type="String" optional="true"/>
+		
+		<attribute name="data" mode="OUT" type="List" optional="true"/>
+	</service>
 	
 	
+	
+	<!-- ============================= -->
+    <!-- Exam Topic Service=====       -->
+    <!-- ============================= -->
+    <service name="getAllAssessmentTopics" engine="java" location="com.sphinx.services.ExamTopicServices" invoke="getAllAssessmentTopics">
+    	<attribute name="partyId" mode="IN" type="String"/>
+    	<attribute name="examId" mode="IN" type="String"/>
+        <attribute name="data" type="List" mode="OUT" optional="true" />
+    </service>
+    
+     <service name="saveMandatoryQuestionsForTopic" engine="java" location="com.sphinx.services.ExamTopicServices" invoke="saveMandatoryQuestionsForTopic">
+    	<attribute name="examId" mode="IN" type="String"/>
+    	<attribute name="topicId" mode="IN" type="String"/>
+    	<attribute name="questionIds" mode="IN" type="String"/>
+    </service>
+    
+    
+    
+
 	 <!-- ============================= -->
     <!-- User Exam Service       -->
     <!-- ============================= -->
