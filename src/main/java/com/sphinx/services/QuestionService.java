@@ -148,7 +148,7 @@ public class QuestionService {
 			}
 
 			List<GenericValue> questionsByCategory = EntityQuery.use(delegator).from("QuestionMaster")
-					.where("topicId", topicId).queryList();
+							.where("topicId", topicId.toUpperCase()).queryList();
 			result.put("data", questionsByCategory);
 			return result;
 

@@ -22,9 +22,7 @@ import javax.ws.rs.core.Response;
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
-import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericValue;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
@@ -167,7 +165,7 @@ public class ExamResource {
 
 			HttpSession session = request.getSession(false);
 
-			String partyId = (String) request.getParameter("partyId");
+			String partyId = request.getParameter("partyId");
 			if (UtilValidate.isEmpty(partyId)) {
 				if (UtilValidate.isNotEmpty(session)) {
 					GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
@@ -246,30 +244,31 @@ public class ExamResource {
 				userLogin = (GenericValue) session.getAttribute("userLogin");
 			}
 
-			String partyId = userLogin.getString("partyId");
+			// String partyId = userLogin.getString("partyId");
 
 			String examId = (String) request.getAttribute("examId");
 			String topicId = (String) request.getAttribute("topicId");
 			String topicName = (String) request.getAttribute("topicName");
 			String percentage = (String) request.getAttribute("percentage");
 			String topicPassPercentage = (String) request.getAttribute("topicPassPercentage");
-
-			if (UtilValidate.isEmail(examId)) {
-				return Response.status(400).entity(ServiceUtil.returnError("Exam id is empty")).build();
-			}
-			if (UtilValidate.isEmpty(topicId)) {
-				return Response.status(400).entity(ServiceUtil.returnError("Topic is Required")).build();
-			}
-			if (UtilValidate.isEmpty(topicName)) {
-				return Response.status(400).entity(ServiceUtil.returnError("Topic name is required")).build();
-			}
-			if (UtilValidate.isEmpty(percentage)) {
-				return Response.status(400).entity(ServiceUtil.returnError("Question percentage is required")).build();
-			}
-			if (UtilValidate.isEmpty(topicPassPercentage)) {
-
-				return Response.status(400).entity(ServiceUtil.returnError("Topic passpercentage is required")).build();
-			}
+			Boolean savePermanently = (Boolean) request.getAttribute("savePermanently");
+			//
+			// if (UtilValidate.isEmail(examId)) {
+			// return Response.status(400).entity(ServiceUtil.returnError("Exam id is empty")).build();
+			// }
+			// if (UtilValidate.isEmpty(topicId)) {
+			// return Response.status(400).entity(ServiceUtil.returnError("Topic is Required")).build();
+			// }
+			// if (UtilValidate.isEmpty(topicName)) {
+			// return Response.status(400).entity(ServiceUtil.returnError("Topic name is required")).build();
+			// }
+			// if (UtilValidate.isEmpty(percentage)) {
+			// return Response.status(400).entity(ServiceUtil.returnError("Question percentage is required")).build();
+			// }
+			// if (UtilValidate.isEmpty(topicPassPercentage)) {
+			//
+			// return Response.status(400).entity(ServiceUtil.returnError("Topic passpercentage is required")).build();
+			// }
 			
 
 			Map<String, Object> input = new HashMap<String, Object>();
@@ -278,14 +277,16 @@ public class ExamResource {
 			input.put("topicName", topicName);
 			input.put("percentage", percentage);
 			input.put("topicPassPercentage", topicPassPercentage);
+			input.put("savePermanently", savePermanently);
+			input.put("userLogin", userLogin);
 
 			// Skip Validation for now.
-			Delegator delegator = (Delegator) request.getAttribute("delegator");
-			GenericValue topic = EntityQuery.use(delegator).from("ExamTopicDetails").where("examId", examId, "topicId", topicId)
-							.queryFirst();
-			if (UtilValidate.isNotEmpty(topic)) {
-				return Response.status(400).entity(ServiceUtil.returnError("Topic already Assigned to the Assessment")).build();
-			}
+			/*
+			 * Delegator delegator = (Delegator) request.getAttribute("delegator"); GenericValue topic =
+			 * EntityQuery.use(delegator).from("ExamTopicDetails").where("examId", examId, "topicId", topicId) .queryFirst(); if
+			 * (UtilValidate.isNotEmpty(topic)) { return
+			 * Response.status(400).entity(ServiceUtil.returnError("Topic already Assigned to the Assessment")).build(); }
+			 */
 			// GenericValue exam = EntityQuery.use(delegator).from("ExamMaster").where("examId",
 			// examId).select("noOfQuestions").queryFirst();
 			// long totalQuestions = exam.getLong("noOfQuestions");
@@ -298,11 +299,16 @@ public class ExamResource {
 			// + " question needed for the Topic to add in Assessment! Please Add Questions to the Topic!")).build();
 			// }
 
-//			if (totalQuestionsInTopic > questionCount) {
-//				return Response.status(400).entity(ServiceUtil.returnError(totalQuestionsInTopic - questionCount
-//								+ " question needed for the Topic to add in Assessment! Please Add Questions to the Topic!")).build();
-//			}
-			Map<String, Object> result = dispatcher.runSync("addExamTopics", input);
+			// if (totalQuestionsInTopic > questionCount) {
+			// return Response.status(400).entity(ServiceUtil.returnError(totalQuestionsInTopic - questionCount
+			// + " question needed for the Topic to add in Assessment! Please Add Questions to the Topic!")).build();
+			// }
+			// Map<String, Object> result = dispatcher.runSync("addExamTopics", input);
+
+			Map<String, Object> result = dispatcher.runSync("addExamTopicsWrapper", input);
+			if (ServiceUtil.isError(result)) {
+				return Response.status(400).entity(result).build();
+			}
 			return Response.status(201).entity(result).build();
 		} catch (Exception e) {
 			Debug.logError(e, MODULE);
@@ -398,11 +404,11 @@ public class ExamResource {
 			String topicId = (String) request.getAttribute("topicId");
 
 			if (UtilValidate.isEmpty(examId)) {
-				return Response.status(400).entity("Exam Id is required ").build();
+				return Response.status(400).entity(ServiceUtil.returnError("Exam Id is required")).build();
 			}
 
 			if (UtilValidate.isEmpty(topicId)) {
-				return Response.status(400).entity("Topic Id is required ").build();
+				return Response.status(400).entity(ServiceUtil.returnError("Topic Id is required")).build();
 			}
 
 			Map<String, Object> input = new HashMap<String, Object>();

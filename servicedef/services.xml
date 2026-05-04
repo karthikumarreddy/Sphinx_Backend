@@ -208,8 +208,12 @@
     </service>
     
     <service name="addExamTopicsWrapper"  engine="java" location="com.sphinx.services.ExamTopicServices" invoke="addExamTopicsWrapper" auth="false">
-        <auto-attributes include="pk" mode="IN" optional="false"/>
-        <auto-attributes include="nonpk" mode="IN" optional="true"/>
+        <attribute name="examId" mode="IN" type="String"/>
+        <attribute name="topicId" mode="IN" type="String"/>
+        <attribute name="topicName" mode="IN" type="String"/>
+        <attribute name="percentage" mode="IN" type="String"/>
+        <attribute name="topicPassPercentage" mode="IN" type="String"/>
+        <attribute name="savePermanently" mode="IN" type="Boolean"/>
     </service>
 
     <service name="updateExamTopics" default-entity-name="ExamTopicDetails" engine="entity-auto" invoke="update" auth="false">
