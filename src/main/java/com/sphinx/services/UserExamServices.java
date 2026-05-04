@@ -225,17 +225,18 @@ public class UserExamServices {
 			if (UtilValidate.isEmpty(answer)) {
 				return ServiceUtil.returnError("Exam is not available ");
 			}
-			if (answer.size() < exam.getInteger("answersMust")) {
-				return ServiceUtil.returnError("must attend atleast " + exam.getInteger("answersMust") + "questions");
+			long answerMust = exam.getLong("answersMust");
+			if (answer.size() < (int) answerMust) {
+				return ServiceUtil.returnError("You Must attend atleast " + exam.getLong("answersMust") + "questions");
 			}
 
 			long passPercentage = exam.getLong("passPercentage") != null ? exam.getLong("passPercentage") : 50L;
-			boolean negativeEnabled = exam.getLong("allowNegativeMarks") != null
-					&& exam.getLong("allowNegativeMarks") == 1L;
-			long negativeMarkValue = exam.getLong("negativeMarkValue") != null ? exam.getLong("negativeMarkValue") : 0L;
+			// boolean negativeEnabled = exam.getLong("allowNegativeMarks") != null
+			// && exam.getLong("allowNegativeMarks") == 1L;
+			// long negativeMarkValue = exam.getLong("negativeMarkValue") != null ? exam.getLong("negativeMarkValue") : 0L;
 
 			// Fetch Questions
-			List<GenericValue> questions = EntityQuery.use(delegator).from("QuestionBankMaster").where("examId", examId)
+			List<GenericValue> questions = EntityQuery.use(delegator).from("QuestionBankMasterB").where("examId", examId)
 					.queryList();
 
 			if (UtilValidate.isEmpty(questions)) {
@@ -295,10 +296,10 @@ public class UserExamServices {
 					topicScores.put(topicId, topicScores.get(topicId) + marks);
 				} else {
 					totalWrong++;
-					if (negativeEnabled) {
-						totalScore -= negativeMarkValue;
-						topicScores.put(topicId, topicScores.get(topicId) - negativeMarkValue);
-					}
+					// if (negativeEnabled) {
+					// totalScore -= negativeMarkValue;
+					// topicScores.put(topicId, topicScores.get(topicId) - negativeMarkValue);
+					// }
 				}
 			}
 

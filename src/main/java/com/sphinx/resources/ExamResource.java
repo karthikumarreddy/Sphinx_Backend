@@ -598,7 +598,7 @@ public class ExamResource {
 			}
 
 			Map<String, Object> result = dispatcher.runSync("removeAssignedUserFromExamWrapper", UtilMisc
-					.toMap("partyId", request.getAttribute("partyId"), "examId", request.getAttribute("examId")));
+							.toMap("partyId", request.getAttribute("partyIds"), "examId", request.getAttribute("examId")));
 
 			return Response.ok().entity(result).build();
 

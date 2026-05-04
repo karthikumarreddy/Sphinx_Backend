@@ -85,7 +85,7 @@
 		<field name="optionE" type="very-long"/>
 		<field name="answer" type="very-long" not-null="true"></field>
 		<field name="numAnswers" type="numeric" not-null="true"/>
-		<field name="questiontype" type="name" not-null="true"></field>
+		<field name="questionType" type="name" not-null="true"></field>
 		<field name="difficultyLevel" type="name"></field>
 		<field name="answerValue" type="very-long"/>
 		<field name="negativeMarkValue" type="numeric"></field>			
@@ -128,8 +128,7 @@
 		<field name="topicId" type="id"/>
 		<field name="topicName" type="short-varchar" not-null="true" />
 		<field name="percentage" type="numeric" not-null="true"/>
-		<field name="startingQid" type="numeric" />
-		<field name="endingQid" type="numeric"/>
+		<field name="mandatoryQuestionIds" type="very-long" not-null="false"/>
 		<field name="questionsPerExam" type="numeric" />
 		<field name="topicPassPercentage" type="floating-point"/>
 		<prim-key field="examId" />
@@ -260,8 +259,38 @@
 	    <view-link entity-alias="PCM" rel-entity-alias="CM">
 	        <key-map field-name="contactMechId"/>
 	    </view-link>
+	</view-entity>
 
-</view-entity>
+	
+	 <view-entity entity-name="AssignedUsersForExam" package-name="com.sphinx">
+    
+	    <member-entity entity-alias="PY" entity-name="Party"/>
+	    <member-entity entity-alias="PN" entity-name="Person"/>
+	    <member-entity entity-alias="PXR" entity-name="PartyExamRelationship" />	    
+	    
+	    <alias entity-alias="PY" name="partyId"/>
+	    <alias entity-alias="PY" name="partyTypeId"/>
+	    <alias entity-alias="PY" name="statusId"/>
+	    <alias entity-alias="PN" name="firstName"/>
+	    <alias entity-alias="PN" name="lastName"/> 
+	    
+	    <alias entity-alias="PXR" name="examId" />
+        <alias entity-alias="PXR" name="allowedAttempts" />
+        <alias entity-alias="PXR" name="noOfAttempts" />
+        <alias entity-alias="PXR" name="timeoutDays" />
+        
+          <view-link rel-entity-alias="PY" entity-alias="PN">
+	    	<key-map field-name="partyId"/>
+	    </view-link>
+	    
+	    
+	    <view-link rel-entity-alias="PXR" entity-alias="PY">
+	    	<key-map field-name="partyId"/>
+	    </view-link>
+	    
+	</view-entity>
+
+
 
     <view-entity entity-name="PersonWithExam" package-name="com.sphinx">
         

@@ -43,10 +43,14 @@ public class UserServices {
 		}
 
 		try {
+			// EntityQuery.use(delegator).from("AssignedUsersForExam").where(
+			// EntityCondition.makeCondition("partyId", "")
+			// ).queryList();
+
 			List<GenericValue> users = EntityQuery
 					.use(delegator).from("PartyPersonalInfo").where("partyTypeId", "PERSON", "statusId",
 							"PARTY_ENABLED", "roleTypeId", "SphinxUser", "contactMechTypeId", "EMAIL_ADDRESS")
-					.queryList();
+							.queryList();
 
 			Map<String, Object> result = ServiceUtil.returnSuccess("List of User");
 			result.put("users", users);
