@@ -95,8 +95,9 @@ public class ExamTopicServices {
 			// + " question needed for the Topic to add in Assessment! Please Add Questions to the Topic!");
 			// }
 
-			GenericValue topic = delegator.findOne("ExamTopicDetails", true, UtilMisc.toMap("topicId", topicId));
+			// GenericValue topic = delegator.findOne("", true, UtilMisc.toMap("topicId", topicId));
 
+			GenericValue topic = EntityQuery.use(delegator).from("ExamTopicDetails").where("topicId", topicId, "examId", examId).queryOne();
 
 			if (UtilValidate.isEmpty(topic)) {
 
@@ -104,15 +105,15 @@ public class ExamTopicServices {
 				input.put("examId", examId);
 				input.put("topicId", topicId);
 				input.put("topicName", topicName);
-				input.put("percentage", percentage);
-				input.put("topicPassPercentage", topicPassPercentage);
+				input.put("percentage", Long.valueOf(percentage));
+				input.put("topicPassPercentage", Double.valueOf(topicPassPercentage));
 
 				LocalDispatcher dispatcher = dctx.getDispatcher();
-				Map<String, Object> result = dispatcher.runSync("updateExamTopics", context);
+				Map<String, Object> result = dispatcher.runSync("addExamTopics", context);
 				if (ServiceUtil.isError(result)) {
 					return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
 				}
-				result.put("successMessage", existingMsg + " " + "Topic Assigned to the Assessment !");
+				result.put("successMessage", existingMsg + ", " + "Topic Assigned to the Assessment !");
 				return result;
 
 			} else {
@@ -131,7 +132,7 @@ public class ExamTopicServices {
 
 				delegator.store(topic);
 
-				return ServiceUtil.returnSuccess(existingMsg + " " + "Topic Updated Successfully!");
+				return ServiceUtil.returnSuccess(existingMsg + ", " + "Topic Updated Successfully!");
 			}
 
 		} catch (Exception e) {

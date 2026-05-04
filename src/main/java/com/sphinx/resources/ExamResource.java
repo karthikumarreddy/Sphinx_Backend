@@ -165,7 +165,7 @@ public class ExamResource {
 
 			HttpSession session = request.getSession(false);
 
-			String partyId = (String) request.getParameter("partyId");
+			String partyId = request.getParameter("partyId");
 			if (UtilValidate.isEmpty(partyId)) {
 				if (UtilValidate.isNotEmpty(session)) {
 					GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
@@ -277,7 +277,7 @@ public class ExamResource {
 			input.put("topicName", topicName);
 			input.put("percentage", percentage);
 			input.put("topicPassPercentage", topicPassPercentage);
-			input.put("userLogin", savePermanently);
+			input.put("savePermanently", savePermanently);
 			input.put("userLogin", userLogin);
 
 			// Skip Validation for now.
@@ -404,11 +404,11 @@ public class ExamResource {
 			String topicId = (String) request.getAttribute("topicId");
 
 			if (UtilValidate.isEmpty(examId)) {
-				return Response.status(400).entity("Exam Id is required ").build();
+				return Response.status(400).entity(ServiceUtil.returnError("Exam Id is required")).build();
 			}
 
 			if (UtilValidate.isEmpty(topicId)) {
-				return Response.status(400).entity("Topic Id is required ").build();
+				return Response.status(400).entity(ServiceUtil.returnError("Topic Id is required")).build();
 			}
 
 			Map<String, Object> input = new HashMap<String, Object>();

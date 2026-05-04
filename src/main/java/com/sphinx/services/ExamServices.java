@@ -226,7 +226,7 @@ public class ExamServices {
 	public static Map<String, Object> assignUsersToExam(DispatchContext dctx, Map<String, ? extends Object> context) {
 
 		try {
-			LocalDispatcher dispatcher = (LocalDispatcher) dctx.getDispatcher();
+			LocalDispatcher dispatcher = dctx.getDispatcher();
 
 			if (UtilValidate.isEmpty(dispatcher)) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
@@ -363,7 +363,7 @@ public class ExamServices {
 
 		try {
 
-			LocalDispatcher dispatcher = (LocalDispatcher) dctx.getDispatcher();
+			LocalDispatcher dispatcher = dctx.getDispatcher();
 
 			if (UtilValidate.isEmpty(dispatcher)) {
 				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
@@ -824,7 +824,7 @@ public class ExamServices {
 	public static Map<String, ? extends Object> deleteExamWrapper(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 
-		LocalDispatcher dispatcher = (LocalDispatcher) dctx.getDispatcher();
+		LocalDispatcher dispatcher = dctx.getDispatcher();
 
 		if (UtilValidate.isEmpty(dispatcher)) {
 			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
