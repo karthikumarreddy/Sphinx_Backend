@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,38 +56,38 @@ public class ExamServices {
 
 	}
 
-	public static Map<String, Object> getExamByName(DispatchContext dctx,
-	        Map<String, ? extends Object> context) {
-	    try {
-	        Delegator delegator = dctx.getDelegator();
+	public static Map<String, Object> getExamByName(DispatchContext dctx, Map<String, ? extends Object> context) {
+		try {
+			Delegator delegator = dctx.getDelegator();
 
-	        if (UtilValidate.isEmpty(delegator)) {
-	            return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
-	        }
+			if (UtilValidate.isEmpty(delegator)) {
+				return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+			}
 
-	        String examName = (String) context.get("examName");
+			String examName = (String) context.get("examName");
 
-	        List<GenericValue> examList;
-	        if (UtilValidate.isEmpty(examName)) {
-	            examList = EntityQuery.use(delegator).from("ExamMaster").queryList();
-	        } else {
-	            examList = EntityQuery.use(delegator).from("ExamMaster")
-	                    .where(EntityCondition.makeCondition("examName", EntityOperator.LIKE, "%" + examName + "%"))
-	                    .queryList();
-	        }
+			List<GenericValue> examList;
+			if (UtilValidate.isEmpty(examName)) {
+				examList = EntityQuery.use(delegator).from("ExamMaster").queryList();
+			} else {
+				examList = EntityQuery.use(delegator).from("ExamMaster")
+						.where(EntityCondition.makeCondition("examName", EntityOperator.LIKE, "%" + examName + "%"))
+						.queryList();
+			}
 
-	        if (UtilValidate.isEmpty(examList)) {
-	            return ServiceUtil.returnError("No exams found");
-	        }
+			if (UtilValidate.isEmpty(examList)) {
+				return ServiceUtil.returnError("No exams found");
+			}
 
-	        Map<String, Object> result = ServiceUtil.returnSuccess();
-	        result.put("examList", examList);
-	        return result;
+			Map<String, Object> result = ServiceUtil.returnSuccess();
+			result.put("examList", examList);
+			return result;
 
-	    } catch (Exception e) {
-	        return ServiceUtil.returnError("Something went wrong: " + e.getMessage());
-	    }
+		} catch (Exception e) {
+			return ServiceUtil.returnError("Something went wrong: " + e.getMessage());
+		}
 	}
+
 	public static Map<String, Object> createExam(DispatchContext dctx, Map<String, Object> context) {
 		try {
 			Delegator delegator = dctx.getDelegator();
@@ -385,13 +386,14 @@ public class ExamServices {
 				return ServiceUtil.returnError("Invalid Assessment Information!");
 			}
 
-			// GenericValue assignedUserRecord = EntityQuery.use(delegator).from("PartyExamRelationship")
+			// GenericValue assignedUserRecord =
+			// EntityQuery.use(delegator).from("PartyExamRelationship")
 			// .where("partyId", partyId, "examId", examId).queryFirst();
 
 			List<GenericValue> assignedUserRecord = EntityQuery.use(delegator).from("PartyExamRelationship")
-							.where(EntityCondition.makeCondition("partyId", EntityOperator.IN, partyIds),
-											EntityCondition.makeCondition("examId", EntityOperator.EQUALS, examId))
-							.queryList();
+					.where(EntityCondition.makeCondition("partyId", EntityOperator.IN, partyIds),
+							EntityCondition.makeCondition("examId", EntityOperator.EQUALS, examId))
+					.queryList();
 
 			if (assignedUserRecord == null) {
 				return ServiceUtil.returnSuccess("Users already Removed!");
@@ -403,7 +405,8 @@ public class ExamServices {
 			// Map<String, Object> result = dispatcher.runSync("removeAssignedUserFromExam",
 			// UtilMisc.toMap("partyId", partyId, "examId", examId));
 
-			// if (result.containsKey("responseMessage") && result.get("responseMessage").equals("success")) {
+			// if (result.containsKey("responseMessage") &&
+			// result.get("responseMessage").equals("success")) {
 			// result.put("successMessage", "User removed from Exam Successfully!");
 			// }
 			// return result;
@@ -623,17 +626,14 @@ public class ExamServices {
 				// EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId)
 				// .maxRows(totalQuestionsInTopic).queryList();
 
-
-
-				//				List<GenericValue> topicWiseQuestions = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId)
-				//								.maxRows(totalQuestionsInTopic).queryList();
-				
+				// List<GenericValue> topicWiseQuestions =
+				// EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId)
+				// .maxRows(totalQuestionsInTopic).queryList();
 
 				List<GenericValue> topicWiseQuestions = EntityQuery.use(delegator).from("QuestionMaster")
-								.where(EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId),
-												EntityCondition.makeCondition("questionId", EntityOperator.NOT_IN, mandatoryQuestions))
-								.queryList();
-
+						.where(EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId),
+								EntityCondition.makeCondition("questionId", EntityOperator.NOT_IN, mandatoryQuestions))
+						.queryList();
 
 				if (UtilValidate.isEmpty(topicWiseQuestions) || topicWiseQuestions.size() < requiredQuestionsInTopic) {
 					return ServiceUtil.returnError("Required Questions Not Found in Question Bank");
@@ -642,19 +642,19 @@ public class ExamServices {
 
 				List<GenericValue> selectedQuestions = new ArrayList<>();
 
-
 				Collections.shuffle(topicWiseQuestions, new SecureRandom());
 
 				if (topicWiseQuestions.size() < (requiredQuestionsInTopic - mandatoryQuestions.size())) {
 					return ServiceUtil.returnError("Required Questions was Not found in Records!");
 				}
 
-				selectedQuestions.addAll(topicWiseQuestions.subList(0, requiredQuestionsInTopic - mandatoryQuestions.size()));
+				selectedQuestions
+						.addAll(topicWiseQuestions.subList(0, requiredQuestionsInTopic - mandatoryQuestions.size()));
 
 				topicWiseQuestions = EntityQuery.use(delegator).from("QuestionMaster")
-								.where(EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId),
-												EntityCondition.makeCondition("questionId", EntityOperator.IN, mandatoryQuestions))
-								.queryList();
+						.where(EntityCondition.makeCondition("topicId", EntityOperator.EQUALS, topicId),
+								EntityCondition.makeCondition("questionId", EntityOperator.IN, mandatoryQuestions))
+						.queryList();
 
 				selectedQuestions.addAll(topicWiseQuestions);
 
@@ -842,7 +842,8 @@ public class ExamServices {
 		}
 
 		try {
-			GenericValue exam = EntityQuery.use(delegator).from("InProgressParty").where("examId", examId, "isExamActive", 1L).queryFirst();
+			GenericValue exam = EntityQuery.use(delegator).from("InProgressParty")
+					.where("examId", examId, "isExamActive", 1L).queryFirst();
 
 			if (!UtilValidate.isEmpty(exam)) {
 				return ServiceUtil.returnError("Can not delete the exam a user is attending the exam try again later ");
@@ -883,7 +884,7 @@ public class ExamServices {
 	public static Map<String, Object> generateReport(DispatchContext dctx, Map<String, ? extends Object> context) {
 		try {
 			Delegator delegator = dctx.getDelegator();
-			
+
 			String partyId = (String) context.get("partyId");
 			if (UtilValidate.isEmpty(partyId)) {
 				return ServiceUtil.returnError("Required details are missing: partyId");
@@ -895,7 +896,7 @@ public class ExamServices {
 			if (UtilValidate.isEmpty(partyExamRels)) {
 				return ServiceUtil.returnError("No assessments assigned to this user");
 			}
-			
+
 			Set<String> assignedExamIds = new HashSet<>();
 			for (GenericValue rel : partyExamRels) {
 				assignedExamIds.add(rel.getString("examId"));
@@ -904,10 +905,8 @@ public class ExamServices {
 			List<GenericValue> allAssignedExams = EntityQuery.use(delegator).from("ExamMaster")
 					.where(EntityCondition.makeCondition("examId", EntityOperator.IN, assignedExamIds)).queryList();
 
-
 			List<GenericValue> performances = EntityQuery.use(delegator).from("PartyPerformance")
-					.where("partyId", partyId).orderBy("-attemptNo")
-					.queryList();
+					.where("partyId", partyId).orderBy("-attemptNo").queryList();
 
 			Map<String, GenericValue> attendedExamMap = new HashMap<>();
 			for (GenericValue perf : performances) {
@@ -967,8 +966,8 @@ public class ExamServices {
 
 			Map<String, Object> result = ServiceUtil.returnSuccess("Report generated successfully");
 			result.put("partyId", partyId);
-			result.put("assignedExams", assignedNotAttended); 
-			result.put("attendedExams", attendedWithResults); 
+			result.put("assignedExams", assignedNotAttended);
+			result.put("attendedExams", attendedWithResults);
 			result.put("totalAssigned", allAssignedExams.size());
 			result.put("totalAttended", attendedWithResults.size());
 			result.put("totalPending", assignedNotAttended.size());
@@ -979,6 +978,37 @@ public class ExamServices {
 			return ServiceUtil.returnError("Error generating report: " + e.getMessage());
 		}
 	}
-	
-	
+
+	public static Map<String, ? extends Object> getUsersNotAssignedToExam(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
+		try {
+			Delegator delegator = dctx.getDelegator();
+			List<GenericValue> examUsers = EntityQuery.use(delegator).from("PartyExamRelationship").queryList();
+			List<GenericValue> users = EntityQuery
+					.use(delegator).from("PartyPersonalInfo").where("partyTypeId", "PERSON", "statusId",
+							"PARTY_ENABLED", "roleTypeId", "SphinxUser", "contactMechTypeId", "EMAIL_ADDRESS")
+					.queryList();
+			Set<String> examUserPartyIds = new HashSet<>();
+
+			for (GenericValue examUser : examUsers) {
+				examUserPartyIds.add(examUser.getString("partyId"));
+			}
+			Iterator<GenericValue> iterator = users.iterator();
+			while (iterator.hasNext()) {
+				GenericValue user = iterator.next();
+				if (examUserPartyIds.contains(user.getString("partyId"))) {
+					iterator.remove();
+				}
+			}
+
+			Map<String, Object> result = ServiceUtil.returnSuccess("Un Assigned Users List");
+			result.put("data", users);
+			return result;
+
+		} catch (Exception e) {
+			Debug.logError(e, "Error in generateReport", MODULE);
+			return ServiceUtil.returnError("Error generating report: " + e.getMessage());
+		}
+	}
+
 }
