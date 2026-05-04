@@ -81,30 +81,30 @@ public class ExamResource {
 	    }
 	}
 
-	@GET
-	@Path("/{examId}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getExamById(@PathParam("examId") String examId, @Context HttpServletRequest request) {
-
-		try {
-			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
-
-			if (UtilValidate.isEmpty(dispatcher)) {
-				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
-			}
-
-			Map<String, Object> input = new HashMap<>();
-			input.put("examId", examId);
-
-			Map<String, Object> result = dispatcher.runSync("getExamById", input);
-
-			return Response.status(200).entity(result).build();
-
-		} catch (Exception e) {
-			return Response.status(400).entity(ServiceUtil.returnError("Something went wrong")).build();
-		}
-	}
+	// @GET
+	// @Path("/{examId}")
+	// @Produces(MediaType.APPLICATION_JSON)
+	// public Response getExamById(@PathParam("examId") String examId, @Context HttpServletRequest request) {
+	//
+	// try {
+	// LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+	//
+	// if (UtilValidate.isEmpty(dispatcher)) {
+	// return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+	// .entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
+	// }
+	//
+	// Map<String, Object> input = new HashMap<>();
+	// input.put("examId", examId);
+	//
+	// Map<String, Object> result = dispatcher.runSync("getExamById", input);
+	//
+	// return Response.status(200).entity(result).build();
+	//
+	// } catch (Exception e) {
+	// return Response.status(400).entity(ServiceUtil.returnError("Something went wrong")).build();
+	// }
+	// }
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -323,13 +323,9 @@ public class ExamResource {
 		try {
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
-			if (UtilValidate.isEmpty(dispatcher)) {
-				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
-			}
 			String examId = request.getParameter("examId");
 			if (UtilValidate.isEmpty(examId))
-				return Response.status(400).entity(ServiceUtil.returnError("Exam is null ")).build();
+				return Response.status(400).entity(ServiceUtil.returnError("Invalid Assessment Information!")).build();
 
 			Map<String, Object> result = dispatcher.runSync("getAllExamTopics", UtilMisc.toMap("examId", examId));
 
@@ -424,9 +420,9 @@ public class ExamResource {
 	}
 
 	@GET
-	@Path("/examtopics/{examId}")
+	@Path("/examTopics")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getExamTopicsByExamId(@PathParam("examId") String examId, @Context HttpServletRequest request) {
+	public Response getExamTopicsByExamId(@Context HttpServletRequest request) {
 
 		try {
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
@@ -436,6 +432,8 @@ public class ExamResource {
 						.entity(ServiceUtil.returnError("Unexpected Error Occured! Try again after Sometime!")).build();
 			}
 
+			String examId = request.getParameter("examId");
+			
 			if (UtilValidate.isEmpty(examId)) {
 				return Response.status(400).entity(ServiceUtil.returnError("ExamId is required")).build();
 			}
@@ -784,13 +782,10 @@ public class ExamResource {
 		try {
 			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
-			if (UtilValidate.isEmpty(dispatcher)) {
-				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-						.entity(ServiceUtil.returnError("Unexpected Error Occurred! Try again after Sometime!"))
-						.build();
-			}
+			String examId = request.getParameter("examId");
+
 			Map<String, Object> result = dispatcher.runSync("getUsersNotAssignedToExam",
-					UtilMisc.toMap());
+							UtilMisc.toMap("examId", examId));
 			if (ServiceUtil.isError(result)) {
 				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
 			}

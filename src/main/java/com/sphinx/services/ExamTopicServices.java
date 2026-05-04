@@ -1,6 +1,5 @@
 package com.sphinx.services;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +62,8 @@ public class ExamTopicServices {
 			String existingMsg = "";
 
 			if (savePermanently) {
-				GenericValue topicMasterRecord = EntityQuery.use(delegator).from("TopicMaster").where("topicId", topicId).queryFirst();
+				GenericValue topicMasterRecord = EntityQuery.use(delegator).from("TopicMaster").where("topicId", topicId.toUpperCase())
+								.queryFirst();
 				if (UtilValidate.isEmpty(topicMasterRecord)) {
 					Map<String, Object> result = dctx.getDispatcher().runSync("createTopic",
 									UtilMisc.toMap("topicId", topicId, "topicName", topicName, "partyId", userLogin.getString("partyId")));
@@ -97,13 +97,14 @@ public class ExamTopicServices {
 
 			// GenericValue topic = delegator.findOne("", true, UtilMisc.toMap("topicId", topicId));
 
-			GenericValue topic = EntityQuery.use(delegator).from("ExamTopicDetails").where("topicId", topicId, "examId", examId).queryOne();
+			GenericValue topic = EntityQuery.use(delegator).from("ExamTopicDetails")
+							.where("topicId", topicId.toUpperCase(), "examId", examId).queryOne();
 
 			if (UtilValidate.isEmpty(topic)) {
 
 				Map<String, Object> input = new HashMap<String, Object>();
 				input.put("examId", examId);
-				input.put("topicId", topicId);
+				input.put("topicId", topicId.toUpperCase());
 				input.put("topicName", topicName);
 				input.put("percentage", Long.valueOf(percentage));
 				input.put("topicPassPercentage", Double.valueOf(topicPassPercentage));
@@ -119,10 +120,10 @@ public class ExamTopicServices {
 			} else {
 				long existingPercentage = topic.getLong("percentage");
 				double existingPassPercentage = topic.getDouble("topicPassPercentage");
-				if (Long.valueOf(percentage) + existingPercentage > 100) {
+				if ((Long.valueOf(percentage) + existingPercentage) > 100) {
 					return ServiceUtil.returnError("Topic Already Exists, Cannot Update further, Cummulative Percentage exceeds 100%");
 				}
-				if (Double.valueOf(topicPassPercentage) + existingPassPercentage > 100) {
+				if ((Double.valueOf(topicPassPercentage) + existingPassPercentage) > 100) {
 					return ServiceUtil.returnError(
 									"Topic Already Exists, Cannot Update further, Cummulative Topic Pass Percentage exceeds 100%");
 				}
@@ -152,10 +153,7 @@ public class ExamTopicServices {
 			}
 
 			List<GenericValue> topics = EntityQuery.use(delegator).from("ExamTopicDetails")
-					.where("examId", context.get("examId")).queryList();
-			if (UtilValidate.isEmpty(topics)) {
-				return ServiceUtil.returnError("topics is null");
-			}
+							.where("examId", (String) context.get("examId")).queryList();
 			Map<String, Object> result = ServiceUtil.returnSuccess();
 			result.put("examTopicList", topics);
 			return result;
@@ -182,17 +180,17 @@ public class ExamTopicServices {
 			List<GenericValue> topics = EntityQuery.use(delegator).from("ExamTopicDetails").where("examId", examId)
 					.queryList();
 
-			if (UtilValidate.isEmpty(topics)) {
-				return ServiceUtil.returnError("topics is null");
-			}
-			List<Map<String, Object>> resultList = new ArrayList<>();
-
-			for (GenericValue gv : topics) {
-				resultList.add(gv.getAllFields());
-			}
+			// if (UtilValidate.isEmpty(topics)) {
+			// return ServiceUtil.returnError("topics is null");
+			// }
+			// List<Map<String, Object>> resultList = new ArrayList<>();
+			//
+			// for (GenericValue gv : topics) {
+			// resultList.add(gv.getAllFields());
+			// }
 
 			Map<String, Object> result = ServiceUtil.returnSuccess();
-			result.put("examTopicList", resultList);
+			result.put("examTopicList", topics);
 			return result;
 
 		} catch (Exception e) {

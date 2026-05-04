@@ -215,6 +215,7 @@ public class QuestionService {
 			List<Map<String, Object>> errorRows = new ArrayList<>();
 
 
+			// String topicId = null;
 			for (int i = 1; i <= sheet.getPhysicalNumberOfRows(); i++) {
 				Row row = sheet.getRow(i);
 				if (row == null)
@@ -281,6 +282,17 @@ public class QuestionService {
 					TransactionUtil.begin();
 
 					question.put("partyId", partyId);
+
+					// String serviceName = "createQuestion";
+					// if(!question.get("topicId").equals(topicId)) {
+					// topicId = (String) question.get("topicId");
+					// GenericValue isTopicIsPermanent = EntityQuery.use(dctx.getDelegator()).from("TopicMaster").where("topicId",
+					// topicId).queryOne();
+					// if(UtilValidate.isEmpty(isTopicIsPermanent)) {
+					// serviceName = "createQuestionInQuestionBankMaster";
+					// }
+					// }
+
 					Map<String, Object> serviceResult = dctx.getDispatcher().runSync("createQuestion", question);
 
 					if (serviceResult.get("responseMessage") != null && serviceResult.get("responseMessage").equals("error")) {
