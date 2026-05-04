@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -938,6 +939,37 @@ public class ExamServices {
 			return ServiceUtil.returnError("Error generating report: " + e.getMessage());
 		}
 	}
+	
+	public static Map<String, ? extends Object> getUsersNotAssignedToExam(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
+		try {
+			Delegator delegator = dctx.getDelegator();
+			List<GenericValue> examUsers = EntityQuery.use(delegator).from("PartyExamRelationship").queryList();
+			List<GenericValue> users = EntityQuery.use(delegator).from("Party").queryList();
+			Set<String> examUserPartyIds = new HashSet<>();
+
+			for (GenericValue examUser : examUsers) {
+				examUserPartyIds.add(examUser.getString("partyId"));
+			}
+			Iterator<GenericValue> iterator = users.iterator();
+			while (iterator.hasNext()) {
+				GenericValue user = iterator.next();
+				if (examUserPartyIds.contains(user.getString("partyId"))) {
+					iterator.remove();
+				}
+			}
+
+			Map<String, Object> result = ServiceUtil.returnSuccess("Un Assigned Users List");
+			result.put("data", users);
+			return result;
+
+		} catch (Exception e) {
+			Debug.logError(e, "Error in generateReport", MODULE);
+			return ServiceUtil.returnError("Error generating report: " + e.getMessage());
+		}
+	}
+
+
 	
 	
 }

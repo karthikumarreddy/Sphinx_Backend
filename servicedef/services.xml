@@ -639,4 +639,7 @@
     <attribute name="totalPending"    type="Integer" mode="OUT" optional="true"/>
 </service>
 	
+	<service engine="java" name="getUsersNotAssignedToExam">
+<attribute name="data" mode="OUT" type="List"/>
+ </service>
 </services>

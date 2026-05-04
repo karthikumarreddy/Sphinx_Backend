@@ -768,5 +768,34 @@ public class ExamResource {
 	        return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
 	    }
 	}
+	
+	
+	@GET
+	@Path("/getUsersNotAssignedToExam")
+	@Produces(MediaType.APPLICATION_JSON)
+	
+	public Response getUsersNotAssignedToExam(@Context HttpServletRequest request){
+		try {
+			LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
+
+			if (UtilValidate.isEmpty(dispatcher)) {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(ServiceUtil.returnError("Unexpected Error Occurred! Try again after Sometime!"))
+						.build();
+			}
+			Map<String, Object> result = dispatcher.runSync("getUsersNotAssignedToExam",
+					UtilMisc.toMap());
+			if (ServiceUtil.isError(result)) {
+				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
+			}
+
+			return Response.status(200).entity(result).build();
+		}catch (Exception e) {
+			Debug.logError(e, MODULE);
+			return Response.status(500).entity(ServiceUtil.returnError(e.getMessage())).build();
+		}
+	} 
+
+
 
 }
