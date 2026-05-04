@@ -35,7 +35,7 @@ public class ExamTopicServices {
 			}
 
 			String examId = (String) context.get("examId");
-			String topicId = (String) context.get("topicId");
+			String topicId = (String) context.get("topicName");
 			String topicName = (String) context.get("topicName");
 			String percentage = (String) context.get("percentage");
 			String topicPassPercentage = (String) context.get("topicPassPercentage");
@@ -63,7 +63,7 @@ public class ExamTopicServices {
 			String existingMsg = "";
 
 			if (savePermanently) {
-				GenericValue topicMasterRecord = EntityQuery.use(delegator).from("TopicMaster").where("topicId", topicId).queryFirst();
+				GenericValue topicMasterRecord = EntityQuery.use(delegator).from("TopicMaster").where("topicId", topicId.toUpperCase()).queryFirst();
 				if (UtilValidate.isEmpty(topicMasterRecord)) {
 					Map<String, Object> result = dctx.getDispatcher().runSync("createTopic",
 									UtilMisc.toMap("topicId", topicId, "topicName", topicName, "partyId", userLogin.getString("partyId")));
