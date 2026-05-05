@@ -40,7 +40,7 @@ public class QuestionService {
 
 	private static final String MODULE = QuestionService.class.getName();
 	private static final String UNEXPECTED_ERROR_MSG = "Unexpected Error Occured! Try Again After Sometime!";
-	
+
 	private String validateQuestionData(Map<String, ? extends Object> context) {
 
 		String questionDetail = (String) context.get("questionDetail");
@@ -128,35 +128,50 @@ public class QuestionService {
 		return null;
 	}
 
-
 	public Map<String, ? extends Object> getAllQuestionByTopic(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 
 		Delegator delegator = dctx.getDelegator();
-
 		if (UtilValidate.isEmpty(delegator)) {
 			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 		}
-
 		Map<String, Object> result = ServiceUtil.returnSuccess();
 		try {
-
 			String topicId = (String) context.get("topicId");
-
 			if (UtilValidate.isEmpty(topicId)) {
 				return ServiceUtil.returnError("Invalid Topic.");
 			}
+			int viewIndex;
+			if (UtilValidate.isNotEmpty(context.get("viewIndex"))) {
+				viewIndex = (Integer) context.get("viewIndex");
+			} else {
+				viewIndex = 0;
+			}
+			int viewSize;
+			if (UtilValidate.isNotEmpty(context.get("viewSize"))) {
+				viewSize = (Integer) context.get("viewSize");
+			} else {
+				viewSize = 10;
+			}
+
+			int offset = viewIndex * viewSize;
 
 			List<GenericValue> questionsByCategory = EntityQuery.use(delegator).from("QuestionMaster")
-							.where("topicId", topicId.toUpperCase()).queryList();
-			result.put("data", questionsByCategory);
-			return result;
+					.where("topicId", topicId.toUpperCase()).offset(offset).limit(viewSize).queryList();
 
+			long totalCount = EntityQuery.use(delegator).from("QuestionMaster").where("topicId", topicId.toUpperCase())
+					.queryCount();
+
+			result.put("data", questionsByCategory);
+			result.put("viewIndex", viewIndex);
+			result.put("viewSize", viewSize);
+			result.put("totalCount", totalCount);
+
+			return result;
 		} catch (GenericEntityException e) {
 			Debug.logError(e, MODULE);
 			return ServiceUtil.returnError(e.getMessage());
 		}
-
 	}
 
 	public Map<String, ? extends Object> getAllQuestionTypes(DispatchContext dctx,
@@ -183,7 +198,7 @@ public class QuestionService {
 	}
 
 	public Map<String, ? extends Object> uploadBulkQuestion(DispatchContext dctx,
-					Map<String, ? extends Object> context) {
+			Map<String, ? extends Object> context) {
 
 		try {
 
@@ -195,7 +210,6 @@ public class QuestionService {
 			if (UtilValidate.isEmpty(partyId)) {
 				return ServiceUtil.returnError("Party Id Required!");
 			}
-
 
 			ByteBuffer buffer = (ByteBuffer) context.get("file");
 			byte[] bytes = new byte[buffer.remaining()];
@@ -210,9 +224,9 @@ public class QuestionService {
 				return ServiceUtil.returnError("Please fill the details and upload the file");
 			}
 
-
 			List<Map<String, Object>> successRows = new ArrayList<>();
 			List<Map<String, Object>> errorRows = new ArrayList<>();
+
 
 
 			// String topicId = null;
@@ -224,13 +238,11 @@ public class QuestionService {
 				Map<String, Object> question = new HashMap<>();
 				List<ColumnConfig> columns = QuestionColumnConfigUtil.getColumnConfigs();
 
-
 				boolean rowHasError = false;
 				String rowErrorMessage = null;
 
 				for (ColumnConfig col : columns) {
 					Cell cell = row.getCell(col.index);
-
 
 					if (col.required && (cell == null || cell.getCellType() == CellType.BLANK)) {
 						rowHasError = true;
@@ -263,7 +275,6 @@ public class QuestionService {
 					}
 				}
 
-
 				if (rowHasError) {
 					Map<String, Object> errDetail = new HashMap<>();
 					errDetail.put("rowNumber", i);
@@ -272,7 +283,6 @@ public class QuestionService {
 					errorRows.add(errDetail);
 					continue;
 				}
-
 
 				boolean rowSaved = false;
 				String errorMsg = null;
@@ -295,7 +305,8 @@ public class QuestionService {
 
 					Map<String, Object> serviceResult = dctx.getDispatcher().runSync("createQuestion", question);
 
-					if (serviceResult.get("responseMessage") != null && serviceResult.get("responseMessage").equals("error")) {
+					if (serviceResult.get("responseMessage") != null
+							&& serviceResult.get("responseMessage").equals("error")) {
 						errorMsg = (String) serviceResult.get("errorMessage");
 						TransactionUtil.rollback();
 					} else {
@@ -312,7 +323,6 @@ public class QuestionService {
 					}
 				}
 
-
 				Map<String, Object> rowDetail = new HashMap<>();
 				rowDetail.put("rowNumber", i);
 				rowDetail.put("questionData", question);
@@ -321,11 +331,11 @@ public class QuestionService {
 					rowDetail.put("questionId", createdQuestionId);
 					successRows.add(rowDetail);
 				} else {
-					rowDetail.put("errorMessage", errorMsg != null ? errorMsg : "Unknown error while creating question");
+					rowDetail.put("errorMessage",
+							errorMsg != null ? errorMsg : "Unknown error while creating question");
 					errorRows.add(rowDetail);
 				}
 			}
-
 
 			Map<String, Object> result = ServiceUtil.returnSuccess();
 			result.put("successRows", successRows);
@@ -337,7 +347,8 @@ public class QuestionService {
 			if (errorRows.isEmpty()) {
 				result.put("successMessage", "All questions uploaded successfully");
 			} else {
-				result.put("successMessage", "Upload completed with " + errorRows.size() + " error(s). Successful rows saved.");
+				result.put("successMessage",
+						"Upload completed with " + errorRows.size() + " error(s). Successful rows saved.");
 			}
 
 			return result;
@@ -349,7 +360,7 @@ public class QuestionService {
 			Debug.logError(e, MODULE);
 			return ServiceUtil.returnError("Unexpected error occurred, try again later!");
 		}
-			}
+	}
 
 	public Map<String, ? extends Object> getAllQuestions(DispatchContext dctx, Map<String, ? extends Object> context) {
 
@@ -361,8 +372,7 @@ public class QuestionService {
 
 			if (UtilValidate.isEmpty(context.get("viewIndex"))) {
 				viewIndex = 0;
-			}
-			else {
+			} else {
 				try {
 					viewIndex = (Integer) context.get("viewIndex");
 				} catch (ClassCastException e) {
@@ -371,8 +381,7 @@ public class QuestionService {
 			}
 			if (UtilValidate.isEmpty(context.get("viewSize"))) {
 				viewSize = 10;
-			}
-			else {
+			} else {
 				try {
 					viewSize = (Integer) context.get("viewSize");
 				} catch (ClassCastException e) {
@@ -391,7 +400,7 @@ public class QuestionService {
 				questionDetailCondition = null;
 			} else {
 				questionDetailCondition = EntityCondition.makeCondition("questionDetail", EntityOperator.LIKE,
-								("%" + questionFilterObj.toString() + "%"));
+						("%" + questionFilterObj.toString() + "%"));
 			}
 
 			Object topicFilterObject = context.get("topicIds");
@@ -431,7 +440,9 @@ public class QuestionService {
 
 			long totalRecords = eq.queryCount();
 
-			// EntityQuery eq = EntityQuery.use(delegator).from("QuestionMaster").maxRows(viewSize * viewIndex).cursorScrollInsensitive();
+			// EntityQuery eq =
+			// EntityQuery.use(delegator).from("QuestionMaster").maxRows(viewSize *
+			// viewIndex).cursorScrollInsensitive();
 
 			List<GenericValue> listOfQuestions = Collections.emptyList();
 			// int balanceRecord;
@@ -446,7 +457,8 @@ public class QuestionService {
 			Map<String, Object> serviceResult = ServiceUtil.returnSuccess();
 
 			serviceResult.put("data", listOfQuestions);
-			serviceResult.put("meta", UtilMisc.toMap("viewIndex", viewIndex, "viewSize", viewSize, "totalRecords", totalRecords));
+			serviceResult.put("meta",
+					UtilMisc.toMap("viewIndex", viewIndex, "viewSize", viewSize, "totalRecords", totalRecords));
 			return serviceResult;
 
 		} catch (GenericEntityException e) {
@@ -455,9 +467,9 @@ public class QuestionService {
 		}
 
 	}
-	
-	public Map<String ,? extends Object> updateQuestionWrapper(DispatchContext dctx,
-			Map<String, ? extends Object> context){
+
+	public Map<String, ? extends Object> updateQuestionWrapper(DispatchContext dctx,
+			Map<String, ? extends Object> context) {
 		try {
 			LocalDispatcher dispatcher = dctx.getDispatcher();
 
@@ -471,18 +483,17 @@ public class QuestionService {
 			}
 			Map<String, Object> result;
 			result = dispatcher.runSync("updateQuestion", context);
-			if(ServiceUtil.isError(result)) {
+			if (ServiceUtil.isError(result)) {
 				return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
 			}
 			return ServiceUtil.returnSuccess(result.toString());
-		}catch (Exception e) {
-			return  ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+		} catch (Exception e) {
+			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 		}
-		
+
 	}
 
-	public Map<String ,? extends Object> createQuestionWrapper(DispatchContext dctx,
-					Map<String, Object> context) {
+	public Map<String, ? extends Object> createQuestionWrapper(DispatchContext dctx, Map<String, Object> context) {
 		try {
 			LocalDispatcher dispatcher = dctx.getDispatcher();
 
@@ -511,12 +522,12 @@ public class QuestionService {
 			// return ServiceUtil.returnSuccess(result.toString());
 			return ServiceUtil.returnSuccess("Question Added to the Topic!");
 
-		}catch (Exception e) {
-			return  ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
+		} catch (Exception e) {
+			return ServiceUtil.returnError(UNEXPECTED_ERROR_MSG);
 		}
-		
+
 	}
-	
+
 	public Map<String, ? extends Object> deleteQuestionsWrapper(DispatchContext dctx,
 			Map<String, ? extends Object> context) {
 
@@ -533,8 +544,8 @@ public class QuestionService {
 
 			for (String qId : questionIds) {
 				if (UtilValidate.isEmpty(qId)) {
-					return ServiceUtil.returnError(
-									"Total Deleted Questions: " + count + "For Question " + count + 1 + " Question Id is required");
+					return ServiceUtil.returnError("Total Deleted Questions: " + count + "For Question " + count + 1
+							+ " Question Id is required");
 				}
 
 				Map<String, Object> result = dispatcher.runSync("deleteQuestion", UtilMisc.toMap("questionId", qId));

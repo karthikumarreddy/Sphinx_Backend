@@ -49,8 +49,6 @@ public class QuestionResource {
 
 	private static final String MODULE = QuestionResource.class.getName();
 
-	
-
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getAllQuestionByTopic(@Context HttpServletRequest request) {
@@ -69,13 +67,23 @@ public class QuestionResource {
 						.build();
 			}
 
+			int viewIndex = 0;
+
+			int viewSize = 10; // default value
+			if (UtilValidate.isNotEmpty(request.getParameter("viewSize"))) {
+				viewSize = Integer.parseInt(request.getParameter("viewSize"));
+			}
+
+			if (UtilValidate.isNotEmpty(request.getParameter("viewIndex"))) {
+				viewIndex = Integer.parseInt(request.getParameter("viewIndex"));
+			}
+
 			Map<String, Object> result = dispatcher.runSync("getAllQuestionByTopic",
-					UtilMisc.toMap("topicId", topicId));
-			
-			if(ServiceUtil.isError(result)) {
+					UtilMisc.toMap("topicId", topicId, "viewIndex", viewIndex, "viewSize", viewSize));
+			if (ServiceUtil.isError(result)) {
 				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
 			}
-			
+
 			return Response.status(Response.Status.OK).entity(result).build();
 
 		} catch (GenericServiceException e) {
@@ -97,7 +105,7 @@ public class QuestionResource {
 		}
 		try {
 			Map<String, Object> result = dispatcher.runSync("getAllQuestionTypes", UtilMisc.toMap());
-			if(ServiceUtil.isError(result)) {
+			if (ServiceUtil.isError(result)) {
 				return Response.status(400).entity(ServiceUtil.getErrorMessage(result)).build();
 			}
 			return Response.status(Response.Status.OK).entity(result).build();
@@ -136,13 +144,11 @@ public class QuestionResource {
 			input.put("topicId", request.getAttribute("topicId"));
 			input.put("questionId", request.getAttribute("questionId"));
 
-
 			Map<String, Object> result;
 			result = dispatcher.runSync("updateQuestionWrapper", input);
 			if (ServiceUtil.isError(result)) {
 				return Response.status(Response.Status.BAD_REQUEST).entity(result).build();
-			}
-			else {
+			} else {
 				result.put("successMessage", "Question Updated Successfully!");
 			}
 
@@ -154,7 +160,7 @@ public class QuestionResource {
 		}
 
 	}
-	
+
 //	@DELETE
 //	@Consumes(MediaType.APPLICATION_JSON)
 //	@Produces(MediaType.APPLICATION_JSON)
@@ -204,9 +210,8 @@ public class QuestionResource {
 					"optionA", request.getAttribute("optionA"), "optionB", request.getAttribute("optionB"), "optionC",
 					request.getAttribute("optionC"), "optionD", request.getAttribute("optionD"), "answer",
 					request.getAttribute("answer"), "numAnswers", request.getAttribute("numAnswers"), "difficultyLevel",
-							request.getAttribute("difficultyLevel"), "answerValue", request.getAttribute("answerValue"), "examId",
-							request.getAttribute("examId"));
-
+					request.getAttribute("difficultyLevel"), "answerValue", request.getAttribute("answerValue"),
+					"examId", request.getAttribute("examId"));
 
 			HttpSession session = request.getSession(false);
 			if (UtilValidate.isEmpty(session)) {
@@ -330,7 +335,8 @@ public class QuestionResource {
 		}
 
 		try {
-			Map<String, Object> result = dispatcher.runSync("uploadBulkQuestion", UtilMisc.toMap("file", buffer, "userLogin", userLogin));
+			Map<String, Object> result = dispatcher.runSync("uploadBulkQuestion",
+					UtilMisc.toMap("file", buffer, "userLogin", userLogin));
 			if (result.get("responseMessage") != null && result.get("responseMessage").equals("error")) {
 				return Response.status(Response.Status.BAD_REQUEST).entity(result).build();
 			} else {
@@ -355,10 +361,10 @@ public class QuestionResource {
 		LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 		try {
 			Map<String, Object> serviceResult = dispatcher.runSync("getAllQuestions",
-							UtilMisc.toMap("viewIndex", request.getAttribute("viewIndex"), "viewSize", request.getAttribute("viewSize"),
-											"topicIds", request.getAttribute("topicIds"), "questionTypes",
-											request.getAttribute("questionTypes"), "questionDetailFilter",
-											request.getAttribute("questionDetailFilter")));
+					UtilMisc.toMap("viewIndex", request.getAttribute("viewIndex"), "viewSize",
+							request.getAttribute("viewSize"), "topicIds", request.getAttribute("topicIds"),
+							"questionTypes", request.getAttribute("questionTypes"), "questionDetailFilter",
+							request.getAttribute("questionDetailFilter")));
 
 			if (ServiceUtil.isError(serviceResult)) {
 				return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(serviceResult).build();
@@ -372,7 +378,6 @@ public class QuestionResource {
 		}
 
 	}
-
 
 //	@PUT
 //	@Produces(MediaType.APPLICATION_JSON)
@@ -470,7 +475,6 @@ public class QuestionResource {
 //		}
 //	}
 
-
 	@DELETE
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -488,8 +492,9 @@ public class QuestionResource {
 				return Response.status(400).entity(ServiceUtil.returnError("Question Id is required")).build();
 			}
 
-			Map<String, Object> result = dispatcher.runSync("deleteQuestionsWrapper", UtilMisc.toMap("questionIds", questionIds));
-			if(ServiceUtil.isError(result)) {
+			Map<String, Object> result = dispatcher.runSync("deleteQuestionsWrapper",
+					UtilMisc.toMap("questionIds", questionIds));
+			if (ServiceUtil.isError(result)) {
 				return Response.status(400).entity(result).build();
 			}
 			return Response.status(200).entity(result).build();

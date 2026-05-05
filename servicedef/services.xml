@@ -516,9 +516,13 @@
 	
 	<service name="getAllQuestionByTopic" engine="java" location="com.sphinx.services.QuestionService" invoke="getAllQuestionByTopic">
 	
-		<attribute name="topicId" mode="IN" type="String" optional="true"/>
-		
-		<attribute name="data" mode="OUT" type="List" optional="true"/>
+	 <attribute name="topicId" type="String" mode="IN" optional="false"/>
+    <attribute name="viewIndex" type="Integer" mode="IN" optional="true"/>
+    <attribute name="viewSize" type="Integer" mode="IN" optional="true"/>
+    <attribute name="data" type="List" mode="OUT"/>
+    <attribute name="viewIndex" type="Integer" mode="OUT"/>
+    <attribute name="viewSize" type="Integer" mode="OUT"/>
+    <attribute name="totalCount" type="Long" mode="OUT"/>
 	</service>
 	
 	
